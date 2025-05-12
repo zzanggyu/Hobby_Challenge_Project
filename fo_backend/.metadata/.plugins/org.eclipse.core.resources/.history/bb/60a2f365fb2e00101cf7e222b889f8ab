@@ -1,0 +1,5 @@
+package com.hobby.challenge.fobackend.entity;
+
+public class User {
+
+}
