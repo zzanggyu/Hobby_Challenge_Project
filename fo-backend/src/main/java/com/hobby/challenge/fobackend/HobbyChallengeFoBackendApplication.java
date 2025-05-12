@@ -1,0 +1,14 @@
+package com.hobby.challenge.fobackend;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+@SpringBootApplication
+public class HobbyChallengeFoBackendApplication {
+
+	public static void main(String[] args) {
+		SpringApplication.run(HobbyChallengeFoBackendApplication.class, args);
+		
+	}
+
+}
