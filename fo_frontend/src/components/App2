@@ -1,0 +1,201 @@
+<template>
+    <!-- Vuetify 앱 전체를 감싸는 최상위 컴포넌트 -->
+    <v-app>
+      <!-- 헤더 영역 -->
+      
+      <v-app-bar app color="primary" height="78">
+        <v-toolbar-title>
+          <v-btn variant="text" height="78" class="d-flex align-center" @click="goHome">
+            <img src="@/assets/logo.png" alt="로고" height="78" class="mr-3" />
+            <span class="hobby-title" >함께하는 취미 챌린지!!</span>
+          </v-btn>
+  
+        </v-toolbar-title>
+        
+        <v-spacer></v-spacer>
+        <v-btn text @click="goHome">홈</v-btn>
+        <v-btn text @click="goChallenges">챌린지</v-btn>
+        <v-btn text @click="goMyPage">마이페이지</v-btn>
+        <v-btn text @click="goToLogin">로그인</v-btn>
+      </v-app-bar>
+      
+      <!-- 히어로 -->
+      <!-- <v-sheet
+        height="70vh"
+        width="100%"
+        class="d-flex flex-column justify-center align-center text-center"
+        style="background:url('/banner.jpg') center/50% auto no-repeat, white"
+        elevation="0"
+      >
+        <h1 class="display-1 font-weight-bold text-blue mb-4">
+          함께하는 취미 챌린지
+        </h1>
+        <p class="subtitle-1 text-blue mb-6">
+          오늘부터 나만의 도전을 시작해보세요!
+        </p>
+        <v-btn color="white" class="text-primary" size="large" elevation="2" @click="goChallenges">
+          챌린지 생성하기
+        </v-btn>
+      </v-sheet> -->
+  
+  
+      <!-- 메인 -->
+      
+      <v-main>
+        <v-container fluid class="py-12">
+          <!-- 메인 배너 -->
+          <!-- <h1 class="display-1 font-weight-bold mb-4">함께하는 챌린지, 성장하는 나</h1> -->
+          <v-btn color="primary" class="mb-8 rounded-lg" @click="goChallenges">챌린지 생성하기</v-btn>
+          
+          <!-- 추천 챌린지 카드 리스트 -->
+          <v-row id="cardsTop" justify="center" align="stretch">
+            <v-col cols="12" sm="6" md="4" class="pa-6" v-for="card in visibleCards"
+            :key="card.id" :id="`card-${card.id}`">
+              <v-card class="mx-auto rounded-xl" max-width="500" elevation="4" >
+                <v-card-title>{{ card.title }}</v-card-title>
+                <v-card-text>챌린지 설명...</v-card-text>
+                <v-card-actions>
+                  <v-btn color="primary" text>참여하기</v-btn>
+                </v-card-actions>
+                <v-card-actions>
+                  <v-btn color="secondary" text>챌린지 상세 보기</v-btn>
+                </v-card-actions>
+              </v-card>
+            </v-col>
+          </v-row>
+  
+            <!-- 더보기 버튼 -->
+          <div class="text-center mt-6">
+            <v-btn
+              v-if="visibleCards.length < allCards.length"
+              color="primary"
+              size="large"
+              @click="loadMore"
+              ref="loadMoreBtn"
+            >
+              더 보기
+            </v-btn>
+  
+              <!-- 접기 : 현재 카드 수가 batchSize보다 많을 때 표시 -->
+            <v-btn
+              v-if="visibleCards.length > batchSize"
+              color="secondary"
+              size="large"
+              class="ml-4"
+              @click="collapse"
+            >
+              접기
+            </v-btn>
+          </div>
+        </v-container>
+      </v-main>
+    
+  
+       <!-- 푸터 영역 -->
+      <!-- 푸터 -->
+      
+      <v-footer app color="grey">
+        <v-col class="text-center">
+          © 2025 취미 챌린지 플랫폼 | 문의: help@hobbychallenge.com
+        </v-col>
+      </v-footer>
+   
+    </v-app>
+  </template>
+  
+  <script setup>
+  // Vue Router에서 페이지 이동용 훅 가져오기
+  import { ref, nextTick } from 'vue'
+  import { useRouter } from 'vue-router'
+  
+  // Router 객체 초기화
+  const router = useRouter()
+  // 라우터
+  const goHome = () => router.push('/')
+  const goChallenges = () => router.push('/challenges')
+  const goMyPage = () => router.push('/mypage')
+  const goToLogin = () => router.push('/login')
+  
+  // 카드 데이터
+  const allCards = ref(
+    Array.from({ length: 100 }, (_, i) => ({
+      id: i + 1,
+      title: `추천 챌린지 ${i + 1}`,
+      desc: '챌린지 설명 …',
+    }))
+  )
+  
+  const batchSize = 6            // 한 번에 6개씩
+  const visibleCards = ref(allCards.value.slice(0, batchSize))
+  
+  // 더보기 로직
+  const loadMoreBtn = ref(null)
+  
+  async function loadMore () {
+    const next = allCards.value.slice(
+      visibleCards.value.length,
+      visibleCards.value.length + batchSize
+    )
+    visibleCards.value.push(...next)
+  
+    await nextTick()
+  
+    /* 마지막 추가 카드로 스크롤 */
+    const lastId = visibleCards.value.slice(-1)[0].id          // 마지막 카드 id
+    document.getElementById(`card-${lastId}`)
+            ?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
+  
+  // 접기
+  async function collapse () {
+    /* 1) 카드 6개만 남김 */
+    visibleCards.value = allCards.value.slice(0, batchSize)
+    await nextTick()                 // DOM 렌더 완료 대기
+  
+    /* 2) 스크롤 컨테이너:  <main class="v-main"> */
+    const scroller  = document.querySelector('.v-main')  // ← .v-main
+    const firstCard = document.getElementById('card-1')
+    if (!scroller || !firstCard) return
+  
+    /* 3) 목표 Y = 첫 카드 절대 top - (헤더 78 + 여유 12) */
+    const headerH = 78
+    const gap     = 12
+    const target  = firstCard.offsetTop - headerH - gap
+  
+    /* 4) 부드럽게 스크롤 */
+    scroller.scrollTo({ top: target, behavior: 'smooth' })
+  }
+  
+  
+  
+  
+  
+  
+  </script>
+  
+  <style scoped>
+  html, body, .v-main {
+    scroll-behavior: smooth;   /* v-main 자체도 부드럽게 */
+  }
+  
+  body {
+    background-color: #f0f4f8;
+  }
+  
+  /* 큰 제목의 색상을 Vuetify 기본 primary 색상으로 변경 */
+  h1 {
+    font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
+    color: #1976d2;
+  }
+  
+  .hobby-title {
+    font-family: 'Nanum Pen Script', cursive;
+    font-size: 30px;
+    color: #ffffff;
+  }
+  
+  #card-1 {
+    scroll-margin-top: 90px;  /* 백업: 브라우저가 margin 방식 지원하면 이 값 적용 */
+  }
+  </style>
+  
