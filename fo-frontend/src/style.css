@@ -1,0 +1,61 @@
+/* 1. 기본 글꼴·렌더링 최적화 */
+:root {
+	font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+	font-weight: 400;
+	font-synthesis: none;
+	text-rendering: optimizeLegibility;
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
+}
+
+/* 2. 부드러운 스크롤 (Vuetify 컨테이너 포함) */
+html,
+body,
+.v-main {
+	scroll-behavior: smooth;
+}
+
+/* 3. body 레이아웃 – 중앙고정 flex 제거 */
+body {
+	margin: 0;
+	min-width: 320px;
+	background: #f0f4f8; /* 라이트 배경 – 브랜드 컬러에 맞춰 조정 */
+	color: #213547; /* 기본 글자색 */
+}
+
+/* 4. 다크 모드 대응 (필요하면) */
+@media (prefers-color-scheme: dark) {
+	body {
+		background: #242424;
+		color: rgba(255, 255, 255, 0.87);
+	}
+}
+
+/* 5. 링크·버튼 기본 스타일 (필요 시 유지) */
+a {
+	color: #646cff;
+	text-decoration: none;
+}
+a:hover {
+	color: #535bf2;
+}
+
+/* a·button 기본 스타일은 <v-btn> 과 겹치지 않으니 필요하면 남겨둡니다 */
+button {
+	border-radius: 8px;
+	padding: 0.6em 1.2em;
+	font-size: 1em;
+	font-family: inherit;
+	background: #1a1a1a;
+	color: #fff;
+	cursor: pointer;
+	transition: border-color 0.25s;
+}
+button:hover {
+	border-color: #646cff;
+}
+
+/* 6. 카드 1번에 쿠션 (접기 후 멈춤 위치) */
+#card-1 {
+	scroll-margin-top: 90px;
+}
