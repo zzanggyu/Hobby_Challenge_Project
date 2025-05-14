@@ -6,7 +6,7 @@ import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.redis.core.StringRedisTemplate;
-import org.springframework.mail.MailMessage;
+import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
 
@@ -30,7 +30,7 @@ public class EmailAuthService {
 		logger.debug("Redis에 저장된 인증 코드: key={} value={}", key, code); // 레디스 저장 확인용 로그 출력
 		
 		// 메일 전송
-		MailMessage msg = new MailMessage();
+		SimpleMailMessage msg = new SimpleMailMessage();
 		msg.setTo(email);
 		msg.setSubject("회원가입 이메일 인증 코드");
 		msg.setText("인증 코드: " + code + "\n(유효시간: 5분)");
