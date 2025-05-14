@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hobby.challenge.fobackend.mapper.UserMapper">
+	
+	<!--  아이디로 조회 -->
+	<select id='findById' resultType="com.hobby.challenge.fobackend.entity.User">
+		SELECT * FROM USER WHERE USER_ID = #{userId}
+	</select>
+
+	<!-- 로그인 아이디로 조회 -->
+	<select id="findByLoginId" resultType="com.hobby.challenge.fobackend.entity.User">
+	    SELECT * FROM USER WHERE LOGIN_ID = #{loginId}
+	</select>
+
+	<!-- 회원 등록 -->
+	<insert id="insertUser" parameterType="com.hobby.challenge.fobackend.entity.User" useGeneratedKeys="true" keyProperty="userId">
+	  INSERT INTO USER (LOGIN_ID, USERNAME, PASSWORD, EMAIL, NICKNAME)
+	  VALUES (#{loginId}, #{username}, #{password}, #{email}, #{nickname})
+	</insert>
+</mapper>
