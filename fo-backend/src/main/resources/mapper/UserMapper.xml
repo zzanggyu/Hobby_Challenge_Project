@@ -4,19 +4,77 @@
          "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.hobby.challenge.fobackend.mapper.UserMapper">
 	
-	<!--  아이디로 조회 -->
-	<select id='findById' resultType="com.hobby.challenge.fobackend.entity.User">
-		SELECT * FROM USER WHERE USER_ID = #{userId}
-	</select>
-
-	<!-- 로그인 아이디로 조회 -->
+	<!--  로그인 시 사용자 조회 비밀번호 -->
 	<select id="findByLoginId" resultType="com.hobby.challenge.fobackend.entity.User">
-	    SELECT * FROM USER WHERE LOGIN_ID = #{loginId}
+		SELECT USER_ID
+			, LOGIN_ID <!-- 로그인 아이디 컬럼 -->
+			, USERNAME <!-- 이름(본명) 컬럼 -->
+			, PASSWORD <!-- 비밀번호 컬럼 -->
+			, EMAIL <!-- 이메일 컬럼 -->
+			, NICKNAME <!--  닉네임(별명) 컬럼 -->
+			, BIRTH_DATE <!--생년월일 컬럼 -->
+			, ROLE <!-- 역할(member, owner, admin) 컬럼 -->
+			, POINTS <!-- 포인트 컬럼 -->
+			, LEVEL <!-- 레벨 컬럼 -->
+			, CREATED_DATE <!-- 생성일(가입일) 커럼 -->
+		FROM USER <!-- 사용자 테이블 -->
+		WHERE LOGIN_ID = #{loginId}
 	</select>
+	
+	<!-- 이메일 중복 체크 -->
+	<select id="findByEmail" resultType="com.hobby.challenge.fobackend.entity.User">
+		SELECT USER_ID
+			, LOGIN_ID <!-- 로그인 아이디 컬럼 -->
+			, USERNAME <!-- 이름(본명) 컬럼 -->
+			, PASSWORD <!-- 비밀번호 컬럼 -->
+			, EMAIL <!-- 이메일 컬럼 -->
+			, NICKNAME <!--  닉네임(별명) 컬럼 -->
+			, BIRTH_DATE <!--생년월일 컬럼 -->
+			, ROLE <!-- 역할(member, owner, admin) 컬럼 -->
+			, POINTS <!-- 포인트 컬럼 -->
+			, LEVEL <!-- 레벨 컬럼 -->
+			, CREATED_DATE <!-- 생성일(가입일) 커럼 -->
+		FROM USER <!-- 사용자 테이블 -->
+		WHERE EMAIL = #{email}
+	</select>
+	
+	<!-- 내 정보 보기(마이페이지) -->
+	<select id="findById" resultType="com.hobby.challenge.fobackend.entity.User">
+		SELECT USER_ID
+			, LOGIN_ID
+			, USERNAME
+			, PASSWORD
+			, EMAIL
+			, NICKNAME
+			, BIRTH_DATE
+			, ROLE
+			, POINTS
+			, LEVEL
+		    , CREATED_DATE
+		  FROM USER
+		  WHERE USER_ID = #{userId}
+		</select>
 
 	<!-- 회원 등록 -->
-	<insert id="insertUser" parameterType="com.hobby.challenge.fobackend.entity.User" useGeneratedKeys="true" keyProperty="userId">
-	  INSERT INTO USER (LOGIN_ID, USERNAME, PASSWORD, EMAIL, NICKNAME)
-	  VALUES (#{loginId}, #{username}, #{password}, #{email}, #{nickname})
+	<insert id="insertUser" 
+	parameterType="com.hobby.challenge.fobackend.entity.User" 
+	useGeneratedKeys="true" 
+	keyProperty="userId">
+	  INSERT INTO USER ( <!-- 사용자 테이블 -->
+		  LOGIN_ID <!-- 로그인 아이디 컬럼-->
+		, USERNAME <!-- 사용자 이름 컬럼-->
+		, PASSWORD <!-- 사용자 비밀번호 컬럼-->
+		, EMAIL <!-- 이메일 컬럼-->
+		, NICKNAME <!-- 닉네임(별명) 컬럼-->
+		, BIRTH_DATE <!-- 생년월일 컬럼-->
+	)
+	  VALUES (
+	  	  #{loginId} 
+	  	, #{username} 
+	  	, #{password} 
+	  	, #{email} 
+	  	, #{nickname}
+	  	, #{birthDate}
+	)		
 	</insert>
 </mapper>
