@@ -66,7 +66,7 @@
 			@click="active = i"
 		/>
 
-		<!-- ▶ / ❚❚  자동재생 토글 -->
+		<!--  자동재생 토글 -->
 		<v-btn icon color="primary" class="ml-4" @click="togglePlay">
 			<v-icon>{{ playing ? 'mdi-pause' : 'mdi-play' }}</v-icon>
 		</v-btn>

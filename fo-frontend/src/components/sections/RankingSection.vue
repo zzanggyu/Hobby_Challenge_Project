@@ -1,4 +1,3 @@
-<!-- src/components/sections/RankingSection.vue -->
 <template>
 	<v-container class="py-10">
 		<!-- 헤더 + 기간 선택 -->
@@ -24,9 +23,9 @@
 					<div class="d-flex align-center">
 						<v-avatar size="48" class="mr-4">
 							<v-img v-if="c.thumbnail" :src="c.thumbnail" />
-							<span v-else class="text-h5 font-weight-bold">{{
-								i + 1
-							}}</span>
+							<span v-else class="text-h5 font-weight-bold">
+								{{ i + 1 }}
+							</span>
 						</v-avatar>
 						<div>
 							<h3 class="text-subtitle-1 font-weight-bold mb-1">
@@ -48,39 +47,29 @@
 	</v-container>
 </template>
 
-<script setup lang="ts">
+<script setup>
 import { ref, watchEffect } from 'vue'
+import { fetchRankings } from '@/services/rankingService'
 
-interface RankingItem {
-	id: number
-	title: string
-	participation_count: number
-	thumbnail?: string
-}
-
-type Period = 'weekly' | 'all'
-
-// 주간 / 전체 옵션
+// 주간/전체 옵션
 const periodOptions = [
-	{ label: '주간', value: 'weekly' as Period },
-	{ label: '전체', value: 'all' as Period },
+	{ label: '주간', value: 'weekly' },
+	{ label: '전체', value: 'all' },
 ]
 
-// 헤더용 맵핑
-const titleMap: Record<Period, string> = {
+// 헤더용 맵
+const titleMap = {
 	weekly: '주간',
 	all: '전체',
 }
 
-const period = ref<Period>('weekly')
-const rankings = ref<RankingItem[]>([])
+// reactive state
+const period = ref('weekly')
+const rankings = ref([])
 
 watchEffect(async () => {
 	try {
-		// fetch 를 사용해서 주간/전체 랭킹 가져오기
-		const res = await fetch(`/rankings?type=${period.value}&metric=count`)
-		if (!res.ok) throw new Error(`HTTP ${res.status}`)
-		rankings.value = await res.json()
+		rankings.value = await fetchRankings(period.value)
 	} catch (e) {
 		console.error('랭킹 로드 실패', e)
 		rankings.value = []

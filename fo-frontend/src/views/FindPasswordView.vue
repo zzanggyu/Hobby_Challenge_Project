@@ -46,7 +46,7 @@
 	</v-container>
 </template>
 
-<script setup lang="ts">
+<script setup>
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 
@@ -85,7 +85,7 @@ async function onFindPassword() {
 		// TODO: 실제 API 호출
 		// await fetch('/api/auth/reset-password', { method:'POST', body:JSON.stringify({ username:username.value, email:email.value }) })
 		message.value = '이메일로 비밀번호 재설정 링크를 전송했습니다.'
-	} catch (e: any) {
+	} catch (e) {
 		error.value = e.message || '비밀번호 찾기 중 오류가 발생했습니다.'
 	} finally {
 		loading.value = false

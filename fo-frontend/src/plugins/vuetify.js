@@ -10,6 +10,9 @@ import { VDateInput } from 'vuetify/labs/VDateInput'
 import DateFnsAdapter from '@date-io/date-fns'
 import koLocale from 'date-fns/locale/ko'
 
+// Vuetify가 제공하는 기본 ko 메시지 가져오기
+import { ko as vuetifyKo } from 'vuetify/locale'
+
 export default createVuetify({
 	components: {
 		...components, // 코어 컴포넌트 모두 등록
@@ -43,5 +46,8 @@ export default createVuetify({
 	locale: {
 		locale: 'ko',
 		fallback: 'en',
+		messages: {
+			ko: vuetifyKo,
+		},
 	},
 })

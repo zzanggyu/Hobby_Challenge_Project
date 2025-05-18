@@ -6,13 +6,6 @@ const api = axios.create({
 	withCredentials: true, // 쿠키 기반 인증 쓸 때
 })
 
-// 요청 시: 토큰이 있으면 헤더에 넣기
-api.interceptors.request.use((config) => {
-	const token = localStorage.getItem('auth_token')
-	if (token) config.headers.Authorization = `Bearer ${token}`
-	return config
-})
-
 // 응답 시: 401 발생하면 로그인 페이지로
 api.interceptors.response.use(
 	(res) => res,

@@ -20,30 +20,50 @@
 		<v-btn text @click="goMyPage">마이페이지</v-btn>
 		<!-- <v-btn text @click="goNotifications">알림</v-btn> -->
 		<notification-bell class="mr-2" />
-		<v-btn text @click="goToLogin">로그인</v-btn>
-		<v-btn text @click="goToSignup">회원가입</v-btn>
+		<v-btn v-if="!auth.isAuthenticated" text to="/login"> 로그인 </v-btn>
+		<v-btn v-else text @click="onLogout"> 로그아웃 </v-btn>
+		<v-btn v-if="!auth.isAuthenticated" text @click="goToSignup"
+			>회원가입</v-btn
+		>
 	</v-app-bar>
 </template>
 
 <script setup>
 import NotificationBell from '@/components/layout/NotificationBell.vue'
 import { useRouter } from 'vue-router'
+import { useAuthStore } from '@/stores/auth'
+import { logout as apiLogout } from '@/services/authService'
+
 // router 인스턴스 생성
 const router = useRouter()
+const auth = useAuthStore()
 
 // 페이지 이동 함수
 function goHome() {
 	router.push('/')
 }
+
 function goChallenges() {
 	router.push('/challenges')
 }
+
 function goMyPage() {
 	router.push('/mypage')
 }
-function goToLogin() {
-	router.push('/login')
+
+async function onLogout() {
+	try {
+		// 서버 세션/쿠키를 무효화
+		await apiLogout()
+	} catch (e) {
+		console.warn('로그아웃 API 호출 중 에러', e)
+	}
+	// 클라이언트 쪽 auth store 초기화
+	auth.$patch({ isAuthenticated: false, user: null })
+	// 홈 또는 로그인 페이지로 이동
+	router.push('/')
 }
+
 function goToSignup() {
 	router.push('/signup')
 }

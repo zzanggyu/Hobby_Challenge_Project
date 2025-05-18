@@ -39,7 +39,7 @@
 	</v-container>
 </template>
 
-<script setup lang="ts">
+<script setup>
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 
@@ -72,7 +72,7 @@ async function onFindId() {
 		// TODO: 실제 API 호출
 		// await fetch('/api/auth/find-id', { method:'POST', body:JSON.stringify({ email: email.value }) })
 		message.value = '가입된 이메일로 아이디를 전송했습니다.'
-	} catch (e: any) {
+	} catch (e) {
 		error.value = e.message || '아이디 찾기 중 오류가 발생했습니다.'
 	} finally {
 		loading.value = false

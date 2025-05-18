@@ -134,29 +134,17 @@
 				<v-date-input
 					v-model="credentials.birthdate"
 					:rules="rules.birthdate"
-					format="yyyy-MM-dd"
+					format="yyyy.MM.dd"
+					value-format="yyyy.MM.dd"
+					:mask="['####.##.##']"
 					locale="ko"
 					label="생년월일"
-					placeholder="예) 1999-10-01"
+					placeholder="예) 2000.01.01"
 					editable
 					open-on-focus
 					required
 					clearable
 				/>
-
-				<!-- 성별 -->
-				<div id="gender_radio">
-					<v-radio-group
-						v-model="credentials.gender"
-						row
-						label="성별"
-						:rules="[(v) => !!v || '성별을 선택하세요.']"
-						required
-					>
-						<v-radio label="남성" value="male" />
-						<v-radio label="여성" value="female" />
-					</v-radio-group>
-				</div>
 
 				<!-- 취미 (복수 선택) -->
 				<!-- <v-select
@@ -198,9 +186,11 @@
 	</v-container>
 </template>
 
-<script setup lang="ts">
+<script setup>
 import { ref, reactive, watch, computed, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
+import { signup, sendCode, verifyCode } from '@/services/authService'
+import { format } from 'date-fns'
 
 const form = ref()
 const valid = ref(false)
@@ -212,11 +202,9 @@ const showConfirm = ref(false)
 
 const router = useRouter()
 
-// 이메일 인증 상태
-const emailSent = ref(false)
+const emailSent = ref(false) // 이메일 인증 상태
 const timer = ref(0) // 남은 재요청 대기 시간(초)
-let timerId: number // setInterval ID
-
+let timerId = null // setInterval ID
 const emailCode = ref('') // 사용자가 입력한 코드
 const emailVerified = ref(false) // 인증 성공 여부
 
@@ -228,7 +216,6 @@ const credentials = reactive({
 	username: '',
 	nickname: '',
 	birthdate: '',
-	gender: '',
 })
 
 // 유효성 규칙
@@ -273,30 +260,35 @@ const rules = {
 	// 3) 생년월일 – 필수, YYYY-MM-DD 형식
 	birthdate: [
 		(v) => !!v || '생년월일을 입력하세요.',
-		(v) => /^\d{4}-\d{2}-\d{2}$/.test(v) || 'YYYY-MM-DD 형식이어야 합니다.',
+		(v) => /^\d{4}\.\d{2}\.\d{2}$/.test(v) || 'YYYY.MM.DD 형식이어야 합니다.',
 		(v) => {
 			const d = new Date(v)
 			return !isNaN(d.getTime()) || '유효한 날짜가 아닙니다.'
 		},
 	],
-	// 성별별
-	gender: [(v) => !!v || '성별을 선택하세요.'],
 }
 
 // 1) 인증 요청
 async function sendEmailCode() {
 	if (emailSent.value) return
 	// TODO: 실제 API 호출
-	// await fetch('/api/auth/send-code', { method:'POST', body: JSON.stringify({ email: credentials.email }) })
-	emailSent.value = true
-	timer.value = 300 // 5분 대기
-	timerId = window.setInterval(() => {
-		if (timer.value > 0) timer.value--
-		else {
-			clearInterval(timerId)
-			emailSent.value = false
-		}
-	}, 1000)
+	try {
+		await sendCode(credentials.email)
+		emailSent.value = true
+		timer.value = 300 // 5분 안에 인증증
+		timerId = window.setInterval(() => {
+			if (timer.value > 0) {
+				timer.value--
+			} else {
+				clearInterval(timerId)
+				emailSent.value = false
+			}
+		}, 1000)
+		error.value = ''
+	} catch (e) {
+		error.value = e.response?.data?.message || '인증 요청에 실패했습니다.'
+		message.value = ''
+	}
 }
 
 // 남은 시간 → "m분 ss초" 포맷으로 변환
@@ -310,12 +302,17 @@ const timerDisplay = computed(() => {
 
 // 2) 인증 코드 확인
 async function verifyEmailCode() {
-	if (emailVerified.value) return
 	// TODO: 실제 API 호출
-	// const res = await fetch('/api/auth/verify-code', { method:'POST', body: JSON.stringify({ email: credentials.email, code: emailCode.value }) })
-	// if (!res.ok) throw new Error('인증 실패')
-	emailVerified.value = true
-	clearInterval(timerId)
+	try {
+		await verifyCode(credentials.email, emailCode.value)
+		emailVerified.value = true
+		clearInterval(timerId)
+		error.value = ''
+	} catch (e) {
+		error.value =
+			e.response?.data?.message || '인증 코드가 올바르지 않습니다.'
+		message.value = ''
+	}
 }
 
 // 비밀번호 일치시 confirm 필드 다시 검증
@@ -337,10 +334,24 @@ async function onSubmit() {
 		return
 	}
 	loading.value = true
+	error.value = ''
+	message.value = ''
 	try {
 		// TODO: 회원가입 API 호출
-		// await fetch('/api/auth/signup', { method:'POST', body: JSON.stringify(credentials) })
-		router.push('/login')
+		await signup({
+			loginId: credentials.loginid,
+			password: credentials.password,
+			email: credentials.email,
+			username: credentials.username,
+			nickname: credentials.nickname,
+			birthDate: format(new Date(credentials.birthdate), 'yyyy.MM.dd'), // v-date-input 에서 자꾸 Date객체를 모델에 넣어서 보내기 직전 수동 포맷
+		})
+		message.value = '회원가입이 완료되었습니다. 로그인 페이지로 이동합니다.'
+		// 잠시 대기 후 이동
+		setTimeout(() => router.push('/login'), 1000)
+	} catch (e) {
+		error.value - e.response?.data?.message || '회원가입에 실패했습니다.'
+		console.error('signup failed response:', e.response?.data)
 	} finally {
 		loading.value = false
 	}
@@ -349,8 +360,8 @@ async function onSubmit() {
 
 <style scoped>
 /* ::v-deep 로 Vuetify 내부 마크업까지 도달하게 하기 */
-::v-deep .v-text-field.required .v-field__label::after {
+/* ::v-deep .v-text-field.required .v-field__label::after {
 	content: ' *';
 	color: red;
-}
+} */
 </style>

@@ -3,10 +3,15 @@
 		<v-card width="400" elevation="6" class="pa-6">
 			<h2 class="text-h5 mb-4 text-center">로그인</h2>
 
-			<v-form ref="form" v-model="valid" lazy-validation>
+			<v-form
+				ref="form"
+				v-model="valid"
+				lazy-validation
+				@submit.prevent="onSubmit"
+			>
 				<!-- 아이디 -->
 				<v-text-field
-					v-model="credentials.loginid"
+					v-model="credentials.loginId"
 					:rules="rules.loginid"
 					label="아이디"
 					placeholder="영문·숫자 조합, 8~20자"
@@ -37,6 +42,7 @@
 				</v-alert>
 
 				<v-btn
+					type="submit"
 					:disabled="!valid || loading"
 					color="primary"
 					class="mt-2"
@@ -65,10 +71,14 @@
 	</v-container>
 </template>
 
-<script setup lang="ts">
+<script setup>
 import { ref, reactive } from 'vue'
 import { useRouter } from 'vue-router'
+import { useAuthStore } from '@/stores/auth'
+import { login } from '@/services/authService'
 
+const auth = useAuthStore()
+const router = useRouter()
 const valid = ref(false)
 const form = ref()
 
@@ -76,14 +86,12 @@ const loading = ref(false)
 const error = ref('')
 
 const credentials = reactive({
-	loginid: '',
+	loginId: '',
 	password: '',
 })
 
 // 비밀번호 보이기/숨기기 토글 상태
 const showPassword = ref(false)
-
-const router = useRouter()
 
 // 유효성 규칙 정규식
 const rules = {
@@ -111,14 +119,11 @@ async function onSubmit() {
 
 	try {
 		// TODO: 실제 로그인 API 호출
-		// const res = await fetch('/api/auth/login', { ... })
-		// if (!res.ok) throw new Error(...)
-		// const data = await res.json()
-		// localStorage.setItem('auth_token', data.token)
-
+		await login(credentials)
 		// 임시로 홈으로 리다이렉트
+		await auth.login(credentials)
 		router.push('/')
-	} catch (e: any) {
+	} catch (e) {
 		error.value = e.message || '로그인 중 오류가 발생했습니다.'
 	} finally {
 		loading.value = false
