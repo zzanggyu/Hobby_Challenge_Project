@@ -29,6 +29,7 @@ public class SecurityConfig {
             // 회원가입·로그인 관련 엔드포인트는 모두 허용
             .requestMatchers("/api/auth/**").permitAll()
             .requestMatchers("/api/categories").permitAll()
+            .requestMatchers("/api/rankings/**").permitAll()
             // 그 외 모든 요청은 JWT 인증을 받은 사용자만 접근 가능
             .anyRequest().authenticated()
             )

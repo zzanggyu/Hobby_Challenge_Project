@@ -4,6 +4,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
@@ -34,6 +35,22 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler{
         int status = Integer.parseInt(ex.getErrorCode().getCode().substring(0,3));
         return ResponseEntity.status(status).body(body); // HTTP 상태와 body에 ErrorResponseDTO(json) 담아 보내기
 	}
+	
+
+    // 로그인 인증 실패 (BadCredentialsException) -> 401 Unauthorized
+    @ExceptionHandler(org.springframework.security.authentication.BadCredentialsException.class)
+    public ResponseEntity<ErrorResponseDTO> handleBadCredentials(
+            org.springframework.security.authentication.BadCredentialsException ex) {
+
+        ErrorResponseDTO body = new ErrorResponseDTO(
+            "4010",                          // 원하는 커스텀 에러 코드
+            "아이디 또는 비밀번호가 틀렸습니다.", // 사용자에게 보여줄 메시지
+            null                             // 상세 정보가 필요하다면 넣어도 되고, null 가능
+        );
+        return ResponseEntity
+                .status(HttpStatus.UNAUTHORIZED)
+                .body(body);
+    }
 	
 	// @Valid 검증이 실패했을 때 자동으로 호출
 	@Override

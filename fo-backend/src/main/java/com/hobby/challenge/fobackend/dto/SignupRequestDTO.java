@@ -50,8 +50,8 @@ public class SignupRequestDTO {
     // 생년월일: YYYY-MM-DD 형식
     @NotBlank(message = "생년월일을 입력하세요.")
     @Pattern(
-      regexp = "^\\d{4}-\\d{2}-\\d{2}$",
-      message = "생년월일은 YYYY-MM-DD 형식이어야 합니다."
+      regexp = "^\\d{4}\\.\\d{2}\\.\\d{2}$",
+      message = "생년월일은 YYYY.MM.DD 형식이어야 합니다."
     )
     private String birthDate;
 }

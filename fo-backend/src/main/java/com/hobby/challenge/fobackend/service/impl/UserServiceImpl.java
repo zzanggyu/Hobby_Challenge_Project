@@ -1,5 +1,8 @@
 package com.hobby.challenge.fobackend.service.impl;
 
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -48,6 +51,10 @@ public class UserServiceImpl implements UserService{
         if (nickname == null || nickname.isBlank()) {
             nickname = sr.getUsername();
         }
+        
+        // 1) DTO의 birthDate(String) → LocalDate로 파싱
+        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy.MM.dd");
+        LocalDate birth = LocalDate.parse(sr.getBirthDate(), fmt);
 		
 		// DTO -> Entity 사용자 엔티티 생성
 		User user = User.builder()
@@ -56,7 +63,7 @@ public class UserServiceImpl implements UserService{
 				.email(sr.getEmail())
 				.username(sr.getUsername())
 				.nickname(nickname) // 닉네임 설정했을 때 
-				.birthDate(java.time.LocalDate.parse(sr.getBirthDate()))   
+				.birthDate(birth)   
 				.build();
 		
 		userMapper.insertUser(user); // DB에 저장
