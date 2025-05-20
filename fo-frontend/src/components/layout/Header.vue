@@ -16,7 +16,11 @@
 		<v-spacer></v-spacer>
 		<!-- 메뉴 버튼튼 -->
 		<!-- <v-btn text @click="goHome">홈</v-btn> -->
-		<v-btn text @click="goChallenges">챌린지</v-btn>
+
+		<!-- 챌린지 생성 페이지로 이동 -->
+		<v-btn text @click="goChallengeCreate">챌린지 생성</v-btn>
+		<!-- 챌린지 목록으로 이동 -->
+		<v-btn text @click="goChallengeList">챌린지 목록</v-btn>
 		<v-btn text @click="goMyPage">마이페이지</v-btn>
 		<!-- <v-btn text @click="goNotifications">알림</v-btn> -->
 		<notification-bell class="mr-2" />
@@ -43,14 +47,22 @@ function goHome() {
 	router.push('/')
 }
 
-function goChallenges() {
+// 챌린지 목록 페이지로 이동
+function goChallengeList() {
 	router.push('/challenges')
 }
 
+// 챌린지 생성 페이지로 이동
+function goChallengeCreate() {
+	router.push('/challenges/new')
+}
+
+// 마이페이지로 이동
 function goMyPage() {
 	router.push('/mypage')
 }
 
+// 로그아웃
 async function onLogout() {
 	try {
 		// 서버 세션/쿠키를 무효화
@@ -64,6 +76,7 @@ async function onLogout() {
 	router.push('/')
 }
 
+// 회원가입 페이지로 이동
 function goToSignup() {
 	router.push('/signup')
 }

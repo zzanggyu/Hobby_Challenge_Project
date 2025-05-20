@@ -47,7 +47,6 @@
 					color="primary"
 					class="mt-2"
 					block
-					@click="onSubmit"
 				>
 					<span v-if="!loading">로그인</span>
 					<v-progress-circular
@@ -119,9 +118,8 @@ async function onSubmit() {
 
 	try {
 		// TODO: 실제 로그인 API 호출
-		await login(credentials)
-		// 임시로 홈으로 리다이렉트
 		await auth.login(credentials)
+		// 임시로 홈으로 리다이렉트
 		router.push('/')
 	} catch (e) {
 		error.value = e.message || '로그인 중 오류가 발생했습니다.'
