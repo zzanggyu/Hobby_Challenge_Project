@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hobby.challenge.fobackend.mapper.ChallengeMapper">
+
+	<!-- 챌린지 생성 -->
+	<insert id="insertChallenge"
+			parameterType="com.hobby.challenge.fobackend.entity.Challenge"
+			useGeneratedKeys="true"
+			keyProperty="challengeId">
+		INSERT INTO CHALLENGE
+			(TITLE,
+			DESCRIPTION,
+			START_DATE,
+			END_DATE,
+			CATEGORY_ID,
+			CREATED_BY)
+		VALUES
+			(#{title},
+			#{description},
+			#{startDate},
+			#{endDate},
+			#{categoryId},
+			#{createdBy})
+	</insert>
+	
+</mapper>

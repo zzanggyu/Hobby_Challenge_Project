@@ -22,11 +22,7 @@ public class CustomUserDetailsService implements UserDetailsService {
 		if (user == null) {
 			throw new UsernameNotFoundException("사용자를 찾을 수 없습니다.: " + loginId); // 401
 		}
-		return org.springframework.security.core.userdetails.User.builder()
-				.username(user.getLoginId()) // principal(인증된 사용자) 아이디
-				.password(user.getPassword()) // credentials 해시화된 비밀번호
-				.roles(user.getRole()) // 권한(role) 설정
-				.build();
+		return new CustomUserDetails(user);
 	}
 
 }

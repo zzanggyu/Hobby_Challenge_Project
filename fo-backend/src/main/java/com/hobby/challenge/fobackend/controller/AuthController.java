@@ -1,5 +1,7 @@
 package com.hobby.challenge.fobackend.controller;
 
+import java.time.LocalDateTime;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -17,14 +19,15 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.hobby.challenge.fobackend.dto.LoginHistoryDTO;
 import com.hobby.challenge.fobackend.dto.LoginRequestDTO;
 import com.hobby.challenge.fobackend.dto.LoginResponseDTO;
 import com.hobby.challenge.fobackend.dto.SignupRequestDTO;
 import com.hobby.challenge.fobackend.dto.UserResponseDTO;
 import com.hobby.challenge.fobackend.entity.User;
-import com.hobby.challenge.fobackend.mapper.UserMapper;
 import com.hobby.challenge.fobackend.security.JwtTokenProvider;
 import com.hobby.challenge.fobackend.service.EmailAuthService;
+import com.hobby.challenge.fobackend.service.LoginHistoryService;
 import com.hobby.challenge.fobackend.service.UserService;
 
 import jakarta.servlet.http.Cookie;
@@ -42,8 +45,8 @@ public class AuthController {
 	private final UserService userService;
 	private final EmailAuthService emailAuthService;
 	private final AuthenticationManager authManager;
+	private final LoginHistoryService loginHistoryService;
 	private final JwtTokenProvider tokenProvider;
-	private final UserMapper userMapper;
 	@Value("${jwt.expiration}")
     private long jwtExpirationMs;
 	
@@ -94,7 +97,16 @@ public class AuthController {
 			    .build();
 		
 		// 추가 사용자 정보 조회
-		User user = userMapper.findByLoginId(req.getLoginId());
+		User user = userService.getUserByLoginId(req.getLoginId());
+		
+	    // 로그인 이력 기록 추가
+	    loginHistoryService.recordLoginHistory(
+	    		LoginHistoryDTO.builder()
+	    	    .userId(user.getUserId())
+	    	    .loginDate(LocalDateTime.now())
+	    	    .build()
+	    );
+		
 		// 응답 LoginResponseDTO(userId,nickname,token)
 		LoginResponseDTO body = new LoginResponseDTO(
 				user.getUserId(),

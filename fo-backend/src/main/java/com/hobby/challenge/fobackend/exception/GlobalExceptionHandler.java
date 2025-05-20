@@ -27,7 +27,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler{
 			HttpServletRequest req){ // 요청 URL, 헤더, 파라미터 등 원본 요청 정보 얻을 때 사용
 		// ErrorResponseDTO 생성
         ErrorResponseDTO body = new ErrorResponseDTO(
-            ex.getErrorCode().getCode(), // 400, 4001, 4002 커스텀 코드
+            ex.getErrorCode().getCode(), // 400011 HTTP + 도메인 + 번호
             ex.getErrorCode().getMessage(), // ErrorCode에 정의된 enum 메세지
             ex.getDetail() // 서비스에서 던질 때 전달한 상세 정보
         );
@@ -43,7 +43,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler{
             org.springframework.security.authentication.BadCredentialsException ex) {
 
         ErrorResponseDTO body = new ErrorResponseDTO(
-            "4010",                          // 원하는 커스텀 에러 코드
+            "401011",                          // 원하는 커스텀 에러 코드 (401 인증필요 + 01 User + 첫 번째)
             "아이디 또는 비밀번호가 틀렸습니다.", // 사용자에게 보여줄 메시지
             null                             // 상세 정보가 필요하다면 넣어도 되고, null 가능
         );
@@ -70,7 +70,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler{
 	      ));
 
 	    ErrorResponseDTO body = new ErrorResponseDTO(
-	      "4000", // 검증 실패 전용 코드
+	      "400001", // 검증 실패 전용 코드
 	      "입력값 검증에 실패했습니다.", // 사용자에게 보여줄 메세지
 	      errors.toString() // detail: "{field1=메세지1, field2=메세지2} 형식
 	    );
@@ -82,7 +82,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler{
     public ResponseEntity<ErrorResponseDTO> handleAll(Exception ex) {
     	// 에러 응답 DTO 생성
         ErrorResponseDTO body = new ErrorResponseDTO(
-            "5000", // 커스텀 에러 코드: 서버 내부 오류
+            "500001", // 커스텀 에러 코드: 서버 내부 오류
             "서버 오류가 발생했습니다.", // 사용자에게 보여줄 기본 메세지
             ex.getMessage() //실제 예외 메세지를 detail에 담아 디버깅에 활용
         );

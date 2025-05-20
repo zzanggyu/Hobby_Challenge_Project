@@ -1,16 +1,17 @@
 package com.hobby.challenge.fobackend.dto;
 
+import java.time.LocalDateTime;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 
-// 로그인할 때 응답
 @Data
 @AllArgsConstructor
 @Builder
-public class LoginResponseDTO {
+public class LoginHistoryDTO {
+    private Integer loginHistoryId;
     private Integer userId;
-    private String nickname;
-    // 나중에 토큰 추가
-    private String token;
+    private LocalDateTime  loginDate;
+
 }

@@ -1,13 +1,7 @@
 package com.hobby.challenge.fobackend.service;
 
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Service;
-
 import com.hobby.challenge.fobackend.dto.SignupRequestDTO;
 import com.hobby.challenge.fobackend.entity.User;
-import com.hobby.challenge.fobackend.mapper.UserMapper;
-
-import lombok.RequiredArgsConstructor;
  
 public interface UserService {
 
@@ -15,5 +9,5 @@ public interface UserService {
     User getUserByLoginId(String loginId); // 로그인 아이디로 사용자 조회
     User register(SignupRequestDTO sr); // 회원가입
     User authenticate(String loginId, String rawPassword); // 로그인 인증 
-
+    
 }

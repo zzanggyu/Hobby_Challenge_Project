@@ -22,7 +22,7 @@ public class User {
     private String imageUrl;
     private LocalDate birthDate;
     private String gender; // ENUM은 String으로 받아도 됨
-    private String role; // member, owner, admin
+    private String role; // member, admin
     private Integer points; // 경험치
     private Short level; 
     private Timestamp createdDate;

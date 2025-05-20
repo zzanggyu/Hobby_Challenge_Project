@@ -3,9 +3,15 @@ package com.hobby.challenge.fobackend.dto;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data // @Getter + @Setter / @RequireArgsConstructor / @ToString / @EqualsAndHashCode의 역할을 다 생성
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
 public class LoginRequestDTO {
     @NotBlank(message = "아이디를 입력하세요.")
     @Size(min = 8, max = 20, message = "아이디는 8~20자여야 합니다.")
