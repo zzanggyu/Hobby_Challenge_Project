@@ -10,8 +10,14 @@ const api = axios.create({
 api.interceptors.response.use(
 	(res) => res,
 	(err) => {
-		if (err.response?.status === 401) {
-			router.push('/login')
+		const status = err.response?.status
+		if (status === 401 || status === 403) {
+			// 사용자에게 알림 메시지
+			alert('로그인해야 이용할 수 있습니다.')
+
+			// 로그인 페이지로 이동, 원래 가려던 경로를 쿼리로 남기기
+			const redirect = router.currentRoute.value.fullPath
+			router.push({ name: 'login', query: { redirect } })
 		}
 		return Promise.reject(err)
 	}

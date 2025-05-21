@@ -27,13 +27,13 @@ const routes = [
 		path: '/challenges',
 		name: 'challenge-list',
 		component: ChallengeListView,
-		// meta: { requiresAuth: true }, // 로그인된 사용자만 접근 가능 로그인 안돼있으면 로그인 페이지로 이동
+		meta: { requiresAuth: true }, // 로그인된 사용자만 접근 가능 로그인 안돼있으면 로그인 페이지로 이동
 	},
 	{
 		path: '/challenges/new',
 		name: 'challenge-create',
 		component: CreateChallengeView,
-		// meta: { requiresAuth: true },
+		meta: { requiresAuth: true },
 	},
 	// {
 	// 	path: '/mypage',
@@ -54,15 +54,18 @@ const router = createRouter({
 router.beforeEach((to, from, next) => {
 	const auth = useAuthStore()
 
-	// 1) 보호된 페이지에 접근 시도
-	if (to.meta.requiresAuth && !auth.isAuthenticated) {
-		// 로그인 페이지로 리다이렉트
-		return next({ name: 'login', query: { redirect: to.fullPath } })
-	}
-
-	// 2) 이미 로그인된 상태로 로그인 페이지 접근 시
+	// 1) 이미 로그인된 상태로 로그인 페이지 접근 시 → 알림 없이 홈으로
 	if (to.name === 'login' && auth.isAuthenticated) {
 		return next({ name: 'home' })
+	}
+
+	// 2) 보호된 페이지에 접근 시도 (로그인 안 돼 있으면)
+	if (to.meta.requiresAuth && !auth.isAuthenticated) {
+		alert('로그인해야 이용할 수 있습니다.')
+		return next({
+			name: 'login',
+			query: { redirect: to.fullPath },
+		})
 	}
 
 	next()
