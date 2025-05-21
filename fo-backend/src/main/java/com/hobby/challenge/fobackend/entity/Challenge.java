@@ -19,6 +19,10 @@ public class Challenge {
     private LocalDate startDate;
     private LocalDate endDate;
     private Integer categoryId;
-    private Integer createdBy;
-    private LocalDateTime createdAt;
+    private Integer createdBy; // 외래키 userId 참조한다.
+    private LocalDateTime createdDate;
+    private LocalDateTime modifiedDate;
+    
+    // 조인 결과
+    private User creator; 
 }

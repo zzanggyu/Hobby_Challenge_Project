@@ -3,6 +3,41 @@
   PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
          "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.hobby.challenge.fobackend.mapper.ChallengeMapper">
+	<!-- Challenge User 조인용 resultMap-->
+ 	<resultMap id="ChallengeWithCreator" type="com.hobby.challenge.fobackend.entity.Challenge">
+	    <id column="CHALLENGE_ID" property="challengeId"/>
+	    <result column="TITLE" property="title"/>
+	    <result column="DESCRIPTION" property="description"/>
+	    <result column="START_DATE" property="startDate"/>
+	    <result column="END_DATE" property="endDate"/>
+	    <result column="CATEGORY_ID" property="categoryId"/>
+	    <result column="CREATED_BY" property="createdBy"/>
+	    <result column="CREATED_DATE" property="createdDate"/>
+	    <result column="MODIFIED_DATE" property="modifiedDate"/>
+	    
+	    <!-- CREATED_BY로 USER 테이블(USER_ID)와 조인 -->
+		<association property="creator" javaType="com.hobby.challenge.fobackend.entity.User">
+			<id column="USER_ID" property="userId"/>
+      		<result column="NICKNAME" property="nickname"/>
+    	</association>
+ 	</resultMap>
+
+	<!-- 전체 챌린지 목록 조회 -->
+	<select id="findAll" resultMap="ChallengeWithCreator">
+		SELECT c.CHALLENGE_ID,
+			C.TITLE,
+			C.DESCRIPTION,
+			C.CATEGORY_ID,
+			C.START_DATE,
+			C.END_DATE,
+			U.USER_ID AS USER_ID,
+			U.NICKNAME AS NICKNAME, <!-- 생성자 닉네임 -->
+			C.CREATED_DATE
+		FROM CHALLENGE C
+		JOIN USER U 
+			ON C.CREATED_BY = U.USER_ID
+		ORDER BY CREATED_DATE DESC
+	</select>
 
 	<!-- 챌린지 생성 -->
 	<insert id="insertChallenge"
@@ -16,8 +51,7 @@
 			END_DATE,
 			CATEGORY_ID,
 			CREATED_BY)
-		VALUES
-			(#{title},
+		VALUES (#{title},
 			#{description},
 			#{startDate},
 			#{endDate},

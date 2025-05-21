@@ -11,12 +11,13 @@ import lombok.Data;
 @AllArgsConstructor
 @Builder
 public class ChallengeResponseDTO {
-	private Integer challengeId;
+	private Integer challengeId; 
     private String title;
     private String description;
+    private Integer categoryId;
+    private String creatorNickname;
     private LocalDate startDate;
     private LocalDate endDate;
-    private Integer categoryId;
-    private Integer createdBy;
-    private LocalDateTime createdAt;
+    private LocalDateTime createdDate;
+
 }

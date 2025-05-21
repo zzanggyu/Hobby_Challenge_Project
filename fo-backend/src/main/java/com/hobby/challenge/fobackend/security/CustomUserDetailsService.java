@@ -6,7 +6,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 import com.hobby.challenge.fobackend.entity.User;
-import com.hobby.challenge.fobackend.mapper.UserMapper;
+import com.hobby.challenge.fobackend.mapper.AuthMapper;
 
 import lombok.RequiredArgsConstructor;
 
@@ -14,7 +14,7 @@ import lombok.RequiredArgsConstructor;
 @Service
 @RequiredArgsConstructor // final 필드( ex:userMapper)를 인자로 받는 생성자 롬복이 자동 생성
 public class CustomUserDetailsService implements UserDetailsService {
-	private final UserMapper userMapper;
+	private final AuthMapper userMapper;
 
 	@Override
 	public UserDetails loadUserByUsername(String loginId) throws UsernameNotFoundException {

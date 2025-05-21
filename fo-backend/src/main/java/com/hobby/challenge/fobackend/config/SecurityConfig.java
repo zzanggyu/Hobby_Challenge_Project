@@ -1,14 +1,16 @@
 package com.hobby.challenge.fobackend.config;
 
+import static org.springframework.security.config.Customizer.withDefaults;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import static org.springframework.security.config.Customizer.withDefaults;
 
 import com.hobby.challenge.fobackend.security.JwtAuthenticationFilter;
 
@@ -35,6 +37,10 @@ public class SecurityConfig {
             .requestMatchers("/api/categories").permitAll()
             .requestMatchers("/api/rankings/**").permitAll()
             
+            // 로그인 되어야 하는 
+            .requestMatchers(HttpMethod.GET, "/api/challenges").authenticated()
+            .requestMatchers(HttpMethod.POST, "/api/challenges/**").authenticated()
+            // 나머지 엔드포인트도 필요에 따라
             // 그 외 모든 요청은 JWT 인증을 받은 사용자만 접근 가능
             .anyRequest().authenticated()
             )

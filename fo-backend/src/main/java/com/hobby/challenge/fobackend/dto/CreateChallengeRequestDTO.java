@@ -11,9 +11,11 @@ import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
 @AllArgsConstructor
+@NoArgsConstructor
 @Builder
 public class CreateChallengeRequestDTO {
     @NotBlank(message = "제목은 반드시 입력해야 합니다.")

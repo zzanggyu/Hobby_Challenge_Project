@@ -1,7 +1,7 @@
 package com.hobby.challenge.fobackend.entity;
 
-import java.sql.Timestamp;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -25,6 +25,6 @@ public class User {
     private String role; // member, admin
     private Integer points; // 경험치
     private Short level; 
-    private Timestamp createdDate;
-    private Timestamp modifiedDate;
+    private LocalDateTime  createdDate;
+    private LocalDateTime  modifiedDate;
 }

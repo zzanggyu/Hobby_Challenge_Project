@@ -6,7 +6,7 @@ import org.apache.ibatis.annotations.Param;
 import com.hobby.challenge.fobackend.entity.User;
 
 @Mapper
-public interface UserMapper {
+public interface AuthMapper {
 	// 로그인 아이디로 조회 로그인 시 정보 가져오기
 	// SELECT * FROM USER WHERE LOGIN_ID = #{loginId}
 	User findByLoginId(@Param("loginId") String loginId);

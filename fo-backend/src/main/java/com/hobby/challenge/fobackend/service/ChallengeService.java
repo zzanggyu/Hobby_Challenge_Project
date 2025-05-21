@@ -1,9 +1,17 @@
 package com.hobby.challenge.fobackend.service;
 
+import java.util.List;
+
+import com.hobby.challenge.fobackend.dto.ChallengeResponseDTO;
 import com.hobby.challenge.fobackend.dto.CreateChallengeRequestDTO;
-import com.hobby.challenge.fobackend.entity.Challenge;
 
 public interface ChallengeService {
 	
-	Challenge createChallenge(CreateChallengeRequestDTO dto, Integer createdBy);
+	// 전체 챌린지 목록 조회 
+	List<ChallengeResponseDTO> getAllChallenges();
+	
+	// 챌린지 생성
+	ChallengeResponseDTO createChallenge(CreateChallengeRequestDTO dto, Integer userId);
+	
+
 }

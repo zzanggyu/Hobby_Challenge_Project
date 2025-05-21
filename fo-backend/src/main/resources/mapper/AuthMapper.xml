@@ -2,7 +2,7 @@
 <!DOCTYPE mapper
   PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
          "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="com.hobby.challenge.fobackend.mapper.UserMapper">
+<mapper namespace="com.hobby.challenge.fobackend.mapper.AuthMapper">
 	
 	<!--  로그인 시 사용자 조회 비밀번호 -->
 	<select id="findByLoginId" resultType="com.hobby.challenge.fobackend.entity.User">
@@ -37,23 +37,6 @@
 		FROM USER <!-- 사용자 테이블 -->
 		WHERE EMAIL = #{email}
 	</select>
-	
-	<!-- 내 정보 보기(마이페이지) -->
-	<select id="findById" resultType="com.hobby.challenge.fobackend.entity.User">
-		SELECT USER_ID
-			, LOGIN_ID
-			, USERNAME
-			, PASSWORD
-			, EMAIL
-			, NICKNAME
-			, BIRTH_DATE
-			, ROLE
-			, POINTS
-			, LEVEL
-		    , CREATED_DATE
-		  FROM USER
-		  WHERE USER_ID = #{userId}
-		</select>
 
 	<!-- 회원 등록 -->
 	<insert id="insertUser" 

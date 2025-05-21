@@ -12,6 +12,7 @@ public enum ErrorCode {
     DUPLICATE_LOGINID    ("400011", "이미 존재하는 아이디입니다."),
     DUPLICATE_EMAIL      ("400012", "이미 가입된 이메일입니다."), 
     USER_NOT_FOUND       ("404011", "해당 사용자를 찾을 수 없습니다."),
+    INVALID_CREDENTIALS  ("400013", "비밀번호가 틀렸습니다."),
     // 이 곳에 새 필드 추가	
     
     // 02: Challenge 도메인
