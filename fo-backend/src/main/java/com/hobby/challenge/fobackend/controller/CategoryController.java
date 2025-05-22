@@ -26,7 +26,7 @@ public class CategoryController {
 
     // 단일 카테고리 조회 API 
     @GetMapping("/{categoryId}")
-    public CategoryResponseDTO getCategoryById(@PathVariable Integer categoryId) {
+    public CategoryResponseDTO getCategoryById(@PathVariable("categoryId") Integer categoryId) {
         return categoryService.getCategoryById(categoryId);
     }
 }

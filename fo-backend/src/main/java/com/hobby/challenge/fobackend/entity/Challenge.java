@@ -1,6 +1,5 @@
 package com.hobby.challenge.fobackend.entity;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 import lombok.AllArgsConstructor;
@@ -16,8 +15,8 @@ public class Challenge {
     private Integer challengeId;
     private String title;
     private String description;
-    private LocalDate startDate;
-    private LocalDate endDate;
+    private LocalDateTime startDate;
+    private LocalDateTime endDate;
     private Integer categoryId;
     private Integer createdBy; // 외래키 userId 참조한다.
     private LocalDateTime createdDate;

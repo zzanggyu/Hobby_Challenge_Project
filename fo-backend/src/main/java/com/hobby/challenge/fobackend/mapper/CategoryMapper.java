@@ -14,6 +14,6 @@ public interface CategoryMapper {
 	List<Category> findAll();
 	
 	// 단일 카테고리 챌린지 조회시 카테고리별로 검색할 때 사용
-	Category findByCategory(@Param("categoryId") Integer CategoryId);
+	Category findByCategory(@Param("categoryId") Integer categoryId);
  
 }

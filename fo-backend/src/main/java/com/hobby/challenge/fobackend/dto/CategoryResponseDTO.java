@@ -8,7 +8,7 @@ import lombok.Data;
 @AllArgsConstructor
 @Builder
 public class CategoryResponseDTO {
-	private Integer id; // 카테고리 아이디
+	private Integer categoryId; // 카테고리 아이디
 	private String name; // 카테고리 취미명
 	
 }

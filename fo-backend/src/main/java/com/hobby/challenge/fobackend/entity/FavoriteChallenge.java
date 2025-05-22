@@ -14,5 +14,5 @@ import lombok.NoArgsConstructor;
 public class FavoriteChallenge {
 	private Integer userId;
 	private Integer challengeId;
-	private LocalDateTime createDate;
+	private LocalDateTime createdDate;
 }
