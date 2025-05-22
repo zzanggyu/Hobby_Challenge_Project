@@ -9,13 +9,13 @@ export const getChallenges = () =>
 export const joinChallenge = (challengeId) =>
 	api.post(`/challenges/${challengeId}/join`).then((res) => res.data)
 
-// 챌린지 하트 누르면 관심 챌린지에 저장장
-export async function toggleFavoriteChallenge(id) {
-	await api.post(`/challenges/${id}/favorite`)
+// 챌린지 하트 누르면 관심 챌린지에 저장 또 누르면 제거
+export async function toggleFavoriteChallenge(challengeId) {
+	await api.post(`/challenges/favorite/${challengeId}`)
 }
 
 // 내가 저장한 관심 챌린지 리스트 조회
 export async function getFavoriteChallenges() {
-	const { data } = await api.get('/challenges/favorites')
+	const { data } = await api.get('/challenges/favorite')
 	return data
 }

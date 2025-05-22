@@ -12,13 +12,24 @@
 			</v-col>
 			<v-col cols="12" md="4">
 				<v-select
-					v-model="selectedCategory"
+					v-model.number="selectedCategory"
 					:items="categories"
 					item-title="name"
-					item-value="id"
+					item-value="categoryId"
 					label="카테고리 필터"
 					clearable
 				/>
+			</v-col>
+			<v-spacer />
+			<!-- 내 관심 챌린지 버튼 -->
+			<v-col cols="auto" class="d-flex align-center">
+				<v-btn
+					size="large"
+					color="secondary"
+					@click="goToFavoriteChallenge"
+				>
+					내 관심 챌린지
+				</v-btn>
 			</v-col>
 		</v-row>
 
@@ -37,7 +48,7 @@
 					height="310"
 					width="100%"
 					rounded="xl"
-					tile="false"
+					:tile="false"
 					variant="outlined"
 					class="d-flex flex-column"
 					outlined
@@ -117,6 +128,7 @@ const selectedCategory = ref(null)
 async function fetchChallenges() {
 	try {
 		const data = await getChallenges()
+		// console.log('raw challenges:', data)
 		challenges.value = data.map((c) => ({
 			...c,
 			isFavorite: c.isFavorite ?? false,
@@ -172,7 +184,9 @@ const filteredChallenges = computed(() => {
 
 // 카테고리 ID → 이름 매핑
 function categoryName(id) {
-	const cat = categories.value.find((x) => x.id === id)
+	// console.log('categoryName got id:', id)
+	// console.log('categories list:', categories.value)
+	const cat = categories.value.find((x) => x.categoryId === id)
 	return cat ? cat.name : '알 수 없음'
 }
 
@@ -196,6 +210,10 @@ function formatDate(date) {
 onMounted(async () => {
 	await Promise.all([fetchCategories(), fetchChallenges()])
 })
+
+function goToFavoriteChallenge() {
+	router.push('/challenges/favorite')
+}
 </script>
 
 <style scoped></style>

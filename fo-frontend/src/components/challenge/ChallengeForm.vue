@@ -29,7 +29,7 @@
 							:items="categories"
 							:rules="rules.categoryId"
 							item-title="name"
-							item-value="id"
+							item-value="categoryId"
 							label="카테고리"
 							outlined
 							dense

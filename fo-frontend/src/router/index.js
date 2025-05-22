@@ -9,6 +9,8 @@ import FindPasswordView from '@/views/FindPasswordView.vue'
 import SignupView from '@/views/SignupView.vue'
 import CreateChallengeView from '@/views/CreateChallengeView.vue'
 import ChallengeListView from '@/views/ChallengeListView.vue'
+import FavoriteChallengeView from '@/views/FavoriteChallengeView.vue'
+
 // import ChallengesView from '@/views/ChallengesView.vue'
 // import MyPageView    from '@/views/MyPageView.vue'
 
@@ -33,6 +35,12 @@ const routes = [
 		path: '/challenges/new',
 		name: 'challenge-create',
 		component: CreateChallengeView,
+		meta: { requiresAuth: true },
+	},
+	{
+		path: '/challenges/favorite',
+		name: 'favorite-challenge',
+		component: FavoriteChallengeView,
 		meta: { requiresAuth: true },
 	},
 	// {
