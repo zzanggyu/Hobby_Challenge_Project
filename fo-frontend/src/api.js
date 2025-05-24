@@ -1,5 +1,6 @@
 import axios from 'axios'
 import router from './router'
+import { logout } from '@/services/authService'
 
 const api = axios.create({
 	baseURL: 'http://localhost:8080/api', // 백엔드 기본 URL
@@ -9,15 +10,26 @@ const api = axios.create({
 // 응답 시: 401 발생하면 로그인 페이지로
 api.interceptors.response.use(
 	(res) => res,
-	(err) => {
-		const status = err.response?.status
-		if (status === 401 || status === 403) {
-			// 사용자에게 알림 메시지
-			alert('로그인해야 이용할 수 있습니다.')
-
-			// 로그인 페이지로 이동, 원래 가려던 경로를 쿼리로 남기기
-			const redirect = router.currentRoute.value.fullPath
-			router.push({ name: 'login', query: { redirect } })
+	async (err) => {
+		const { response, config } = err
+		// 401 Unauthorized일 때, 다시 시도 플래그가 없으면
+		if (
+			(response?.status === 401 || response?.status === 403) &&
+			!config._retry
+		) {
+			config._retry = true
+			try {
+				// 1) 리프레시 토큰으로 새 액세스 토큰 발급
+				await api.post('/auth/refresh')
+				// 2) 원래 요청을 재시도
+				return api(config)
+			} catch (refreshErr) {
+				// 리프레시도 실패하면 로그아웃 처리
+				logout()
+				alert('세션이 만료되었습니다. 다시 로그인해주세요.')
+				const redirect = router.currentRoute.value.fullPath
+				router.push({ name: 'login', query: { redirect } })
+			}
 		}
 		return Promise.reject(err)
 	}

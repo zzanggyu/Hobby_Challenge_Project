@@ -16,6 +16,12 @@
 				</v-btn>
 			</v-col>
 		</v-row>
+
+		<!-- 로딩 스피너 -->
+		<v-row v-if="isLoadingFavorites" justify="center">
+			<v-progress-circular indeterminate />
+		</v-row>
+
 		<v-row align="stretch">
 			<template v-for="fav in favorites" :key="fav.challengeId">
 				<v-col v-if="fav.challenge" cols="12" md="6" lg="4" class="d-flex">
@@ -64,10 +70,14 @@
 							<v-spacer />
 							<v-btn
 								small
-								color="primary"
+								:color="fav.requested ? 'black' : 'secondary'"
+								:loading="
+									isJoining && targetId === fav.challenge.challengeId
+								"
+								:disabled="fav.requested || isJoining"
 								@click="onJoin(fav.challenge.challengeId)"
 							>
-								참여하기
+								{{ fav.requested ? '요청중' : '참여하기' }}
 							</v-btn>
 						</v-card-actions>
 					</v-card>
@@ -84,56 +94,113 @@ import axios from 'axios'
 import {
 	getFavoriteChallenges,
 	toggleFavoriteChallenge,
+	joinChallenge,
+	getMyParticipations,
 } from '@/services/challengeService'
 import { getCategories } from '@/services/categoryService'
+import { useAuthStore } from '@/stores/auth'
+import { handleApiError } from '@/utils/apiError'
 
+const authStore = useAuthStore()
 const router = useRouter()
+
 const favorites = ref([])
 const categories = ref([])
+
+// 내 참여 요청/승인된 챌린지 ID 저장용 Set 선언
+const myParts = ref(new Set())
+
+const isLoadingFavorites = ref(false)
+const isToggling = ref(false)
+const isJoining = ref(false)
+const targetId = ref(null)
+
+function categoryName(id) {
+	const cat = categories.value.find((x) => x.categoryId === id)
+	return cat ? cat.name : '알 수 없음'
+}
+
+// 날짜 포맷
+function formatDate(d) {
+	return d ? new Date(d).toLocaleDateString() : '-'
+}
 
 // 챌린지 목록으로 돌아가기기
 function goToList() {
 	router.push({ name: 'challenge-list' })
 }
 
-// 내 관심 챌린지 목록 가져오기
-async function fetchFavorites() {
+// 내 참여내역 불러와 myParts Set을 채우기
+async function fetchMyParticipations() {
+	const userId = authStore.user?.userId
+	if (!userId) return
 	try {
-		const data = await getFavoriteChallenges()
-		favorites.value = data
-	} catch (e) {
-		console.error('관심챌린지 로드 실패', e)
-		if (
-			axios.isAxiosError(e) &&
-			(e.response.status === 401 || e.response.status === 403)
-		) {
-			alert('로그인 후 이용 가능합니다.')
-			router.push({ name: 'login' })
-		}
+		const res = await getMyParticipations(userId)
+		console.log('fetchMyParticipations response:', res)
+		const list = Array.isArray(res)
+			? res
+			: res.items || res.participations || []
+		myParts.value = new Set(
+			list.filter((p) => p.status !== 'REJECTED').map((p) => p.challengeId)
+		)
+	} catch (err) {
+		handleApiError(err)
 	}
 }
 
-// 즐겨찾기 토글(취소)
+// 내 관심 챌린지 목록 가져오기
+async function fetchFavorites() {
+	isLoadingFavorites.value = true
+	try {
+		const data = await getFavoriteChallenges()
+		favorites.value = data.map((item) => ({
+			...item,
+			requested: myParts.value.has(item.challenge.challengeId),
+		}))
+	} catch (err) {
+		handleApiError(err)
+	} finally {
+		isLoadingFavorites.value = false
+	}
+}
+
+// 관심 챌린지 토글(취소)
 async function onToggleFavorite(challengeId) {
+	isToggling.value = true
 	try {
 		await toggleFavoriteChallenge(challengeId)
 		favorites.value = favorites.value.filter(
 			(f) => f.challenge.challengeId !== challengeId
 		)
-	} catch (e) {
-		console.error('관심챌린지 취소 실패', e)
-		alert('취소 중 오류가 발생했습니다.')
+	} catch (err) {
+		handleApiError(err)
+	} finally {
+		isToggling.value = false
 	}
 }
 
 // 참여하기 버튼
 async function onJoin(challengeId) {
+	const userId = authStore.user?.userId
+	if (!userId) {
+		alert('로그인 후 참여 가능합니다.')
+		return router.push({ name: 'login' })
+	}
+
+	isJoining.value = true
+	targetId.value = challengeId
 	try {
-		await axios.post(`/api/challenges/${challengeId}/join`)
-		alert('참여 요청 완료!')
-	} catch (e) {
-		console.error('참여 요청 실패', e)
-		alert('참여 중 오류 발생')
+		await joinChallenge(userId, challengeId)
+		alert('참여 요청이 완료되었습니다!')
+		const fav = favorites.value.find(
+			(x) => x.challenge.challengeId === challengeId
+		)
+		if (fav) fav.requested = true
+	} catch (err) {
+		handleApiError(err)
+	} finally {
+		isJoining.value = false
+		targetId.value = null
 	}
 }
 
@@ -146,18 +213,10 @@ async function loadCategories() {
 	}
 }
 
-function categoryName(id) {
-	const cat = categories.value.find((x) => x.categoryId === id)
-	return cat ? cat.name : '알 수 없음'
-}
-
-// 날짜 포맷
-function formatDate(d) {
-	return d ? new Date(d).toLocaleDateString() : '-'
-}
-
 // 마운트 시 초기 로드
 onMounted(async () => {
+	await authStore.fetchUser()
+	await fetchMyParticipations() // 수정: 먼저 내 참여내역 로드
 	await Promise.all([fetchFavorites(), loadCategories()])
 })
 </script>

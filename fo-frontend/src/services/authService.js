@@ -18,7 +18,7 @@ export function logout() {
 
 // 내 정보 조회
 export function me() {
-	return api.get('/auth/me')
+	return api.get('/auth/me').then((res) => res.data)
 }
 
 /* 회원가입용 이메일 인증 */

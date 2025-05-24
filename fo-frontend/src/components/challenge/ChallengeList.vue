@@ -95,8 +95,14 @@
 						>
 						<v-spacer />
 						<!-- 참여하기 버튼 -->
-						<v-btn small color="primary" @click="onJoin(c.challengeId)">
-							참여하기
+						<v-btn
+							small
+							:color="c.requested ? 'black' : 'secondary'"
+							:loading="isJoining && targetId === c.challengeId"
+							:disabled="c.requested || isJoining"
+							@click="onJoin(c.challengeId)"
+						>
+							{{ c.requested ? '요청중' : '참여하기' }}
 						</v-btn>
 					</v-card-actions>
 				</v-card>
@@ -120,12 +126,20 @@ import {
 	getChallenges,
 	joinChallenge,
 	toggleFavoriteChallenge,
+	getMyParticipations,
 } from '@/services/challengeService'
 import { getCategories } from '@/services/categoryService'
 import { useRouter } from 'vue-router'
 import axios from 'axios'
+import { useAuthStore } from '@/stores/auth'
+import { handleApiError } from '@/utils/apiError'
+
+const authStore = useAuthStore()
 
 const router = useRouter()
+
+const isJoining = ref(false)
+const targetId = ref(null)
 
 // 페이징 상태
 const currentPage = ref(1)
@@ -140,8 +154,43 @@ const categories = ref([]) // 카테고리 목록
 const search = ref('')
 const selectedCategory = ref(null)
 
-// 페이징 API 호출
+// 내 참여 요청/승인된 챌린지 ID 저장용 Set 선언
+const myParts = ref(new Set())
+
+// 날짜 포맷터
+function formatDate(date) {
+	return date ? new Date(date).toLocaleDateString() : '-'
+}
+
+// 카테고리 ID → 이름 매핑
+function categoryName(id) {
+	// console.log('categoryName got id:', id)
+	// console.log('categories list:', categories.value)
+	const cat = categories.value.find((x) => x.categoryId === id)
+	return cat ? cat.name : '알 수 없음'
+}
+
+// 내 참여내역 불러와 myParts Set을 채우기
+async function fetchMyParticipations() {
+	const userId = authStore.user?.userId
+	if (!userId) return
+	try {
+		const res = await getMyParticipations(userId)
+		const list = Array.isArray(res)
+			? res
+			: res.items || res.participations || []
+		myParts.value = new Set(
+			list.filter((p) => p.status !== 'REJECTED').map((p) => p.challengeId)
+		)
+	} catch (err) {
+		handleApiError(err)
+	}
+}
+
+// 페이징 챌린지 목록 API 호출
 async function fetchChallenges() {
+	// MyParts 최신화: 서버 참여내역 동기화
+	await fetchMyParticipations()
 	try {
 		// 백엔드에서 { total, items } 형태로 내려줌
 		const { totalCount: totalFromAPi, items } = await getChallenges(
@@ -155,6 +204,7 @@ async function fetchChallenges() {
 			//관심 챌린지 여부 (빈하트/꽉하트)
 			...c,
 			isFavorite: c.isFavorite ?? false,
+			requested: myParts.value.has(c.challengeId),
 		}))
 	} catch (err) {
 		if (axios.isAxiosError(err) && [401, 403].includes(err.response.status)) {
@@ -164,38 +214,13 @@ async function fetchChallenges() {
 				query: { redirect: router.currentRoute.value.fullPath },
 			})
 		} else {
-			console.error(err)
+			handleApiError(err)
 		}
 	}
 }
 
 // 페이지가 바뀌면 다시 불러오기
 watch(currentPage, fetchChallenges)
-
-// API 호출
-// async function fetchChallenges() {
-// 	try {
-// 		const data = await getChallenges()
-// 		// console.log('raw challenges:', data)
-// 		challenges.value = data.map((c) => ({
-// 			...c,
-// 			isFavorite: c.isFavorite ?? false,
-// 		}))
-// 	} catch (err) {
-// 		if (
-// 			axios.isAxiosError(err) &&
-// 			(err.response.status === 401 || err.response.status === 403)
-// 		) {
-// 			alert('로그인해야 이용할 수 있습니다.')
-// 			router.push({
-// 				name: 'login',
-// 				query: { redirect: router.currentRoute.value.fullPath },
-// 			})
-// 		} else {
-// 			console.error(err)
-// 		}
-// 	}
-// }
 
 // 카테고리 가져오기
 async function fetchCategories() {
@@ -218,9 +243,46 @@ async function onToggleFavorite(challenge) {
 		challenge.isFavorite = !challenge.isFavorite
 	} catch (err) {
 		console.error(err)
-		alert('관심챌린지 등록 중 오류가 발생했습니다.')
+		handleApiError(err)
 	}
 }
+
+// 참여 버튼
+async function onJoin(challengeId) {
+	const userId = authStore.user?.userId
+	if (!userId) {
+		alert('로그인 후 참여 가능합니다.')
+		return router.push({ name: 'login' })
+	}
+
+	isJoining.value = true
+	targetId.value = challengeId
+	try {
+		await joinChallenge(userId, challengeId)
+		// 바로 서버 기준 참여내역을 다시 불러와 myParts를 갱신
+		await fetchMyParticipations()
+		// myParts가 갱신됐으니 challenges 리스트도 다시 매핑
+		const c = challenges.value.find((x) => x.challengeId === challengeId)
+		if (c) {
+			c.requested = true
+			myParts.value.add(challengeId) // 새로 참여 요청한 챌린지 ID를 Set에도 추가
+		} // 로컬 상태 업데이트
+
+		alert('참여 요청이 완료되었습니다!')
+	} catch (err) {
+		handleApiError(err)
+	} finally {
+		isJoining.value = false
+		targetId.value = null
+	}
+}
+
+// 컴포넌트 마운트 시 초기 로드
+onMounted(async () => {
+	await authStore.fetchUser()
+	await fetchMyParticipations()
+	await Promise.all([fetchCategories(), fetchChallenges()])
+})
 
 // 검색 + 카테고리 필터 적용
 const filteredChallenges = computed(() => {
@@ -233,38 +295,6 @@ const filteredChallenges = computed(() => {
 			!selectedCategory.value || c.categoryId === selectedCategory.value
 		return matchesText && matchesCategory
 	})
-})
-
-// 카테고리 ID → 이름 매핑
-function categoryName(id) {
-	// console.log('categoryName got id:', id)
-	// console.log('categories list:', categories.value)
-	const cat = categories.value.find((x) => x.categoryId === id)
-	return cat ? cat.name : '알 수 없음'
-}
-
-// 참여하기 버튼 클릭 핸들러
-async function onJoin(challengeId) {
-	try {
-		await joinChallenge(challengeId)
-		alert('챌린지 참여 요청이 완료되었습니다!')
-	} catch (err) {
-		console.error(err)
-		alert('참여 요청 중 오류가 발생했습니다.')
-	}
-}
-
-// 날짜 포맷터
-function formatDate(date) {
-	return date ? new Date(date).toLocaleDateString() : '-'
-}
-
-// 컴포넌트 마운트 시 초기 로드
-onMounted(async () => {
-	await Promise.all([
-		getCategories().then((data) => (categories.value = data)),
-		fetchChallenges(),
-	])
 })
 
 function goToFavoriteChallenge() {
