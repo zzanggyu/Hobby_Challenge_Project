@@ -8,10 +8,12 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.hobby.challenge.fobackend.dto.ChallengeResponseDTO;
 import com.hobby.challenge.fobackend.dto.CreateChallengeRequestDTO;
+import com.hobby.challenge.fobackend.dto.PageResponseDTO;
 import com.hobby.challenge.fobackend.service.ChallengeService;
 
 import jakarta.validation.Valid;
@@ -24,12 +26,26 @@ public class ChallengeController {
 	
 	private final ChallengeService challengeService;
 	
+	// 30개씩 페이징한 챌린지 목록 조회
+	@GetMapping 
+	public PageResponseDTO<ChallengeResponseDTO> listAll(
+	    @RequestParam(name ="page", defaultValue = "1") int page,
+	    @RequestParam(name ="size", defaultValue = "30") int size,
+	    @RequestParam(name="search", required=false) String search,
+	    @RequestParam(name="categoryId", required=false) Integer categoryId,
+	    @AuthenticationPrincipal(expression = "userId") Integer userId
+	) {
+	    int offset = (page - 1) * size;
+//	    if (userId == null) userId = -1;
+	    return challengeService.getPageChallenges(userId, search, categoryId, size, offset);
+	}
+	
 	// 전체 챌린지 목록 조회
-	@GetMapping
-    public ResponseEntity<List<ChallengeResponseDTO>> listAll() {
-        List<ChallengeResponseDTO> list = challengeService.getAllChallenges();
-        return ResponseEntity.ok(list);
-    }
+//	@GetMapping
+//    public ResponseEntity<List<ChallengeResponseDTO>> listAll() {
+//        List<ChallengeResponseDTO> list = challengeService.getAllChallenges();
+//        return ResponseEntity.ok(list);
+//    }
 	
 	// 챌린지 생성
 	@PostMapping

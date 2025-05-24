@@ -33,13 +33,14 @@ public class SecurityConfig {
           .authorizeHttpRequests(auth -> auth // URL별 접근 권한 설정
             // 회원가입·로그인 관련 엔드포인트는 모두 허용
         		  
-            .requestMatchers("/api/auth/**").permitAll()
+            .requestMatchers("/api/auth/**").permitAll() // 로그인 리프레시 로그아웃 모두 허용
             .requestMatchers("/api/categories").permitAll()
             .requestMatchers("/api/rankings/**").permitAll()
             
             // 로그인 되어야 하는 
             .requestMatchers(HttpMethod.GET, "/api/challenges").authenticated()
             .requestMatchers(HttpMethod.POST, "/api/challenges/**").authenticated()
+            
             // 나머지 엔드포인트도 필요에 따라
             // 그 외 모든 요청은 JWT 인증을 받은 사용자만 접근 가능
             .anyRequest().authenticated()

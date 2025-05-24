@@ -3,8 +3,10 @@ package com.hobby.challenge.fobackend.service.impl;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.concurrent.TimeUnit;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -39,8 +41,11 @@ public class AuthServiceImpl implements AuthService{
 	private final PasswordEncoder passwordEncoder; // Bcrypt 암호화 인코더 (수정)
 	private final JwtTokenProvider tokenProvider;
 	private final LoginHistoryService loginHistoryService;
+	private final StringRedisTemplate redisTemplate;   // ★ RedisTemplate
 	@Value("${jwt.expiration}")
-	private long jwtExpirationMs; 
+	private long jwtExpirationMs;  // 엑세스 토큰 만료 시간
+    @Value("${jwt.refreshExpiration}")
+    private long jwtRefreshExpirationMs; // 리프레시 토큰 만료시간
 	
 	// 생성자 @Autowired를 사용해 명시적 생성자 주입도 가능
 //	public UserService(UserMapper userMapper) {
@@ -65,8 +70,10 @@ public class AuthServiceImpl implements AuthService{
         }
         
         // 1) DTO의 birthDate(String) → LocalDate로 파싱
-        LocalDate birth = LocalDate.parse(dto.getBirthDate(),
-                DateTimeFormatter.ofPattern("yyyy.MM.dd"));
+        LocalDate birth = LocalDate.parse(dto.getBirthDate(), DateTimeFormatter.ofPattern("yyyy.MM.dd"));
+        if (birth.isAfter(LocalDate.now())) {
+            throw new CustomException(ErrorCode.INVALID_BIRTHDATE);
+        }
         
 		// DTO -> Entity 사용자 엔티티 생성
 		User user = User.builder()
@@ -94,19 +101,32 @@ public class AuthServiceImpl implements AuthService{
     @Override
     public LoginResponseDTO login(LoginRequestDTO dto,  HttpServletResponse response) {
     	
-        // 1) 인증
+        // 1. 인증 
         Authentication auth = authManager.authenticate(
             new UsernamePasswordAuthenticationToken(dto.getLoginId(), dto.getPassword()));
         SecurityContextHolder.getContext().setAuthentication(auth);
 
-        // 2) JWT 생성 & 쿠키 세팅
-        String token = tokenProvider.createToken(dto.getLoginId());
-        ResponseCookie cookie = ResponseCookie.from("token", token)
+        // 2. 엑세스 토큰 생성 + 쿠키 세팅
+        String accessToken = tokenProvider.createToken(dto.getLoginId());
+        ResponseCookie cookie = ResponseCookie.from("token", accessToken)
             .httpOnly(true).secure(true).path("/")
             .maxAge(jwtExpirationMs/1000).sameSite("Strict").build();
         response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
+        
+        // Refresh Token 생성
+        String refreshToken = tokenProvider.createRefreshToken(dto.getLoginId());
+        // Redis에 (key=refresh:{token}, value=loginId) TTL 설정
+        redisTemplate.opsForValue()
+                     .set("refresh:" + refreshToken, dto.getLoginId(),
+                          jwtRefreshExpirationMs, TimeUnit.MILLISECONDS);
+        // 클라이언트에 쿠키로도 전달
+        response.addHeader(HttpHeaders.SET_COOKIE,
+            ResponseCookie.from("refreshToken", refreshToken)
+                .httpOnly(true).secure(true).path("/") // 루트로 설정해야 로그아웃 시에도 브라우저가 쿠키를 전달하고 삭제 헤더가 적용
+                .maxAge(jwtRefreshExpirationMs/1000).sameSite("Strict").build()
+                .toString());
 
-        // 3) 로그인 이력
+        // 3. 로그인 이력
         User user = userMapper.findByLoginId(dto.getLoginId());
         loginHistoryService.recordLoginHistory(
             LoginHistoryDTO.builder()
@@ -119,22 +139,51 @@ public class AuthServiceImpl implements AuthService{
         LoginResponseDTO res = LoginResponseDTO.builder()
             .userId(user.getUserId())
             .nickname(user.getNickname())
-            .token(token)
+            .token(accessToken)
             .build();
         
         return res;
 
     }
     
-    // 로그아웃
+    // 리프레시 토큰
     @Override
-    public void logout(HttpServletResponse response) {
-        // 엑세스 토큰 쿠키 제거
-        ResponseCookie cookie = ResponseCookie.from("token", "")
-            .httpOnly(true).secure(true).path("/").maxAge(0).sameSite("Strict").build();
-        response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
+    public void refreshToken(String refreshToken, HttpServletResponse response) {
+        String loginId = redisTemplate.opsForValue().get("refresh:" + refreshToken);
+        if (loginId == null) {
+            throw new CustomException(ErrorCode.INVALID_REFRESH_TOKEN);
+        }
+        // 유효하면 새 Access Token 발급 + 쿠키 세팅
+        String newAccess = tokenProvider.createToken(loginId);
+        response.addHeader(HttpHeaders.SET_COOKIE,
+            ResponseCookie.from("token", newAccess)
+                .httpOnly(true).secure(true).path("/")
+                .maxAge(jwtExpirationMs/1000).sameSite("Strict").build()
+                .toString());
     }
     
+    // 로그아웃
+    @Override
+    public void logout(String refreshToken,HttpServletResponse response) {
+        // (Controller에서 refreshToken 쿠키 값을 꺼내면)
+        // redisTemplate.delete("refresh:" + refreshToken);
+    	
+        // 1) Redis에서 해당 키 삭제
+        redisTemplate.delete("refresh:" + refreshToken);
+        
+        // 2) Access Token 쿠키 삭제
+        response.addHeader(HttpHeaders.SET_COOKIE,
+            ResponseCookie.from("token", "")
+                .httpOnly(true).secure(true).path("/").maxAge(0).sameSite("Strict").build()
+                .toString());
+        // 3) Refresh Token 쿠키 삭제
+        response.addHeader(HttpHeaders.SET_COOKIE,
+            ResponseCookie.from("refreshToken", "")
+                .httpOnly(true).secure(true).path("/").maxAge(0).sameSite("Strict").build()
+                .toString());
+    }
+    
+    // 로그인한 사용자의 정보 가져오기
     @Override
     public UserResponseDTO getCurrentUser(String loginId) {
         User user = userMapper.findByLoginId(loginId);

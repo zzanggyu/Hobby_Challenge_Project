@@ -17,10 +17,13 @@ import io.jsonwebtoken.security.Keys;
 public class JwtTokenProvider {
 	private final Key key;
 	private final long validityInMilliseconds;
+    // 리프레시 만료(ms)
+    private final long refreshValidityInMilliseconds;
 	
 	// application.properties의 jwt.secret(서명키), jwt.expiration(토큰 유효시간)을 가져와 초기화
 	public JwtTokenProvider(@Value("${jwt.secret}") String secret, // @Value application.properties에 있는 값을 읽어서 주입
-			@Value("${jwt.expiration}") long validityInMilliseconds) {
+			@Value("${jwt.expiration}") long validityInMilliseconds,
+			@Value("${jwt.refreshExpiration}") long refreshValidityInMilliseconds) {
 		
 		byte[] keyBytes = Decoders.BASE64.decode(secret); // 인코딩된 키를 바이트 배열로 디코딩
 		this.key = Keys.hmacShaKeyFor(keyBytes); // 아래 주석 부분처럼 동작
@@ -30,6 +33,7 @@ public class JwtTokenProvider {
 //		SecretKey secretKey = new SecretKeySpec(keyBytes, "HmacSHA256");
 //		return secretKey;
 		this.validityInMilliseconds = validityInMilliseconds; // 만료 기간 저장
+		this.refreshValidityInMilliseconds = refreshValidityInMilliseconds;
 	}
 	
 	// 로그인 아이디(sub) 클레임만 담아 토큰 생성. iat,exp를 자동 세팅하고 HS256으로 서명한다.
@@ -43,6 +47,18 @@ public class JwtTokenProvider {
 				.signWith(key, SignatureAlgorithm.HS256) // 서명 설정: 이전에 만든 ScretKey와 HS256 알고리즘
 				.compact(); // 토큰 직렬화: "header.payload.signature" 형태로 반환. 클라이언트에 전달할 JWT토큰
 	}
+	
+    // Refresh Token 생성
+    public String createRefreshToken(String loginId) {
+        Date now = new Date();
+        Date expiry = new Date(now.getTime() + refreshValidityInMilliseconds);
+        return Jwts.builder()
+                .setSubject(loginId)
+                .setIssuedAt(now)
+                .setExpiration(expiry)
+                .signWith(key, SignatureAlgorithm.HS256)
+                .compact();
+    }
 	
 	// 토큰에서 서명 검증 후 subject(loginId) 반환 서명일 틀리거나 만료되면 예외가 발생함
 	public String getLoginId(String token) {

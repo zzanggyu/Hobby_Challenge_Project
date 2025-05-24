@@ -4,10 +4,13 @@
          "http://mybatis.org/dtd/mybatis-3-config.dtd">
 <configuration>
   <typeHandlers>
-    <!-- LocalDateTime → TIMESTAMP -->
-    <typeHandler 
-      javaType="java.time.LocalDateTime" 
+    <!-- LocalDateTime → TIMESTAMP 핸들러 -->
+    <typeHandler
+      javaType="java.time.LocalDateTime"
       handler="org.apache.ibatis.type.LocalDateTimeTypeHandler"/>
-    
+    <!-- LocalDate → DATE 핸들러 -->
+    <typeHandler
+      javaType="java.time.LocalDate"
+      handler="org.apache.ibatis.type.LocalDateTypeHandler"/>
   </typeHandlers>
 </configuration>

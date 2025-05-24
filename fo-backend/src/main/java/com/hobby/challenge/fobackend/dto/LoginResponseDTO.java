@@ -3,10 +3,12 @@ package com.hobby.challenge.fobackend.dto;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 // 로그인할 때 응답
 @Data
 @AllArgsConstructor
+@NoArgsConstructor
 @Builder
 public class LoginResponseDTO {
     private Integer userId;

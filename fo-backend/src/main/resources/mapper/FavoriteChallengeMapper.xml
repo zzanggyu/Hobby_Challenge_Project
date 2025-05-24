@@ -18,8 +18,8 @@
 	      <result column="title" property="title"/>
 	      <result column="description" property="description"/>
 	      <result column="categoryId" property="categoryId"/>
-	      <result column="startDate" property="startDate" javaType="java.time.LocalDateTime" jdbcType="TIMESTAMP"/>
-	      <result column="endDate" property="endDate" javaType="java.time.LocalDateTime" jdbcType="TIMESTAMP"/>
+	      <result column="startDate" property="startDate" javaType="java.time.LocalDate" jdbcType="DATE"/>
+	      <result column="endDate" property="endDate" javaType="java.time.LocalDate" jdbcType="DATE"/>
 	      <result column="createdDate" property="createdDate" javaType="java.time.LocalDateTime" jdbcType="TIMESTAMP"/>
 	      <result column="creatorNickname" property="creatorNickname"/>
 	    </association>

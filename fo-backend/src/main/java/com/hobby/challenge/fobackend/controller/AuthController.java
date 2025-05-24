@@ -1,5 +1,7 @@
 package com.hobby.challenge.fobackend.controller;
 
+import java.util.Arrays;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -17,9 +19,13 @@ import com.hobby.challenge.fobackend.dto.LoginResponseDTO;
 import com.hobby.challenge.fobackend.dto.SignupRequestDTO;
 import com.hobby.challenge.fobackend.dto.SignupResponseDTO;
 import com.hobby.challenge.fobackend.dto.UserResponseDTO;
+import com.hobby.challenge.fobackend.exception.CustomException;
+import com.hobby.challenge.fobackend.exception.ErrorCode;
 import com.hobby.challenge.fobackend.service.AuthService;
 import com.hobby.challenge.fobackend.service.EmailAuthService;
 
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
@@ -68,13 +74,30 @@ public class AuthController {
         return ResponseEntity.ok(body);
 	}
 	
-	// 로그아웃
-	@PostMapping("/logout")
-    public ResponseEntity<Void> logout(HttpServletResponse response) {
-		authService.logout(response);
+	// 리프레시 토큰
+	@PostMapping("/refresh")
+    public ResponseEntity<Void> refresh(HttpServletRequest req, HttpServletResponse res) {
+        String refreshToken = Arrays.stream(req.getCookies())
+            .filter(c -> "refreshToken".equals(c.getName()))
+            .findFirst()
+            .map(Cookie::getValue)
+            .orElseThrow(() -> new CustomException(ErrorCode.REFRESH_TOKEN_MISSING));
 
+        authService.refreshToken(refreshToken, res);
         return ResponseEntity.ok().build();
     }
+	
+	// 로그아웃
+	@PostMapping("/logout")
+	public ResponseEntity<Void> logout(HttpServletRequest req, HttpServletResponse res) {
+	    String refreshToken = Arrays.stream(req.getCookies())
+	        .filter(c -> "refreshToken".equals(c.getName()))
+	        .map(Cookie::getValue)
+	        .findFirst()
+	        .orElseThrow(() -> new CustomException(ErrorCode.REFRESH_TOKEN_MISSING));
+	    authService.logout(refreshToken, res);
+	    return ResponseEntity.ok().build();
+	}
 	
 	// 새로고침 시 현재 인증된 사용자 정보를 반환
     @GetMapping("/me")

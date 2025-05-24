@@ -17,8 +17,11 @@ public interface AuthService {
     LoginResponseDTO login(LoginRequestDTO dto, HttpServletResponse response);
     
     // 로그아웃 → 쿠키 삭제
-    void logout(HttpServletResponse response);
+    void logout(String refreshToken,HttpServletResponse response);
     
     // 현재 로그인한 사용자의 정보 조회
     UserResponseDTO getCurrentUser(String loginId);
+    
+    // 리프레시 토큰으로 Access Token 재발급
+    void refreshToken(String refreshToken, HttpServletResponse response);
 }

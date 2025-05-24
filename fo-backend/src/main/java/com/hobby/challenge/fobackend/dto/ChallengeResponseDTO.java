@@ -2,6 +2,7 @@ package com.hobby.challenge.fobackend.dto;
 
 
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 import lombok.AllArgsConstructor;
@@ -18,9 +19,11 @@ public class ChallengeResponseDTO {
     private String title;
     private String description;
     private Integer categoryId;
-    private LocalDateTime startDate;
-    private LocalDateTime endDate;
+    private LocalDate startDate;
+    private LocalDate endDate;
     private LocalDateTime createdDate;
+    
+    private Boolean isFavorite; // 관심 챌린지 하트 여부
     
     // USER NICKNAME
     private String creatorNickname;
