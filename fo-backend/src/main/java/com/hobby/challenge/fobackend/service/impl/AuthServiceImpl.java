@@ -15,6 +15,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.hobby.challenge.fobackend.dto.LoginHistoryDTO;
 import com.hobby.challenge.fobackend.dto.LoginRequestDTO;
@@ -28,6 +29,7 @@ import com.hobby.challenge.fobackend.exception.ErrorCode;
 import com.hobby.challenge.fobackend.mapper.AuthMapper;
 import com.hobby.challenge.fobackend.security.JwtTokenProvider;
 import com.hobby.challenge.fobackend.service.AuthService;
+import com.hobby.challenge.fobackend.service.EmailAuthService;
 import com.hobby.challenge.fobackend.service.LoginHistoryService;
 
 import jakarta.servlet.http.HttpServletResponse;
@@ -42,6 +44,7 @@ public class AuthServiceImpl implements AuthService{
 	private final JwtTokenProvider tokenProvider;
 	private final LoginHistoryService loginHistoryService;
 	private final StringRedisTemplate redisTemplate;   // ★ RedisTemplate
+	private final EmailAuthService emailAuthService;
 	@Value("${jwt.expiration}")
 	private long jwtExpirationMs;  // 엑세스 토큰 만료 시간
     @Value("${jwt.refreshExpiration}")
@@ -206,4 +209,53 @@ public class AuthServiceImpl implements AuthService{
         
         return response;
     }
+    
+    // 회원가입 이메일 인증
+    @Override
+    public void sendSignupEmailCode(String email) {
+        emailAuthService.sendVerificationCode("signup", email);
+    }
+
+    // 회원가입 이메일 인증코드 확인
+    @Override
+    public void verifySignupEmailCode(String email, String code) {
+        boolean ok = emailAuthService.verifyCode("signup", email, code);
+        if (!ok) throw new CustomException(ErrorCode.INVALID_VERIFICATION_CODE);
+    }
+
+    // 비밀번호 재설정 인증
+    @Override
+    public void sendPasswordResetCode(String loginId, String email) {
+        User u = userMapper.findByLoginId(loginId);
+        if (u == null || !u.getEmail().equals(email)) {
+            throw new CustomException(ErrorCode.INVALID_CREDENTIALS);
+        }
+        emailAuthService.sendVerificationCode("passwordreset", email);
+    }
+    
+    // 비밀번호 재설정 코드 확인
+    @Override
+    public void verifyPasswordResetCode(String email, String code) {
+        boolean ok = emailAuthService.verifyCode("passwordreset", email, code);
+        if (!ok) throw new CustomException(ErrorCode.INVALID_VERIFICATION_CODE);
+    }
+    
+    // 비밀번호 재설정
+    @Override
+    @Transactional
+    public void resetPassword(String loginId, String newPassword) {
+        String enc = passwordEncoder.encode(newPassword);
+        userMapper.updatePassword(loginId, enc);
+    }
+    
+    // 아이디 찾기
+    @Override
+    public String findLoginIdByEmail(String email) {
+        User u = userMapper.findByEmail(email);
+        if (u == null) {
+            throw new CustomException(ErrorCode.USER_NOT_FOUND);
+        }
+        return u.getLoginId();
+    }
+
 }

@@ -43,21 +43,27 @@
 	parameterType="com.hobby.challenge.fobackend.entity.User" 
 	useGeneratedKeys="true" 
 	keyProperty="userId">
-	  INSERT INTO USER ( <!-- 사용자 테이블 -->
-		  LOGIN_ID <!-- 로그인 아이디 컬럼-->
-		, USERNAME <!-- 사용자 이름 컬럼-->
-		, PASSWORD <!-- 사용자 비밀번호 컬럼-->
-		, EMAIL <!-- 이메일 컬럼-->
-		, NICKNAME <!-- 닉네임(별명) 컬럼-->
-		, BIRTH_DATE <!-- 생년월일 컬럼-->
+	 <!-- 사용자 테이블 -->
+	  INSERT INTO USER (LOGIN_ID <!-- 로그인 아이디 컬럼-->
+		   , USERNAME <!-- 사용자 이름 컬럼-->
+		   , PASSWORD <!-- 사용자 비밀번호 컬럼-->
+		   , EMAIL <!-- 이메일 컬럼-->
+		   , NICKNAME <!-- 닉네임(별명) 컬럼-->
+		   , BIRTH_DATE <!-- 생년월일 컬럼-->
 	)
-	  VALUES (
-	  	  #{loginId} 
-	  	, #{username} 
-	  	, #{password} 
-	  	, #{email} 
-	  	, #{nickname}
-	  	, #{birthDate}
+	  VALUES (#{loginId} 
+	  	   , #{username} 
+	  	   , #{password} 
+	  	   , #{email} 
+	  	   , #{nickname}
+	  	   , #{birthDate}
 	)		
 	</insert>
+	
+	  <!-- 5) 비밀번호 재설정용 업데이트 -->
+    <update id="updatePassword">
+      UPDATE USER
+         SET PASSWORD = #{newPassword}
+       WHERE LOGIN_ID = #{loginId}
+    </update>
 </mapper>

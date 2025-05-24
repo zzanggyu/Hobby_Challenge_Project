@@ -14,10 +14,12 @@ public enum ErrorCode {
     USER_NOT_FOUND       ("404011", "해당 사용자를 찾을 수 없습니다."),
     INVALID_CREDENTIALS  ("400013", "비밀번호가 틀렸습니다."),
     INVALID_BIRTHDATE    ("400014", "생년월일은 오늘 이전 날짜부터 입력할 수 있습니다."),
+    INVALID_VERIFICATION_CODE ("400017", "인증코드가 틀렸습니다."),
     
     // 리프레시 토큰 관련
     INVALID_REFRESH_TOKEN ("400015", "리프레시 토큰이 만료되었거나 유효하지 않습니다. 다시 로그인해주세요."),
     REFRESH_TOKEN_MISSING ("400016", "리프레시 토큰이 제공되지 않았습니다."),
+    
     // 이 곳에 새 필드 추가	
     
     // 02: Challenge 도메인

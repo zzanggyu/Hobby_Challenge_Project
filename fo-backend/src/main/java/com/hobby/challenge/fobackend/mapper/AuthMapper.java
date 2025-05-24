@@ -14,12 +14,18 @@ public interface AuthMapper {
 	// 이메일 중복 체크
 	User findByEmail(@Param("email") String email);
 	
+	// 회원 등록 회원가입
+	// INSERT INTO USER (LOGIN_ID, USERNAME, PASSWORD, EMAIL, NICKNAME, ROLE)
+	// VALUES (#{loginId}, #{username}, #{password}, #{email}, #{nickname}, #{role})
+	int insertUser(User user);
+	
 	// 내 정보 조회
 	// SELECT * FROM USER_ID = #{userId}
 	User findById(@Param("userId") Integer userId);
 	
-	// 회원 등록
-	// INSERT INTO USER (LOGIN_ID, USERNAME, PASSWORD, EMAIL, NICKNAME, ROLE)
-	// VALUES (#{loginId}, #{username}, #{password}, #{email}, #{nickname}, #{role})
-	int insertUser(User user);
+    // 비밀번호 재설정 시, 로그인 아이디(loginId)로 DB의 PASSWORD를 업데이트
+    void updatePassword(@Param("loginId") String loginId,
+                        @Param("newPassword") String newPassword);
+	
+
 }

@@ -24,4 +24,16 @@ public interface AuthService {
     
     // 리프레시 토큰으로 Access Token 재발급
     void refreshToken(String refreshToken, HttpServletResponse response);
+    
+    // 회원가입 이메일 인증
+    void sendSignupEmailCode(String email);
+    void verifySignupEmailCode(String email, String code);
+
+    // 아이디 찾기
+    String findLoginIdByEmail(String email);
+    
+    // 비밀번호 재설정 인증
+    void sendPasswordResetCode(String loginId, String email);
+    void verifyPasswordResetCode(String email, String code);
+    void resetPassword(String loginId, String newPassword);
 }
