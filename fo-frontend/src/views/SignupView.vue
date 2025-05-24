@@ -189,7 +189,11 @@
 <script setup>
 import { ref, reactive, watch, computed, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
-import { signup, sendCode, verifyCode } from '@/services/authService'
+import {
+	signup,
+	sendSignupCode,
+	verifySignupCode,
+} from '@/services/authService'
 import { format } from 'date-fns'
 
 const form = ref()
@@ -282,7 +286,7 @@ async function sendEmailCode() {
 	if (emailSent.value) return
 	// TODO: 실제 API 호출
 	try {
-		await sendCode(credentials.email)
+		await sendSignupCode(credentials.email)
 		emailSent.value = true
 		timer.value = 300 // 5분 안에 인증증
 		timerId = window.setInterval(() => {
@@ -313,7 +317,7 @@ const timerDisplay = computed(() => {
 async function verifyEmailCode() {
 	// TODO: 실제 API 호출
 	try {
-		await verifyCode(credentials.email, emailCode.value)
+		await verifySignupCode(credentials.email, emailCode.value)
 		emailVerified.value = true
 		clearInterval(timerId)
 		error.value = ''

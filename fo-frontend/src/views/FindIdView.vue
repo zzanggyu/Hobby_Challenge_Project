@@ -28,7 +28,7 @@
 					block
 					@click="onFindId"
 				>
-					이메일로 아이디 전송
+					아이디 확인하기
 				</v-btn>
 			</v-form>
 
@@ -42,6 +42,7 @@
 <script setup>
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { findId } from '@/services/authService'
 
 const form = ref()
 const valid = ref(false)
@@ -69,11 +70,12 @@ async function onFindId() {
 	message.value = ''
 
 	try {
-		// TODO: 실제 API 호출
-		// await fetch('/api/auth/find-id', { method:'POST', body:JSON.stringify({ email: email.value }) })
-		message.value = '가입된 이메일로 아이디를 전송했습니다.'
+		const res = await findId(email.value)
+		message.value = `당신의 아이디는 “${res.data.loginId}” 입니다.`
+		form.value.reset()
 	} catch (e) {
-		error.value = e.message || '아이디 찾기 중 오류가 발생했습니다.'
+		error.value =
+			e.response?.data?.message || '아이디 찾기 중 오류가 발생했습니다.'
 	} finally {
 		loading.value = false
 	}
