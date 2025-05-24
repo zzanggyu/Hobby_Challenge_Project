@@ -1,11 +1,21 @@
 <template>
 	<v-container>
 		<v-row class="mb-4" align="center">
-			<v-col cols="12">
-				<h2 class="text-h5">관심 챌린지</h2>
+			<v-col cols="12" class="d-flex align-center justify-space-between">
+				<h2 class="text-h5 mb-0">관심 챌린지</h2>
+				<!-- 챌린지 목록으로 돌아가기 버튼 -->
+				<v-btn
+					color="secondary"
+					variant="tonal"
+					small
+					@click="goToList"
+					class="ml-auto"
+				>
+					<v-icon left>mdi-arrow-left</v-icon>
+					챌린지 목록으로
+				</v-btn>
 			</v-col>
 		</v-row>
-
 		<v-row align="stretch">
 			<template v-for="fav in favorites" :key="fav.challengeId">
 				<v-col v-if="fav.challenge" cols="12" md="6" lg="4" class="d-flex">
@@ -80,6 +90,11 @@ import { getCategories } from '@/services/categoryService'
 const router = useRouter()
 const favorites = ref([])
 const categories = ref([])
+
+// 챌린지 목록으로 돌아가기기
+function goToList() {
+	router.push({ name: 'challenge-list' })
+}
 
 // 내 관심 챌린지 목록 가져오기
 async function fetchFavorites() {

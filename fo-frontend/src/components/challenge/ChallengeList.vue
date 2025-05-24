@@ -102,11 +102,20 @@
 				</v-card>
 			</v-col>
 		</v-row>
+		<v-row justify="center" class="my-4">
+			<v-pagination
+				v-model="currentPage"
+				:length="totalPages"
+				total-visible="10"
+				show-first-last-page
+				class="my-4"
+			/>
+		</v-row>
 	</v-container>
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
 import {
 	getChallenges,
 	joinChallenge,
@@ -117,27 +126,38 @@ import { useRouter } from 'vue-router'
 import axios from 'axios'
 
 const router = useRouter()
+
+// 페이징 상태
+const currentPage = ref(1)
+const pageSize = ref(30)
+const totalCount = ref(0)
+
 // 챌린지 목록을 저장할 반응형 변수
 const challenges = ref([])
 const categories = ref([]) // 카테고리 목록
+
 // 검색어 와 선택된 카테고리 를 위한 반응형 변수
 const search = ref('')
 const selectedCategory = ref(null)
 
-// API 호출
+// 페이징 API 호출
 async function fetchChallenges() {
 	try {
-		const data = await getChallenges()
-		// console.log('raw challenges:', data)
-		challenges.value = data.map((c) => ({
+		// 백엔드에서 { total, items } 형태로 내려줌
+		const { totalCount: totalFromAPi, items } = await getChallenges(
+			currentPage.value, // 현재 페이지
+			pageSize.value, // 페이지 크기기
+			search.value, //  검색 키워드
+			selectedCategory.value //  카테고리 필터
+		)
+		totalCount.value = totalFromAPi // 총 챌린지 수
+		challenges.value = items.map((c) => ({
+			//관심 챌린지 여부 (빈하트/꽉하트)
 			...c,
 			isFavorite: c.isFavorite ?? false,
 		}))
 	} catch (err) {
-		if (
-			axios.isAxiosError(err) &&
-			(err.response.status === 401 || err.response.status === 403)
-		) {
+		if (axios.isAxiosError(err) && [401, 403].includes(err.response.status)) {
 			alert('로그인해야 이용할 수 있습니다.')
 			router.push({
 				name: 'login',
@@ -148,6 +168,34 @@ async function fetchChallenges() {
 		}
 	}
 }
+
+// 페이지가 바뀌면 다시 불러오기
+watch(currentPage, fetchChallenges)
+
+// API 호출
+// async function fetchChallenges() {
+// 	try {
+// 		const data = await getChallenges()
+// 		// console.log('raw challenges:', data)
+// 		challenges.value = data.map((c) => ({
+// 			...c,
+// 			isFavorite: c.isFavorite ?? false,
+// 		}))
+// 	} catch (err) {
+// 		if (
+// 			axios.isAxiosError(err) &&
+// 			(err.response.status === 401 || err.response.status === 403)
+// 		) {
+// 			alert('로그인해야 이용할 수 있습니다.')
+// 			router.push({
+// 				name: 'login',
+// 				query: { redirect: router.currentRoute.value.fullPath },
+// 			})
+// 		} else {
+// 			console.error(err)
+// 		}
+// 	}
+// }
 
 // 카테고리 가져오기
 async function fetchCategories() {
@@ -161,7 +209,12 @@ async function fetchCategories() {
 // 관심 챌린지 등록 하트 누르기
 async function onToggleFavorite(challenge) {
 	try {
-		await toggleFavoriteChallenge(challenge.challengeId)
+		const id = challenge.challengeId
+		if (!id) {
+			alert('챌린지 아이디가 없습니다!')
+			return
+		}
+		await toggleFavoriteChallenge(id)
 		challenge.isFavorite = !challenge.isFavorite
 	} catch (err) {
 		console.error(err)
@@ -208,12 +261,18 @@ function formatDate(date) {
 
 // 컴포넌트 마운트 시 초기 로드
 onMounted(async () => {
-	await Promise.all([fetchCategories(), fetchChallenges()])
+	await Promise.all([
+		getCategories().then((data) => (categories.value = data)),
+		fetchChallenges(),
+	])
 })
 
 function goToFavoriteChallenge() {
 	router.push('/challenges/favorite')
 }
+
+// 전체 페이지 수 계산
+const totalPages = computed(() => Math.ceil(totalCount.value / pageSize.value))
 </script>
 
 <style scoped></style>

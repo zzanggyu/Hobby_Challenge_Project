@@ -265,6 +265,15 @@ const rules = {
 			const d = new Date(v)
 			return !isNaN(d.getTime()) || '유효한 날짜가 아닙니다.'
 		},
+		// 오늘 이전 날짜만 허용
+		(v) => {
+			const d = new Date(v)
+			const now = new Date()
+			// 00시 00분 기준으로만 비교하면, 오늘은 입력 불가!
+			d.setHours(0, 0, 0, 0)
+			now.setHours(0, 0, 0, 0)
+			return d < now || '생년월일은 오늘 이전 날짜만 가능합니다.'
+		},
 	],
 }
 
@@ -350,7 +359,7 @@ async function onSubmit() {
 		// 잠시 대기 후 이동
 		setTimeout(() => router.push('/login'), 1000)
 	} catch (e) {
-		error.value - e.response?.data?.message || '회원가입에 실패했습니다.'
+		error.value = e.response?.data?.message || '회원가입에 실패했습니다.'
 		console.error('signup failed response:', e.response?.data)
 	} finally {
 		loading.value = false

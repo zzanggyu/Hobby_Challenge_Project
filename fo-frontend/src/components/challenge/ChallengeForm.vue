@@ -175,16 +175,16 @@ const minEndDate = computed(() => {
 	return d.toISOString().substr(0, 10)
 })
 
-// 룰: 시작일이 없거나, endDate ≥ startDate+7일
-const endDateRule = (v) => {
-	if (!v || !startDate.value) return true
-	const start = new Date(startDate.value)
-	const end = new Date(v)
-	return (
-		(end - start) / (1000 * 60 * 60 * 24) >= 7 ||
-		'종료일은 시작일로부터 최소 일주일 이상 뒤여야 합니다.'
-	)
-}
+// // 룰: 시작일이 없거나, endDate ≥ startDate+7일
+// const endDateRule = (v) => {
+// 	if (!v || !startDate.value) return true
+// 	const start = new Date(startDate.value)
+// 	const end = new Date(v)
+// 	return (
+// 		(end - start) / (1000 * 60 * 60 * 24) >= 7 ||
+// 		'종료일은 시작일로부터 최소 일주일 이상 뒤여야 합니다.'
+// 	)
+// }
 
 // 유효성 검사
 const rules = {
@@ -196,7 +196,7 @@ const rules = {
 	description: [
 		(v) => !!v || '설명을 입력하세요.',
 		(v) => v.length >= 10 || '10자 이상 입력하세요.',
-		(v) => v.length <= 200 || '200자 이내여야 합니다.',
+		(v) => v.length <= 500 || '500자 이내여야 합니다.',
 	],
 	categoryId: [(v) => !!v || '카테고리를 선택하세요.'],
 	startDate: [(v) => !!v || '시작일을 선택하세요.'],
@@ -218,17 +218,29 @@ async function onSubmit() {
 			title: title.value,
 			description: description.value,
 			startDate: startDate.value
-				? startDate.value.toISOString().substr(0, 10)
+				? startDate.value.toLocaleDateString('sv-SE')
 				: null,
 			endDate: endDate.value
-				? endDate.value.toISOString().substr(0, 10)
+				? endDate.value.toLocaleDateString('sv-SE')
 				: null,
 			categoryId: categoryId.value,
 		})
 		router.push({ name: 'challenge-list' })
 	} catch (e) {
-		console.error(e)
-		alert('생성 실패!')
+		const res = e.response?.data
+		if (res?.detail) {
+			// "{description=10자이상 입력하세요}" → "10자이상 입력하세요"
+			// "{title=제목은 반드시 입력해야 합니다., description=10자이상 입력하세요}"
+			// → "제목은 반드시 입력해야 합니다.\n10자이상 입력하세요"
+			const msg = res.detail
+				.replace(/[{}]/g, '') // 중괄호 제거
+				.split(', ') // 콤마(,)로 나눔
+				.map((s) => s.split('=').pop()) // = 뒤 메시지 부분만 추출
+				.join('\n') // 줄바꿈으로 합치기
+			alert(msg)
+			return
+		}
+		alert(res?.message || '생성 실패!')
 	}
 }
 </script>
