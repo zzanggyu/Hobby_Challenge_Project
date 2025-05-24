@@ -112,8 +112,12 @@ public class AuthServiceImpl implements AuthService{
         // 2. 엑세스 토큰 생성 + 쿠키 세팅
         String accessToken = tokenProvider.createToken(dto.getLoginId());
         ResponseCookie cookie = ResponseCookie.from("token", accessToken)
-            .httpOnly(true).secure(true).path("/")
-            .maxAge(jwtExpirationMs/1000).sameSite("Strict").build();
+            .httpOnly(true)
+            .secure(false)  // HTTPS 아닌 로컬에선 이 옵션 때문에 브라우저가 보내지 않음 ,개발 중에는 false, 운영(HTTPS) 시 true
+            .path("/")
+            .maxAge(jwtExpirationMs/1000)
+            .sameSite("Lax") // cross-site 허용
+            .build();
         response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
         
         // Refresh Token 생성
@@ -125,8 +129,12 @@ public class AuthServiceImpl implements AuthService{
         // 클라이언트에 쿠키로도 전달
         response.addHeader(HttpHeaders.SET_COOKIE,
             ResponseCookie.from("refreshToken", refreshToken)
-                .httpOnly(true).secure(true).path("/") // 루트로 설정해야 로그아웃 시에도 브라우저가 쿠키를 전달하고 삭제 헤더가 적용
-                .maxAge(jwtRefreshExpirationMs/1000).sameSite("Strict").build()
+                .httpOnly(true)
+                .secure(false) // 개발 중에는 false, 운영(HTTPS) 시 true
+                .path("/") // 루트로 설정해야 로그아웃 시에도 브라우저가 쿠키를 전달하고 삭제 헤더가 적용
+                .maxAge(jwtRefreshExpirationMs/1000)
+                .sameSite("Lax")
+                .build()
                 .toString());
 
         // 3. 로그인 이력
@@ -160,8 +168,12 @@ public class AuthServiceImpl implements AuthService{
         String newAccess = tokenProvider.createToken(loginId);
         response.addHeader(HttpHeaders.SET_COOKIE,
             ResponseCookie.from("token", newAccess)
-                .httpOnly(true).secure(true).path("/")
-                .maxAge(jwtExpirationMs/1000).sameSite("Strict").build()
+                .httpOnly(true)
+                .secure(false) // 개발 중에는 false, 운영(HTTPS) 시 true
+                .path("/")
+                .maxAge(jwtExpirationMs/1000)
+                .sameSite("Lax") // cross-site 허용
+                .build()
                 .toString());
     }
     
@@ -171,18 +183,25 @@ public class AuthServiceImpl implements AuthService{
         // (Controller에서 refreshToken 쿠키 값을 꺼내면)
         // redisTemplate.delete("refresh:" + refreshToken);
     	
-        // 1) Redis에서 해당 키 삭제
+        // Redis에서 해당 키 삭제
         redisTemplate.delete("refresh:" + refreshToken);
         
-        // 2) Access Token 쿠키 삭제
+        // Access Token 쿠키 삭제
         response.addHeader(HttpHeaders.SET_COOKIE,
             ResponseCookie.from("token", "")
-                .httpOnly(true).secure(true).path("/").maxAge(0).sameSite("Strict").build()
+                .httpOnly(true)
+                .secure(false)
+                .path("/")
+                .maxAge(0)
+                .sameSite("Lax").build()
                 .toString());
-        // 3) Refresh Token 쿠키 삭제
+        // Refresh Token 쿠키 삭제
         response.addHeader(HttpHeaders.SET_COOKIE,
             ResponseCookie.from("refreshToken", "")
-                .httpOnly(true).secure(true).path("/").maxAge(0).sameSite("Strict").build()
+                .httpOnly(true)
+                .secure(false)
+                .path("/").maxAge(0)
+                .sameSite("Lax").build()
                 .toString());
     }
     

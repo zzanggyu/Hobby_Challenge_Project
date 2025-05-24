@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hobby.challenge.fobackend.mapper.ParticipationMapper">
+	<!-- 챌린지에 참여 -->
+	<insert id="insertParticipation"
+        useGeneratedKeys="true"
+        keyProperty="participationId">
+		INSERT INTO PARTICIPATION (USER_ID, 
+								   CHALLENGE_ID)
+		VALUES (#{userId}, 
+				#{challengeId})
+	</insert>
+	
+	<!-- 특정 챌린지의 모든 요청 조회 챌린지 생성자(OWNER)용 -->
+	<select id="findRequestByChallenge" 
+			resultType="com.hobby.challenge.fobackend.dto.ParticipationResponseDTO">
+			
+			SELECT PARTICIPATION_ID
+				 , USER_ID
+				 , CHALLENGE_ID
+				 , STATUS
+				 , REQUEST_DATE
+				 , PARTICIPATED_DATE
+				 , ROLE				
+			  FROM PARTICIPATION
+			 WHERE CHALLENGE_ID = #{challengeId}
+	</select>
+	
+	<!-- 특정 사용자의 챌린지 참여 내역 조회 -->
+	<select id="findByUser" 
+			resultType="com.hobby.challenge.fobackend.dto.ParticipationResponseDTO">
+		
+			SELECT PARTICIPATION_ID
+				 , USER_ID
+				 , CHALLENGE_ID
+				 , STATUS
+				 , REQUEST_DATE
+				 , PARTICIPATED_DATE
+				 , ROLE
+		      FROM PARTICIPATION
+		     WHERE USER_ID = #{userId}
+	</select>
+	
+	<!-- 승인된 참여자 조회 -->
+	<select id="findApprovedByChallenge" resultType="com.hobby.challenge.fobackend.dto.ParticipationResponseDTO">
+	  SELECT PARTICIPATION_ID
+		   , USER_ID
+		   , CHALLENGE_ID
+		   , STATUS
+		   , REQUEST_DATE
+		   , PARTICIPATED_DATE
+		   , ROLE 
+	    FROM participation
+	   WHERE CHALLENGE_ID = #{challengeId}
+	     AND STATUS = 'APPROVED'
+	</select>
+	
+	<select id="selectById" resultType="com.hobby.challenge.fobackend.dto.ParticipationResponseDTO">
+	  SELECT PARTICIPATION_ID
+		  , USER_ID
+		  , CHALLENGE_ID
+		  , STATUS
+		  , REQUEST_DATE
+		  , PARTICIPATED_DATE
+		  , ROLE
+	   FROM PARTICIPATION
+	   WHERE PARTICIPATION_ID = #{participationId}
+	</select>
+	
+	<!-- 참여 상태 업데이트 (승인/거절) -->
+	<update id="updateStatus">
+		UPDATE PARTICIPATION
+		   SET STATUS = #{status}
+		   	 , PARTICIPATED_DATE = WHEN #{status} = 'APPROVED'
+		   	 					   THEN CURRENT_TIMESTAMP
+		   	 					   ELSE PARTICIPATED_DATE END
+		   	 					 , MODIFIED_DATE = CURRENT_TIMESTAMP
+		 WHERE PARTICIPATION_ID = #{participationId}
+	</update>
+
+	
+
+</mapper>
+         
