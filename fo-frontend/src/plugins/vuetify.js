@@ -5,6 +5,19 @@ import * as directives from 'vuetify/directives'
 import { aliases, mdi } from 'vuetify/iconsets/mdi'
 import colors from 'vuetify/util/colors'
 import { VDateInput } from 'vuetify/labs/VDateInput'
+// 탭 계열 컴포넌트를 직접 import
+// import {
+// 	VApp,
+// 	VMain,
+// 	VContainer,
+// 	VCard,
+// 	VTabs,
+// 	VTab,
+// 	VTabsItems,
+// 	VTabItem,
+// 	VBtn,
+// 	/* …필요한 다른 컴포넌트… */
+// } from 'vuetify/components'
 
 // date-fns 어댑터 + 한국어 로케일
 import DateFnsAdapter from '@date-io/date-fns'

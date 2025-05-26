@@ -10,6 +10,12 @@ import SignupView from '@/views/SignupView.vue'
 import CreateChallengeView from '@/views/CreateChallengeView.vue'
 import ChallengeListView from '@/views/ChallengeListView.vue'
 import FavoriteChallengeView from '@/views/FavoriteChallengeView.vue'
+import MyChallengesView from '@/views/MyChallengesView.vue'
+import ChallengeOverviewView from '@/views/ChallengeOverviewView.vue'
+import ChallengeParticipantsView from '@/views/ChallengeParticipantsView.vue'
+import ChallengeRequestsView from '@/views/ChallengeRequestsView.vue'
+import ChallengeCertificationView from '@/views/ChallengeCertificationView.vue'
+import ChallengeEditView from '../views/ChallengeEditView.vue'
 
 // import ChallengesView from '@/views/ChallengesView.vue'
 // import MyPageView    from '@/views/MyPageView.vue'
@@ -31,18 +37,68 @@ const routes = [
 		component: ChallengeListView,
 		meta: { requiresAuth: true }, // 로그인된 사용자만 접근 가능 로그인 안돼있으면 로그인 페이지로 이동
 	},
+	// 챌린지 생성
 	{
 		path: '/challenges/new',
 		name: 'challenge-create',
 		component: CreateChallengeView,
 		meta: { requiresAuth: true },
 	},
+	// 관심 챌린지
 	{
 		path: '/challenges/favorite',
 		name: 'favorite-challenge',
 		component: FavoriteChallengeView,
 		meta: { requiresAuth: true },
 	},
+
+	// 내가 참여·생성한 챌린지 보기
+	{
+		path: '/challenges/my',
+		name: 'my-challenges',
+		component: MyChallengesView,
+		meta: { requiresAuth: true },
+	},
+
+	// 챌린지 상세
+	{
+		path: '/challenges/:id',
+		component: ChallengeOverviewView,
+		children: [
+			// 챌린지 참여자 화면
+			{
+				path: 'participants',
+				name: 'challenge-participants',
+				component: ChallengeParticipantsView,
+				meta: { requiresAuth: true },
+			},
+			// 챌린지 참여 요청 목록
+			{
+				path: 'requests',
+				name: 'challenge-requests',
+				component: ChallengeRequestsView,
+				meta: { requiresAuth: true },
+			},
+			// 챌린지 생성자 화면
+			{
+				path: '',
+				name: 'challenge-overview',
+				component: ChallengeCertificationView,
+				meta: { requiresAuth: true },
+			},
+		],
+	},
+	// 챌린지 수정
+	{
+		path: '/challenges/:id/edit',
+		name: 'challenge-edit',
+		component: ChallengeEditView,
+		meta: { requiresAuth: true },
+		props: true,
+	},
+
+	// 서브뷰들 (탭 내에서 라우팅)
+
 	// {
 	// 	path: '/mypage',
 	// 	name: 'mypage',

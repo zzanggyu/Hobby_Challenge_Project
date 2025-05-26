@@ -28,7 +28,7 @@
 							v-model="categoryId"
 							:items="categories"
 							:rules="rules.categoryId"
-							item-title="name"
+							item-title="categoryName"
 							item-value="categoryId"
 							label="카테고리"
 							outlined
@@ -131,7 +131,7 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { createChallenge } from '@/services/challengeService'
+import { createChallenge, getCategories } from '@/services/challengeService'
 import { useRouter } from 'vue-router'
 import axios from 'axios'
 
@@ -150,8 +150,8 @@ const categories = ref([])
 // TODO : API로 가져오기 카테고리리
 onMounted(async () => {
 	try {
-		const res = await axios.get('http://localhost:8080/api/categories')
-		categories.value = res.data
+		const cats = await getCategories()
+		categories.value = cats
 	} catch (e) {
 		console.error('카테고리 불러오기 실패', e)
 	}

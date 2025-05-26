@@ -7,7 +7,7 @@
 				<v-btn
 					color="secondary"
 					variant="tonal"
-					small
+					size="large"
 					@click="goToList"
 					class="ml-auto"
 				>
