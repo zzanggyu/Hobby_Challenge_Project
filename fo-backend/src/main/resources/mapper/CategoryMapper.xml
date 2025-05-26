@@ -5,15 +5,15 @@
 	<!-- 전체 카테고리 조회 드롭다운-->
 	<select id="findAll" resultType="com.hobby.challenge.fobackend.entity.Category">
 		SELECT CATEGORY_ID AS categoryId
-		 	 , NAME AS name
-			FROM HOBBY_CATEGORY
+		 	 , CATEGORY_NAME AS categoryName
+		  FROM HOBBY_CATEGORY
 	</select>
 	
 	 <!-- 단일 카테고리 조회 검색-->
     <select id="findByCategory" resultType="com.hobby.challenge.fobackend.entity.Category">
         SELECT CATEGORY_ID AS categoryId 
-        	 , NAME AS name
-        	FROM HOBBY_CATEGORY 
-        	WHERE CATEGORY_ID = #{categoryId}
+        	 , CATEGORY_NAME AS categoryName
+          FROM HOBBY_CATEGORY 
+         WHERE CATEGORY_ID = #{categoryId}
     </select>
 </mapper>

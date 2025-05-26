@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hobby.challenge.fobackend.mapper.CertificationMapper">
+
+	  <!-- 인증 등록 -->
+	  <insert id="insertCertification" 
+	          parameterType="com.hobby.challenge.fobackend.entity.Certification" 
+	          useGeneratedKeys="true" 
+	          keyProperty="certificationId">
+		    INSERT INTO CERTIFICATION (PARTICIPATION_ID
+								    , COMMENT
+								    , IMAGE_URL
+								    , LIKE_COUNT
+								    , CREATED_BY
+		    					      ) 
+		    VALUES (#{participationId}
+		         , #{comment}
+		         , #{imageUrl}
+		         , #{likeCount}
+		         , #{createdBy}
+		    )
+	  </insert>
+
+	  <!-- 인증 내역 조회용 DTO 매핑 -->
+	  <resultMap id="CertMap" type="com.hobby.challenge.fobackend.dto.CertificationDTO">
+	    <id column="CERTIFICATION_ID" property="certificationId" />
+	    <result column="CREATED_BY" property="userId" />
+	    <result column="NICKNAME" property="nickname" />
+	    <result column="COMMENT" property="comment" />
+	    <result column="IMAGE_URL" property="imageUrl" />
+	    <result column="CREATED_DATE" property="createdDate" />
+	    <result column="LIKE_COUNT" property="likeCount" />
+	  </resultMap>
+
+	  <!-- 챌린지별 인증 내역 조회 -->
+	  <select id="findByChallenge" 
+	  		  parameterType="int" 
+	  		  resultMap="CertMap">
+		    SELECT C.CERTIFICATION_ID AS CERTIFICATION_ID
+		         , C.CREATED_BY AS CREATED_BY	         
+		         , C.COMMENT AS COMMENT
+		         , C.IMAGE_URL AS IMAGE_URL
+		         , C.CREATED_DATE AS CREATED_DATE
+		         , C.LIKE_COUNT AS LIKE_COUNT
+		         , U.NICKNAME AS NICKNAME
+		      FROM CERTIFICATION C
+		      JOIN PARTICIPATION P
+		        ON C.PARTICIPATION_ID = P.PARTICIPATION_ID
+		      JOIN USER U 
+		        ON C.CREATED_BY = U.USER_ID
+		     WHERE P.CHALLENGE_ID = #{challengeId}
+          ORDER BY C.CREATED_DATE DESC
+	  </select>
+	
+
+
+</mapper>

@@ -5,12 +5,14 @@ import java.util.List;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import com.hobby.challenge.fobackend.dto.CreateParticipationDTO;
+import com.hobby.challenge.fobackend.dto.ParticipantDTO;
 import com.hobby.challenge.fobackend.dto.ParticipationResponseDTO;
 
 @Mapper
 public interface ParticipationMapper {
     // 참여 요청
-	void insertParticipation(ParticipationResponseDTO dto);
+	void insertParticipation(CreateParticipationDTO dto);
 
     // 특정 챌린지의 모든 요청 조회 (OWNER 챌린지 생성자용)
     List<ParticipationResponseDTO> findRequestsByChallenge(@Param("challengeId") Integer challengeId);
@@ -22,9 +24,18 @@ public interface ParticipationMapper {
     void updateStatus(@Param("participationId") Integer participationId,
                       @Param("status") String status);
 
-    // 승인된 참여자 조회
-    List<ParticipationResponseDTO> findApprovedByChallenge(@Param("challengeId") Integer challengeId);
+
     
     // 참여 테이블 조회
     ParticipationResponseDTO selectById(@Param("participationId") Integer participationId);
+    
+    // 챌린지 참여 승인된 참여자 목록
+    List<ParticipantDTO> findApprovedByChallenge(
+            @Param("challengeId") Integer challengeId
+        );
+    
+    ParticipationResponseDTO selectByUserAndChallenge(
+    	    @Param("userId") Integer userId,
+    	    @Param("challengeId") Integer challengeId
+    	);
 }

@@ -1,7 +1,11 @@
 package com.hobby.challenge.fobackend.exception;
 
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.ResponseStatus;
+
 import lombok.Getter;
 
+@ResponseStatus(HttpStatus.FORBIDDEN)
 @Getter
 public class CustomException extends RuntimeException{ // 일반적으로 사용하는 예외는 거의 Runtime에 발생하므로 RuntimeException 상속
 	private final ErrorCode errorCode; // 코드,메세지 정의해둔 enum

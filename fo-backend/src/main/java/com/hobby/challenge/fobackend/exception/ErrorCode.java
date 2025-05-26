@@ -25,11 +25,18 @@ public enum ErrorCode {
     // 02: Challenge 도메인
     INVALID_CHALLENGE    ("400021", "챌린지 입력값이 올바르지 않습니다."),
     CHALLENGE_NOT_FOUND  ("404021", "해당 챌린지를 찾을 수 없습니다."),
+    PARTICIPATION_NOT_APPROVED("404022", "인증을 등록하려면 먼저 챌린지 참여 승인을 받아야 합니다."),
+    CERTIFICATION_ACCESS_DENIED("404023", "인증은 승인된 참여자만 가능합니다."),
+    CHALLENGE_UPDATE_FORBIDDEN("403024","챌린지 생성자만 수정 가능합니다"),
+    CHALLENGE_DELETE_FORBIDDEN ("403025","챌린지 생성자만 삭제 가능합니다."),
     // 이 곳에 새 필드 추가
     
     // 03: Category 도메인
     CATEGORY_NOT_FOUND   ("404031", "해당 카테고리를 찾을 수 없습니다."),
     // 이 곳에 새 필드 추가
+    
+    // 04: Category 도메인
+    DUPLICATE_CERTIFICATION("400041", "오늘은 이미 인증을 등록했습니다."),
     
     // 00: 기타/공통/서버
     INTERNAL_SERVER_ERROR("500001", "서버 오류가 발생했습니다.");

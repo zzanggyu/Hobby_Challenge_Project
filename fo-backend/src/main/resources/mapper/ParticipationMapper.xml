@@ -7,80 +7,127 @@
 	<insert id="insertParticipation"
         useGeneratedKeys="true"
         keyProperty="participationId">
-		INSERT INTO PARTICIPATION (USER_ID, 
-								   CHALLENGE_ID)
-		VALUES (#{userId}, 
-				#{challengeId})
+		INSERT INTO PARTICIPATION (USER_ID
+								,  CHALLENGE_ID
+								,  STATUS
+								,  ROLE)
+		VALUES (#{userId}
+			 ,  #{challengeId}
+			 ,  #{status}
+			 ,  #{role})
 	</insert>
 	
+	<resultMap id="RequestMap"
+	           type="com.hobby.challenge.fobackend.dto.ParticipationResponseDTO">
+	  <id column="participationId" property="participationId"/>
+	  <result column="userId" property="userId"/>
+	  <result column="nickname" property="nickname"/>
+	  <result column="challengeId" property="challengeId"/>
+	  <result column="status" property="status"/>
+	  <result column="requestDate" property="requestDate"/>
+	  <result column="participatedDate" property="participatedDate"/>
+	  <result column="role" property="role"/>
+	</resultMap>
+	
 	<!-- 특정 챌린지의 모든 요청 조회 챌린지 생성자(OWNER)용 -->
-	<select id="findRequestByChallenge" 
-			resultType="com.hobby.challenge.fobackend.dto.ParticipationResponseDTO">
-			
-			SELECT PARTICIPATION_ID
-				 , USER_ID
-				 , CHALLENGE_ID
-				 , STATUS
-				 , REQUEST_DATE
-				 , PARTICIPATED_DATE
-				 , ROLE				
-			  FROM PARTICIPATION
-			 WHERE CHALLENGE_ID = #{challengeId}
+	<select id="findRequestsByChallenge"
+	        resultMap="RequestMap">
+	  SELECT P.PARTICIPATION_ID AS participationId
+	       , P.USER_ID AS userId
+	       , U.NICKNAME AS nickname
+	       , P.CHALLENGE_ID AS challengeId
+	       , P.STATUS AS status
+	       , P.REQUEST_DATE AS requestDate
+	       , P.PARTICIPATED_DATE AS participatedDate
+	       , P.ROLE AS role
+	    FROM PARTICIPATION P
+	    JOIN USER U
+	      ON P.USER_ID = U.USER_ID
+	   WHERE P.CHALLENGE_ID = #{challengeId}
 	</select>
+	
+
 	
 	<!-- 특정 사용자의 챌린지 참여 내역 조회 -->
 	<select id="findByUser" 
 			resultType="com.hobby.challenge.fobackend.dto.ParticipationResponseDTO">
 		
-			SELECT PARTICIPATION_ID
-				 , USER_ID
-				 , CHALLENGE_ID
-				 , STATUS
-				 , REQUEST_DATE
-				 , PARTICIPATED_DATE
-				 , ROLE
-		      FROM PARTICIPATION
-		     WHERE USER_ID = #{userId}
+		SELECT PARTICIPATION_ID
+			 , USER_ID
+			 , CHALLENGE_ID
+			 , STATUS
+			 , REQUEST_DATE
+			 , PARTICIPATED_DATE
+			 , ROLE
+	      FROM PARTICIPATION
+	     WHERE USER_ID = #{userId}
 	</select>
 	
-	<!-- 승인된 참여자 조회 -->
-	<select id="findApprovedByChallenge" resultType="com.hobby.challenge.fobackend.dto.ParticipationResponseDTO">
-	  SELECT PARTICIPATION_ID
-		   , USER_ID
-		   , CHALLENGE_ID
-		   , STATUS
-		   , REQUEST_DATE
-		   , PARTICIPATED_DATE
-		   , ROLE 
-	    FROM participation
-	   WHERE CHALLENGE_ID = #{challengeId}
-	     AND STATUS = 'APPROVED'
+
+	
+	<select id="selectById" 
+			resultType="com.hobby.challenge.fobackend.dto.ParticipationResponseDTO">
+	    SELECT PARTICIPATION_ID
+		     , USER_ID
+		     , CHALLENGE_ID
+		     , STATUS
+		     , REQUEST_DATE
+		     , PARTICIPATED_DATE
+		     , ROLE
+	      FROM PARTICIPATION
+	     WHERE PARTICIPATION_ID = #{participationId}
 	</select>
 	
-	<select id="selectById" resultType="com.hobby.challenge.fobackend.dto.ParticipationResponseDTO">
-	  SELECT PARTICIPATION_ID
-		  , USER_ID
-		  , CHALLENGE_ID
-		  , STATUS
-		  , REQUEST_DATE
-		  , PARTICIPATED_DATE
-		  , ROLE
-	   FROM PARTICIPATION
-	   WHERE PARTICIPATION_ID = #{participationId}
-	</select>
+
 	
+	<resultMap id="ApprovedMap" type="com.hobby.challenge.fobackend.dto.ParticipantDTO">
+	    <id     column="userId"    property="userId"/>
+	    <result column="nickname"  property="nickname"/>
+	    <result column="imageUrl"  property="imageUrl"/>
+	</resultMap>
+	
+	<!-- 챌린지 참여 승인된 참여자 목록 -->
+	<select id="findApprovedByChallenge" 
+	 		resultMap="ApprovedMap">
+	    SELECT U.USER_ID AS userId
+	         , U.NICKNAME  AS nickname
+	         , U.IMAGE_URL AS imageUrl
+	      FROM PARTICIPATION P
+	      JOIN CHALLENGE C
+	        ON P.CHALLENGE_ID = C.CHALLENGE_ID
+	      JOIN USER U
+	        ON P.USER_ID = U.USER_ID
+	     WHERE P.CHALLENGE_ID = #{challengeId}
+	       AND P.STATUS = 'APPROVED'
+	       AND (C.IS_DELETED = 0 OR C.IS_DELETED IS NULL) <!-- 삭제되지 않은 챌린지만 -->
+	</select>
+
+	<select id="selectByUserAndChallenge"
+       	    parameterType="map"
+      	    resultType="com.hobby.challenge.fobackend.dto.ParticipationResponseDTO">
+	    SELECT PARTICIPATION_ID
+	         , USER_ID
+	         , CHALLENGE_ID
+	         , STATUS
+	         , REQUEST_DATE
+	         , PARTICIPATED_DATE
+	         , ROLE
+	  	  FROM PARTICIPATION
+	     WHERE USER_ID      = #{userId}
+	       AND CHALLENGE_ID = #{challengeId}
+	       AND STATUS       = 'APPROVED'
+	</select>
+
+
 	<!-- 참여 상태 업데이트 (승인/거절) -->
 	<update id="updateStatus">
 		UPDATE PARTICIPATION
 		   SET STATUS = #{status}
-		   	 , PARTICIPATED_DATE = WHEN #{status} = 'APPROVED'
+		   	 , PARTICIPATED_DATE = CASE WHEN #{status} = 'APPROVED'
 		   	 					   THEN CURRENT_TIMESTAMP
 		   	 					   ELSE PARTICIPATED_DATE END
 		   	 					 , MODIFIED_DATE = CURRENT_TIMESTAMP
 		 WHERE PARTICIPATION_ID = #{participationId}
 	</update>
-
-	
-
 </mapper>
          

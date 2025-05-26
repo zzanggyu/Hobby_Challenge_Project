@@ -2,11 +2,12 @@ package com.hobby.challenge.fobackend.service;
 
 import java.util.List;
 
+import com.hobby.challenge.fobackend.dto.CreateParticipationDTO;
 import com.hobby.challenge.fobackend.dto.ParticipationResponseDTO;
 
 public interface ParticipationService {
 	// 챌린지 참여 요청
-    ParticipationResponseDTO requestJoin(Integer userId, Integer challengeId);
+	CreateParticipationDTO  requestJoin(Integer userId, Integer challengeId);
     
     // 챌리지의 모든 요청 조회( OWNER 챌린지 생성자 용)
     List<ParticipationResponseDTO> getRequests(Integer challengeId);
@@ -17,6 +18,5 @@ public interface ParticipationService {
     // 참여 상태 업데이트
     ParticipationResponseDTO changeStatus(Integer participationId, String status);
     
-    // 승인된 참여자 조회
-    List<ParticipationResponseDTO> getApprovedParticipants(Integer challengeId);
+
 }

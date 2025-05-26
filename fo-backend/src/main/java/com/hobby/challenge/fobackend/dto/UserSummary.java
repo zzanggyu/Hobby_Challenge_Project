@@ -9,11 +9,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class CreateParticipationDTO {
-
-	private Integer userId; // 참여 요청자 아이디
-	private Integer challengeId;
-	private String nickname;
-	private String  status; 
-	private String  role;  
+public class UserSummary {
+    private Integer userId;
+    private String nickname;
 }

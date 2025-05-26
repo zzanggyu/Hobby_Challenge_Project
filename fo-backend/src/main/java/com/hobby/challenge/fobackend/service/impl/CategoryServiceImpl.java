@@ -27,7 +27,7 @@ public class CategoryServiceImpl implements CategoryService{
 		List<Category> categories = categoryMapper.findAll();
 		
 		return categories.stream()
-				.map(c -> new CategoryResponseDTO(c.getCategoryId(), c.getName()))
+				.map(c -> new CategoryResponseDTO(c.getCategoryId(), c.getCategoryName()))
 				.collect(Collectors.toList());
 	}
 	
@@ -40,6 +40,6 @@ public class CategoryServiceImpl implements CategoryService{
             
             throw new CustomException(ErrorCode.CATEGORY_NOT_FOUND, "카테고리 ID=" + categoryId);
         }
-        return new CategoryResponseDTO(c.getCategoryId(), c.getName());
+        return new CategoryResponseDTO(c.getCategoryId(), c.getCategoryName());
     }
 }

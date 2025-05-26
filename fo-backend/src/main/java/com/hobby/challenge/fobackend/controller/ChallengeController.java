@@ -4,16 +4,22 @@ import java.util.List;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.hobby.challenge.fobackend.dto.ChallengeDetailDTO;
 import com.hobby.challenge.fobackend.dto.ChallengeResponseDTO;
 import com.hobby.challenge.fobackend.dto.CreateChallengeRequestDTO;
 import com.hobby.challenge.fobackend.dto.PageResponseDTO;
+import com.hobby.challenge.fobackend.dto.ParticipantDTO;
+import com.hobby.challenge.fobackend.dto.UpdateChallengeRequestDTO;
 import com.hobby.challenge.fobackend.service.ChallengeService;
 
 import jakarta.validation.Valid;
@@ -56,6 +62,43 @@ public class ChallengeController {
 	    return ResponseEntity.ok(created);
 	}
 	
+    /** 참여한 챌린지 상세 조회 */
+	@GetMapping("/{id}")
+	public ChallengeDetailDTO getDetail(
+	    @PathVariable("id") Integer id,
+	    @AuthenticationPrincipal(expression="userId") Integer userId
+	) {
+	    return challengeService.getChallengeDetail(id, userId);
+	}
+	
+	/** 승인된 참여자 목록 조회 */
+	@GetMapping("/{id}/participants")
+	public List<ParticipantDTO> getParticipants(
+	    @PathVariable("id") Integer id
+	) {
+	    return challengeService.getApprovedParticipants(id);
+	}
+	
+	// 챌린지 수정  챌린지 생성자(owner)만 가능
+	@PutMapping("/{id}")
+	public ChallengeResponseDTO updateChallenge(
+	        @PathVariable("id") Integer id,
+	        @Valid @RequestBody UpdateChallengeRequestDTO dto,
+	        @AuthenticationPrincipal(expression = "userId") Integer userId) {
+	    return challengeService.updateChallenge(id, dto, userId);
+	}
 
+
+	// 챌린지 삭제 챌린지 생성자(owner)만 가능
+	@DeleteMapping("/{id}")
+	public ResponseEntity<Void> deleteChallenge(
+			 @PathVariable("id") Integer id,
+	        @AuthenticationPrincipal(expression = "userId") Integer userId) {
+
+	    challengeService.deleteChallenge(id, userId);
+	    return ResponseEntity.noContent().build();
+	}
+	
+	
 	
 }

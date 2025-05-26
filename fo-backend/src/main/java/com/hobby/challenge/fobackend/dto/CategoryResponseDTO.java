@@ -11,6 +11,6 @@ import lombok.NoArgsConstructor;
 @Builder
 public class CategoryResponseDTO {
 	private Integer categoryId; // 카테고리 아이디
-	private String name; // 카테고리 취미명
+	private String categoryName; // 카테고리 취미명
 	
 }

@@ -22,6 +22,7 @@ public class ChallengeResponseDTO {
     private LocalDate startDate;
     private LocalDate endDate;
     private LocalDateTime createdDate;
+    private Integer createdBy; 
     
     private Boolean isFavorite; // 관심 챌린지 하트 여부
     
