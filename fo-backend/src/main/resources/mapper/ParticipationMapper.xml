@@ -44,6 +44,7 @@
 	    JOIN USER U
 	      ON P.USER_ID = U.USER_ID
 	   WHERE P.CHALLENGE_ID = #{challengeId}
+	     AND P.STATUS = 'REQUESTED'
 	</select>
 	
 
@@ -81,17 +82,21 @@
 
 	
 	<resultMap id="ApprovedMap" type="com.hobby.challenge.fobackend.dto.ParticipantDTO">
-	    <id     column="userId"    property="userId"/>
-	    <result column="nickname"  property="nickname"/>
-	    <result column="imageUrl"  property="imageUrl"/>
+		<id column="participationId" property="participationId"/>
+	    <id column="userId" property="userId"/>
+	    <result column="nickname" property="nickname"/>
+	    <result column="role" property="role"/> 
+	    <result column="imageUrl" property="imageUrl"/>
 	</resultMap>
 	
 	<!-- 챌린지 참여 승인된 참여자 목록 -->
 	<select id="findApprovedByChallenge" 
 	 		resultMap="ApprovedMap">
-	    SELECT U.USER_ID AS userId
+	    SELECT P.PARTICIPATION_ID AS participationId
+	    	 , U.USER_ID AS userId
 	         , U.NICKNAME  AS nickname
 	         , U.IMAGE_URL AS imageUrl
+	         , P.ROLE AS role
 	      FROM PARTICIPATION P
 	      JOIN CHALLENGE C
 	        ON P.CHALLENGE_ID = C.CHALLENGE_ID
@@ -101,7 +106,8 @@
 	       AND P.STATUS = 'APPROVED'
 	       AND (C.IS_DELETED = 0 OR C.IS_DELETED IS NULL) <!-- 삭제되지 않은 챌린지만 -->
 	</select>
-
+	
+	<!-- 승인된 참여자 조회 -->
 	<select id="selectByUserAndChallenge"
        	    parameterType="map"
       	    resultType="com.hobby.challenge.fobackend.dto.ParticipationResponseDTO">
@@ -117,6 +123,32 @@
 	       AND CHALLENGE_ID = #{challengeId}
 	       AND STATUS       = 'APPROVED'
 	</select>
+	
+	<!-- 참여 요청을 한 번만 하게 하기위해 요청/승인상태인 참여 조회-->
+	<select id="selectByUserAndChallengeAnyStatus" 
+	        parameterType="map" 
+	        resultType="com.hobby.challenge.fobackend.dto.ParticipationResponseDTO">
+	    SELECT PARTICIPATION_ID
+		     , USER_ID
+		     , CHALLENGE_ID
+		     , STATUS
+		     , REQUEST_DATE
+		     , PARTICIPATED_DATE
+		     , ROLE
+		     , MODIFIED_DATE
+	      FROM PARTICIPATION
+	     WHERE USER_ID = #{userId}
+	       AND CHALLENGE_ID = #{challengeId}
+	       AND STATUS IN ('REQUESTED','APPROVED')
+	</select>
+	
+	<!-- 유저가 REQUESTED 또는 APPROVED 상태인 참여 건수 조회 -->
+	<select id="countActiveParticipations" resultType="int">
+	    SELECT COUNT(*)
+	      FROM PARTICIPATION
+	     WHERE USER_ID = #{userId}
+	       AND STATUS IN ('REQUESTED','APPROVED')
+    </select>
 
 
 	<!-- 참여 상태 업데이트 (승인/거절) -->
@@ -129,5 +161,14 @@
 		   	 					 , MODIFIED_DATE = CURRENT_TIMESTAMP
 		 WHERE PARTICIPATION_ID = #{participationId}
 	</update>
+	
+	<!-- 요청 취소 or 탈퇴(행 삭제) -->
+	<delete id="deleteByIdAndUser" 
+			parameterType="map">
+	    DELETE FROM PARTICIPATION
+	     WHERE PARTICIPATION_ID = #{participationId}
+	       AND USER_ID = #{userId}
+	       AND STATUS IN ('REQUESTED','APPROVED')
+	</delete>
 </mapper>
          

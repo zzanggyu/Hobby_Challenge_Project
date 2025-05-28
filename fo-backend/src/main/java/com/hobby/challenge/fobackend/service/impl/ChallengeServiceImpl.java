@@ -48,6 +48,12 @@ public class ChallengeServiceImpl implements ChallengeService{
     @Override
     @Transactional // 중간에 예외가 나면 롤백시킴
     public ChallengeResponseDTO createChallenge(CreateChallengeRequestDTO dto, Integer userId) {
+    	
+        // 1) 사용자당 하나만 생성 가능하도록 검사
+        int existing = challengeMapper.countByCreator(userId);
+        if (existing > 0) {
+            throw new CustomException(ErrorCode.CHALLENGE_LIMIT_EXCEEDED);
+        }
         // DTO → Entity 변환
     	Challenge c = Challenge.builder()
     		    .title(dto.getTitle())

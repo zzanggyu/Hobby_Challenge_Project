@@ -50,6 +50,9 @@ public interface ChallengeMapper {
     	      @Param("userId")      Integer userId
     	    );
     
+    // 챌린지 활성 개수 조회 
+    int countByCreator(@Param("userId") Integer userId);
+    
     // 챌린지 수정 챌린지 생성자용
     int updateChallenge(Challenge challenge);
 	

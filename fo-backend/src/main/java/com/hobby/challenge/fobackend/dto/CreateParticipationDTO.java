@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class CreateParticipationDTO {
-
+	private Integer participationId;
 	private Integer userId; // 참여 요청자 아이디
 	private Integer challengeId;
 	private String nickname;

@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.hobby.challenge.fobackend.mapper.CertLikeMapper">
+
+	<!-- 좋아요 추가 -->
+  <insert id="insertLike"
+  		  parameterType="map">
+  		  
+  	    INSERT
+  	      INTO CERT_LIKE (CERTIFICATION_ID
+  			           , USER_ID)
+  	    VALUES (#{certificationId}
+  			 , #{userId})
+  </insert>
+
+  <!-- 좋아요 여부 -->
+  <select id="isLiked" parameterType="map" resultType="int">
+	    SELECT COUNT(*) 
+	      FROM CERT_LIKE 
+	     WHERE CERTIFICATION_ID = #{certificationId}
+	       AND USER_ID = #{userId}
+  </select>
+     
+    	  <!-- 인증 테이블 좋아요 숫자 +1 -->
+  <update id="incrementLikeCount"
+  		  parameterType="int">
+  		    		
+		UPDATE CERTIFICATION
+		   SET LIKE_COUNT = LIKE_COUNT + 1
+		 WHERE CERTIFICATION_ID = #{certificationId}
+  </update>
+  
+ 	   <!-- 인증 테이블 좋아요 숫자 -1 -->
+  <update id="decrementLikeCount"
+  		  parameterType="int">
+  		    		
+		UPDATE CERTIFICATION
+		   SET LIKE_COUNT = LIKE_COUNT - 1
+		 WHERE CERTIFICATION_ID = #{certificationId}
+  </update>
+  
+  <!-- 좋아요 삭제 -->
+  <delete id="deleteLike"
+  		  parameterType="map">
+  		  
+  		DELETE 
+		  FROM CERT_LIKE
+		 WHERE CERTIFICATION_ID = #{certificationId}
+	       AND USER_ID = #{userId}
+  </delete>
+
+</mapper>

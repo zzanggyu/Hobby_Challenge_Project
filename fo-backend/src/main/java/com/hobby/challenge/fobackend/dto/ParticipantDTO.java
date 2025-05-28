@@ -10,7 +10,9 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ParticipantDTO {
+	private Integer participationId;
     private Integer userId;
     private String nickname;
     private String imageUrl;  // 프로필 이미지 URL
+    private String role;
 }

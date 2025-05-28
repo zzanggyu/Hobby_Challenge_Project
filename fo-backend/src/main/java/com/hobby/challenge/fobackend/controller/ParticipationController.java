@@ -5,6 +5,7 @@ import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -54,6 +55,17 @@ public class ParticipationController {
             @RequestParam("status") String status) {
     	ParticipationResponseDTO updated = participationService.changeStatus(participationId, status);
     	return ResponseEntity.ok(updated);
+    }
+    
+    // 챌린지 참여 요청 취소 또는 챌린지 탈퇴
+    @DeleteMapping("/challenges/{challengeId}/participations/{participationId}")
+    public ResponseEntity<Void> cancelParticipation(
+            @PathVariable("challengeId") Integer challengeId,
+            @PathVariable("participationId") Integer participationId,
+            @AuthenticationPrincipal(expression = "userId") Integer userId) {
+        // service 쪽에서 userId 검증 포함해서 처리
+        participationService.cancelParticipation(userId, participationId);
+        return ResponseEntity.noContent().build();
     }
 
 

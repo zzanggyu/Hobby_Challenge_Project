@@ -8,6 +8,8 @@ import org.springframework.stereotype.Service;
 import com.hobby.challenge.fobackend.dto.CreateParticipationDTO;
 import com.hobby.challenge.fobackend.dto.ParticipationResponseDTO;
 import com.hobby.challenge.fobackend.entity.Challenge;
+import com.hobby.challenge.fobackend.exception.CustomException;
+import com.hobby.challenge.fobackend.exception.ErrorCode;
 import com.hobby.challenge.fobackend.mapper.ChallengeMapper;
 import com.hobby.challenge.fobackend.mapper.ParticipationMapper;
 import com.hobby.challenge.fobackend.service.ParticipationService;
@@ -24,10 +26,22 @@ public class ParticipationServiceImpl implements ParticipationService {
 	@Override
 	public CreateParticipationDTO requestJoin(Integer userId, Integer challengeId) {
 		Challenge c = challengeMapper.selectById(challengeId, null);
+	    
+	    // 다른 챌린지에 이미 REQUESTED/APPROVED 상태인지 확인
+		int active = participationMapper.countActiveParticipations(userId);
+		if (active > 0) {
+		    throw new CustomException(
+		        ErrorCode.PARTICIPATION_LIMIT_EXCEEDED, 
+		        "이미 다른 챌린지에 참여 요청 또는 참여 중입니다.\n먼저 기존 요청을 취소하거나 챌린지에서 탈퇴해주세요."
+		    );
+		}
+	    
 	    // 이미 요청/승인된 내역이 있는지 확인
-	    if (participationMapper.selectByUserAndChallenge(userId, challengeId) != null) {
-	        throw new IllegalStateException("이미 이 챌린지에 참여하셨습니다.");
-	    }
+	    ParticipationResponseDTO existing = participationMapper
+            .selectByUserAndChallengeAnyStatus(userId, challengeId);
+        if (existing != null) {
+            throw new IllegalStateException("이미 참여 요청 중이거나 참여하신 챌린지가 있습니다.");
+        }
 	    // 진행 중인 챌린지인 경우에만 참여가능 종료됐거나 삭제됐거나 확인
 	    if (c.getEndDate().isBefore(LocalDate.now()) || Boolean.TRUE.equals(c.getIsDeleted())) {
 	        throw new IllegalStateException("종료되었거나 삭제된 챌린지에는 참여할 수 없습니다.");
@@ -64,7 +78,17 @@ public class ParticipationServiceImpl implements ParticipationService {
         participationMapper.updateStatus(participationId, status);
         return participationMapper.selectById(participationId);
 	}
-
-
+	
+	// 참여 취소 요청 취소
+    @Override
+    public void cancelParticipation(Integer userId, Integer participationId) {
+        int deleted = participationMapper.deleteByIdAndUser(participationId, userId);
+        if (deleted == 0) {
+            throw new CustomException(
+                ErrorCode.PARTICIPATION_CANCEL_FORBIDDEN,
+                "취소 권한이 없거나 이미 취소된 요청입니다."
+            );
+        }
+    }
 
 }

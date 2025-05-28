@@ -31,8 +31,9 @@ public class SecurityConfig {
           	session.sessionCreationPolicy(SessionCreationPolicy.STATELESS) // 세션 사용 안함 무상태(stateless)정책 설정 JWT로 인증 처리
           )
           .authorizeHttpRequests(auth -> auth // URL별 접근 권한 설정
-            // 회원가입·로그인 관련 엔드포인트는 모두 허용
-        		  
+        	 //  OPTIONS 프리플라이트 요청은 인증 없이 통과시킴
+    		.requestMatchers(HttpMethod.OPTIONS, "/api/**").permitAll()
+    		 // 회원가입·로그인 관련 엔드포인트는 모두 허용
             .requestMatchers("/api/auth/**").permitAll() // 로그인 리프레시 로그아웃 모두 허용
             .requestMatchers("/api/categories").permitAll()
             .requestMatchers("/api/rankings/**").permitAll()

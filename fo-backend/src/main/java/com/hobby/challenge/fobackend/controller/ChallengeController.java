@@ -32,6 +32,15 @@ public class ChallengeController {
 	
 	private final ChallengeService challengeService;
 	
+	// 챌린지 생성
+	@PostMapping
+	public ResponseEntity<ChallengeResponseDTO> createChallenge(@Valid @RequestBody CreateChallengeRequestDTO dto,
+			@AuthenticationPrincipal(expression = "userId") Integer userId){ // JWT에서 세팅한 사용자 아이디 꺼냄
+			
+	    ChallengeResponseDTO created = challengeService.createChallenge(dto, userId);
+	    return ResponseEntity.ok(created);
+	}
+	
 	// 30개씩 페이징한 챌린지 목록 조회
 	@GetMapping 
 	public PageResponseDTO<ChallengeResponseDTO> listAll(
@@ -53,15 +62,7 @@ public class ChallengeController {
 //        return ResponseEntity.ok(list);
 //    }
 	
-	// 챌린지 생성
-	@PostMapping
-	public ResponseEntity<ChallengeResponseDTO> createChallenge(@Valid @RequestBody CreateChallengeRequestDTO dto,
-			@AuthenticationPrincipal(expression = "userId") Integer userId){ // JWT에서 세팅한 사용자 아이디 꺼냄
-			
-	    ChallengeResponseDTO created = challengeService.createChallenge(dto, userId);
-	    return ResponseEntity.ok(created);
-	}
-	
+
     /** 참여한 챌린지 상세 조회 */
 	@GetMapping("/{id}")
 	public ChallengeDetailDTO getDetail(

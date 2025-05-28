@@ -18,5 +18,7 @@ public interface ParticipationService {
     // 참여 상태 업데이트
     ParticipationResponseDTO changeStatus(Integer participationId, String status);
     
+    // 참여 요청 취소 및 챌린지 탈퇴
+    void cancelParticipation(Integer userId, Integer participationId);
 
 }
