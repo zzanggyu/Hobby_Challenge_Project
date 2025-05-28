@@ -225,22 +225,32 @@ async function onSubmit() {
 				: null,
 			categoryId: categoryId.value,
 		})
-		router.push({ name: 'challenge-list' })
+		alert('챌린지가 성공적으로 생성되었습니다!')
+		router.push({ name: 'my-challenges' })
 	} catch (e) {
-		const res = e.response?.data
-		if (res?.detail) {
-			// "{description=10자이상 입력하세요}" → "10자이상 입력하세요"
-			// "{title=제목은 반드시 입력해야 합니다., description=10자이상 입력하세요}"
-			// → "제목은 반드시 입력해야 합니다.\n10자이상 입력하세요"
-			const msg = res.detail
-				.replace(/[{}]/g, '') // 중괄호 제거
-				.split(', ') // 콤마(,)로 나눔
-				.map((s) => s.split('=').pop()) // = 뒤 메시지 부분만 추출
-				.join('\n') // 줄바꿈으로 합치기
-			alert(msg)
-			return
+		if (axios.isAxiosError(e)) {
+			const { status, data } = e.response || {}
+			// 사용자당 챌린지 1개 제한 에러
+			if (status === 400 && data.errorCode === 'CHALLENGE_LIMIT_EXCEEDED') {
+				alert(
+					'하나의 챌린지만 생성할 수 있습니다.\n이미 생성하신 챌린지가 있습니다.'
+				)
+			}
+			// validation 에러(detail 필드 있는 경우)
+			else if (status === 400 && data.detail) {
+				const msg = data.detail
+					.replace(/[{}]/g, '')
+					.split(', ')
+					.map((s) => s.split('=').pop())
+					.join('\n')
+				alert(msg)
+			} else {
+				handleApiError(e)
+			}
+		} else {
+			console.error(e)
+			alert('알 수 없는 오류가 발생했습니다.')
 		}
-		alert(res?.message || '생성 실패!')
 	}
 }
 </script>

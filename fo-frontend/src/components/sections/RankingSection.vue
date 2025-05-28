@@ -3,7 +3,7 @@
 		<!-- 헤더 + 기간 선택 -->
 		<div class="d-flex justify-space-between align-center mb-4">
 			<h2 class="text-h4 font-weight-bold">
-				{{ titleMap[period] }} 인기 랭킹 🔥
+				{{ titleMap[period] }} 인증 랭킹 🔥
 			</h2>
 			<v-select
 				v-model="period"

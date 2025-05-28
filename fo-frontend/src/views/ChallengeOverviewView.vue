@@ -9,12 +9,14 @@
 		>
 			<div class="d-flex flex-column flex-sm-row justify-space-between">
 				<div>
-					<h2 class="text-h6 text-sm-h5 font-weight-bold mb-1">
-						{{ challenge.title }}
+					<h2 class="text-h6 text-sm-h5 font-weight-bold mb-1 text-white">
+						{{ detail.title }}
 					</h2>
-					<div class="text-body-2 text-sm-body-1 opacity-75">
-						기간 : {{ formatDate(challenge.startDate) }} &nbsp;–&nbsp;{{
-							formatDate(challenge.endDate)
+					<div
+						class="text-body-2 text-sm-body-1 text-white text-opacity-75"
+					>
+						기간 : {{ formatDate(detail.startDate) }} &nbsp;~&nbsp;{{
+							formatDate(detail.endDate)
 						}}
 					</div>
 				</div>
@@ -51,20 +53,49 @@
 			align-tabs="center"
 			slider-color="primary"
 			class="mb-4"
+			@update:modelValue="onTabChange"
 		>
 			<v-tab v-if="canWrite" value="0">인증등록</v-tab>
-			<v-tab value="1">인증내역</v-tab>
+			<v-tab value="1">전체 인증내역</v-tab>
 			<v-tab v-if="isOwner" value="2">참여자</v-tab>
 			<v-tab v-if="isOwner" value="3">요청</v-tab>
+			<v-tab value="4">내 인증내역</v-tab>
 		</v-tabs>
+
+		<div class="mb-4" v-if="myStatus === 'APPROVED' && !isOwner">
+			<v-btn color="error" @click="onLeave" :loading="leaving">
+				챌린지 탈퇴하기
+			</v-btn>
+		</div>
 
 		<!--  탭 내용  -->
 		<!-- 탭 콘텐츠 - 조건부 렌더링 -->
 		<div class="mt-4">
-			<ChallengeCertificationForm v-if="tab === '0' && canWrite" />
-			<ChallengeCertificationView v-if="tab === '1'" />
+			<!-- 0: 인증등록 -->
+			<ChallengeCertificationForm
+				v-if="tab === '0' && canWrite"
+				@submitted="onSubmitted"
+			/>
+			<v-alert type="info" v-if="!joined">
+				참여 요청이 승인될 때까지 인증내역을 볼 수 없습니다.
+			</v-alert>
+			<!-- 1: 전체 인증내역 보기 -->
+			<ChallengeCertificationList
+				v-if="tab === '1'"
+				:challengeId="id"
+				:refreshKey="refreshKey"
+			/>
+			<!-- 참여자 보기기 -->
 			<ChallengeParticipantsView v-if="tab === '2' && isOwner" />
+			<!-- 참여 요청자 보기 -->
 			<ChallengeRequestsView v-if="tab === '3' && isOwner" />
+			<!-- 내 인증 내역만 -->
+			<ChallengeCertificationList
+				v-if="tab === '4'"
+				:challengeId="id"
+				:refreshKey="refreshKey"
+				only-mine
+			/>
 		</div>
 	</v-container>
 </template>
@@ -73,51 +104,141 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import {
-	getChallengeById,
 	deleteChallenge,
 	getChallengeDetail,
 } from '@/services/challengeService'
 import { useAuthStore } from '@/stores/auth'
-import ChallengeCertificationView from './ChallengeCertificationView.vue'
 import ChallengeParticipantsView from './ChallengeParticipantsView.vue'
 import ChallengeRequestsView from './ChallengeRequestsView.vue'
-import ChallengeCertificationForm from './ChallengeCertificationForm.vue'
+import ChallengeCertificationForm from '../components/challenge/ChallengeCertificationForm.vue'
+import ChallengeCertificationList from '@/components/challenge/ChallengeCertificationList.vue'
+
+// 참여 상태 확인·취소 API
+import {
+	getMyParticipations,
+	cancelParticipation,
+} from '@/services/participationService'
 
 const route = useRoute()
 const router = useRouter()
 const auth = useAuthStore()
 const id = Number(route.params.id)
 
-const challenge = ref({})
+// const challenge = ref({})
 const detail = ref({})
 const tab = ref('1')
+// 이 키를 바꿔 주면 CertificationView 가 re-fetch 합니다
+const refreshKey = ref(0)
 
-async function load() {
-	detail.value = await getChallengeDetail(id)
-	challenge.value = detail.value
+// 탈퇴 상태 관리
+const myStatus = ref('NONE') // NONE, REQUESTED, APPROVED
+const myParticipationId = ref(null)
+const leaving = ref(false)
+
+// 날짜 포맷
+function formatDate(d) {
+	return d ? new Date(d).toLocaleDateString() : '-'
 }
 
-// 데이터 로드드
-onMounted(load)
+// 챌린지 상세 로드
+async function loadDetail() {
+	detail.value = await getChallengeDetail(id)
+}
+
+// 내 참여 상태 로드
+async function loadMyStatus() {
+	const userId = auth.user?.userId
+	if (!userId) {
+		myStatus.value = 'NONE'
+		return
+	}
+	const list = await getMyParticipations(userId)
+	const me = list.find((p) => p.challengeId === id && p.status !== 'REJECTED')
+	if (me) {
+		myStatus.value = me.status
+		myParticipationId.value = me.participationId
+	} else {
+		myStatus.value = 'NONE'
+		myParticipationId.value = null
+	}
+}
+
+// 데이터 로드
+onMounted(loadDetail)
 
 // 권한
 const isOwner = computed(() => auth.user.userId === detail.value.createdBy)
-const canWrite = computed(() => isOwner.value || detail.value.joined === true) // 인증등록 가능
+// 챌린지 참여 상태
+const joined = computed(() => detail.value.joined)
+// 챌린지 기간 내인지
+const inPeriod = computed(() => {
+	if (!detail.value.startDate || !detail.value.endDate) return false
+	const now = new Date()
+	const start = new Date(detail.value.startDate)
+	const end = new Date(detail.value.endDate)
+	return now >= start && now <= end
+})
 
-// 수정
+// 최종 인증 등록 가능 여부
+const canWrite = computed(
+	() => (isOwner.value || joined.value) && inPeriod.value
+)
+
+// 챌린지 수정
 function onEdit() {
 	router.push({ name: 'challenge-edit', params: { id } })
 }
-
-// 삭제
+// 챌린지 삭제
 async function onDelete() {
-	if (confirm('정말 삭제하시겠습니까?')) {
-		await deleteChallenge(id)
+	if (!confirm('정말 삭제하시겠습니까?')) return
+	await deleteChallenge(id)
+	router.push({ name: 'challenge-list' })
+}
+function onTabChange(newTab) {
+	if (newTab === '0' && !canWrite.value) {
+		alert('승인된 참여자만 인증을 등록할 수 있습니다.')
+		return
+	}
+	if (newTab === '1' && !joined.value) {
+		alert('승인된 참여자만 전체 인증내역을 볼 수 있습니다.')
+		return
+	}
+	tab.value = newTab
+}
+
+// 폼에서 제출이 완료되면 호출됩니다
+function onSubmitted() {
+	// 인증내역 탭으로 전환
+	tab.value = '1'
+	// CertificationView 가 다시 데이터를 가져오도록 키를 변경
+	refreshKey.value++
+	// 권한(joined) 업데이트
+	loadDetail()
+	loadMyStatus()
+}
+
+// 챌린지 탈퇴하기
+async function onLeave() {
+	if (!confirm('정말 챌린지에서 탈퇴하시겠습니까?')) return
+	leaving.value = true
+	try {
+		await cancelParticipation(id, myParticipationId.value)
+		alert('챌린지에서 탈퇴되었습니다.')
+		// 다시 로딩
+		await Promise.all([loadDetail(), loadMyStatus()])
+		tab.value = '1'
+		refreshKey.value++
+	} catch (e) {
+		console.error(e)
+		alert('탈퇴 중 오류가 발생했습니다.')
+	} finally {
+		leaving.value = false
 		router.push({ name: 'challenge-list' })
 	}
 }
 
-function formatDate(d) {
-	return d ? new Date(d).toLocaleDateString() : '-'
-}
+// 컴포넌트 마운트 시 초기 로드
+onMounted(async () => {
+	await Promise.all([loadDetail(), loadMyStatus()])
+})
 </script>

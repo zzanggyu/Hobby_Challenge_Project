@@ -14,8 +14,11 @@ import MyChallengesView from '@/views/MyChallengesView.vue'
 import ChallengeOverviewView from '@/views/ChallengeOverviewView.vue'
 import ChallengeParticipantsView from '@/views/ChallengeParticipantsView.vue'
 import ChallengeRequestsView from '@/views/ChallengeRequestsView.vue'
-import ChallengeCertificationView from '@/views/ChallengeCertificationView.vue'
+// import ChallengeCertificationView from '@/views/ChallengeCertificationView.vue'
 import ChallengeEditView from '../views/ChallengeEditView.vue'
+import ChallengeCertificationForm from '../components/challenge/ChallengeCertificationForm.vue'
+import ChallengeCertificationList from '../components/challenge/ChallengeCertificationList.vue'
+import CertificationDetailDialog from '@/components/challenge/CertificationDetailDialog.vue'
 
 // import ChallengesView from '@/views/ChallengesView.vue'
 // import MyPageView    from '@/views/MyPageView.vue'
@@ -63,29 +66,44 @@ const routes = [
 	// 챌린지 상세
 	{
 		path: '/challenges/:id',
+		name: 'challenge-overview',
 		component: ChallengeOverviewView,
+		meta: { requiresAuth: true },
 		children: [
+			{
+				path: '/challenges/:id/certifications/:certificationId',
+				name: 'cert-detail',
+				component: CertificationDetailDialog,
+				props: true,
+			},
 			// 챌린지 참여자 화면
-			{
-				path: 'participants',
-				name: 'challenge-participants',
-				component: ChallengeParticipantsView,
-				meta: { requiresAuth: true },
-			},
-			// 챌린지 참여 요청 목록
-			{
-				path: 'requests',
-				name: 'challenge-requests',
-				component: ChallengeRequestsView,
-				meta: { requiresAuth: true },
-			},
-			// 챌린지 생성자 화면
-			{
-				path: '',
-				name: 'challenge-overview',
-				component: ChallengeCertificationView,
-				meta: { requiresAuth: true },
-			},
+			// {
+			// 	path: 'participants',
+			// 	name: 'challenge-participants',
+			// 	component: ChallengeParticipantsView,
+			// 	meta: { requiresAuth: true },
+			// },
+			// // 챌린지 참여 요청 목록
+			// {
+			// 	path: 'requests',
+			// 	name: 'challenge-requests',
+			// 	component: ChallengeRequestsView,
+			// 	meta: { requiresAuth: true },
+			// },
+			// // 인증 등록
+			// {
+			// 	path: 'certform',
+			// 	name: 'challenge-certform',
+			// 	component: ChallengeCertificationForm,
+			// 	meta: { requiresAuth: true },
+			// },
+			// // 인증 등록
+			// {
+			// 	path: 'certlist',
+			// 	name: 'challenge-certlist',
+			// 	component: ChallengeCertificationList,
+			// 	meta: { requiresAuth: true },
+			// },
 		],
 	},
 	// 챌린지 수정

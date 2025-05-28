@@ -32,10 +32,10 @@ api.interceptors.response.use(
 			}
 		}
 		//  하루 1회 인증 , 중복 불가
-		if (data?.errorCode === '400041') {
-			alert(data.message) // 또는 Pinia Snackbar
-			return Promise.resolve() // 여기서 소모해버림
-		}
+		// if (data?.errorCode === '400041') {
+		// 	alert(data.message) // 또는 Pinia Snackbar
+		// 	return Promise.resolve() // 여기서 소모해버림
+		// }
 		return Promise.reject(err)
 	}
 )

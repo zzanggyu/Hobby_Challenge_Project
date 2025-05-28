@@ -1,15 +1,29 @@
 <template>
 	<v-container>
 		<h2 class="text-h4 mb-4">내 챌린지</h2>
-		<v-row dense>
+		<v-row align="stretch">
 			<v-col
 				v-for="p in participations"
 				:key="p.participationId"
 				cols="12"
 				md="6"
 				lg="4"
+				class="d-flex"
 			>
-				<v-card outlined height="300">
+				<v-card
+					elevation="4"
+					height="310"
+					width="100%"
+					rounded="xl"
+					:tile="false"
+					variant="outlined"
+					class="d-flex flex-column"
+					outlined
+					:style="{
+						border: '1px solid rgba(230, 30, 30, 0.3)',
+						backgroundColor: '#f9fdfc',
+					}"
+				>
 					<v-card-title class="justify-space-between">
 						{{ p.challenge.title }}
 						<v-chip small color="green" v-if="p.status === 'APPROVED'"

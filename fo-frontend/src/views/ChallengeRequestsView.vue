@@ -54,8 +54,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
-import { getRequests, changeStatus } from '@/services/challengeService'
-
+import { getRequests, changeStatus } from '@/services/participationService'
 const route = useRoute()
 const id = Number(route.params.id)
 const requests = ref([])

@@ -1,6 +1,6 @@
 <template>
 	<v-container>
-		<!-- 1. 검색 & 카테고리 필터 바 -->
+		<!-- 검색 & 카테고리 필터 바 -->
 		<v-row class="mb-4" align="center">
 			<v-col cols="12" md="6">
 				<v-text-field
@@ -12,9 +12,9 @@
 			</v-col>
 			<v-col cols="12" md="4">
 				<v-select
-					v-model.number="selectedCategory"
+					v-model="categoryId"
 					:items="categories"
-					item-title="name"
+					item-title="categoryName"
 					item-value="categoryId"
 					label="카테고리 필터"
 					clearable
@@ -33,7 +33,7 @@
 			</v-col>
 		</v-row>
 
-		<!-- 2. 챌린지 카드 리스트 -->
+		<!-- 챌린지 카드 리스트 -->
 		<v-row align="stretch">
 			<v-col
 				v-for="c in filteredChallenges"
@@ -86,7 +86,6 @@
 					</v-card-subtitle>
 
 					<v-card-actions class="mt-auto">
-						<!-- 카테고리  -->
 						<v-chip small outlined color="green-accent-4">
 							{{ categoryName(c.categoryId) }}
 						</v-chip>
@@ -94,16 +93,30 @@
 							>by: {{ c.creatorNickname }}</small
 						>
 						<v-spacer />
-						<!-- 참여하기 버튼 -->
-						<v-btn
-							small
-							:color="c.requested ? 'black' : 'secondary'"
-							:loading="isJoining && targetId === c.challengeId"
-							:disabled="c.requested || isJoining"
-							@click="onJoin(c.challengeId)"
-						>
-							{{ c.requested ? '요청중' : '참여하기' }}
-						</v-btn>
+
+						<!-- 토글 버튼 -->
+						<template v-if="!c.requested">
+							<v-btn
+								small
+								color="secondary"
+								:loading="isJoining && targetId === c.challengeId"
+								:disabled="isJoining"
+								@click="onJoin(c.challengeId)"
+							>
+								참여하기
+							</v-btn>
+						</template>
+						<template v-else>
+							<v-btn
+								small
+								color="error"
+								:loading="isJoining && targetId === c.challengeId"
+								:disabled="isJoining"
+								@click="onCancel(c.challengeId)"
+							>
+								요청 취소
+							</v-btn>
+						</template>
 					</v-card-actions>
 				</v-card>
 			</v-col>
@@ -126,8 +139,11 @@ import {
 	getChallenges,
 	joinChallenge,
 	toggleFavoriteChallenge,
-	getMyParticipations,
 } from '@/services/challengeService'
+import {
+	getMyParticipations,
+	cancelParticipation,
+} from '@/services/participationService'
 import { getCategories } from '@/services/categoryService'
 import { useRouter } from 'vue-router'
 import axios from 'axios'
@@ -138,6 +154,7 @@ const authStore = useAuthStore()
 
 const router = useRouter()
 
+// 참여 상태
 const isJoining = ref(false)
 const targetId = ref(null)
 
@@ -154,8 +171,10 @@ const categories = ref([]) // 카테고리 목록
 const search = ref('')
 const selectedCategory = ref(null)
 
+// 내 참여내역을 id → participationId 매핑해서 저장
 // 내 참여 요청/승인된 챌린지 ID 저장용 Set 선언
 const myParts = ref(new Set())
+const myPartsMap = ref({})
 
 // 날짜 포맷터
 function formatDate(date) {
@@ -167,7 +186,7 @@ function categoryName(id) {
 	// console.log('categoryName got id:', id)
 	// console.log('categories list:', categories.value)
 	const cat = categories.value.find((x) => x.categoryId === id)
-	return cat ? cat.name : '알 수 없음'
+	return cat ? cat.categoryName : '알 수 없음'
 }
 
 // 내 참여내역 불러와 myParts Set을 채우기
@@ -179,9 +198,17 @@ async function fetchMyParticipations() {
 		const list = Array.isArray(res)
 			? res
 			: res.items || res.participations || []
-		myParts.value = new Set(
-			list.filter((p) => p.status !== 'REJECTED').map((p) => p.challengeId)
-		)
+		// Set 과 Map 동시 채우기
+		const set = new Set()
+		const idMap = {}
+		list.forEach((p) => {
+			if (p.status !== 'REJECTED') {
+				set.add(p.challengeId)
+				idMap[p.challengeId] = p.participationId
+			}
+		})
+		myParts.value = set
+		myPartsMap.value = idMap
 	} catch (err) {
 		handleApiError(err)
 	}
@@ -255,6 +282,12 @@ async function onJoin(challengeId) {
 		return router.push({ name: 'login' })
 	}
 
+	// 이미 요청/승인 중이면 API 호출 전단에서 막기
+	if (myParts.value.has(challengeId)) {
+		alert('이미 참여 요청 중인 챌린지가 있거나 참여 중인 챌린지가 있습니다.')
+		return
+	}
+
 	isJoining.value = true
 	targetId.value = challengeId
 	try {
@@ -270,6 +303,55 @@ async function onJoin(challengeId) {
 
 		alert('참여 요청이 완료되었습니다!')
 	} catch (err) {
+		if (axios.isAxiosError(err)) {
+			const code = err.response?.data?.errorCode
+			if (code === 'PARTICIPATION_LIMIT_EXCEEDED') {
+				// 이미 다른 챌린지에 요청 중일 때
+				alert(
+					'이미 다른 챌린지에 참여 요청/참여 중입니다.\n먼저 기존 요청을 취소하거나 탈퇴해주세요.'
+				)
+			} else if (err.response?.status === 400) {
+				// 그 외 BadRequest
+				alert(err.response.data.message || '참여 요청에 실패했습니다.')
+			} else {
+				handleApiError(err)
+			}
+		} else {
+			console.error(err)
+			alert('알 수 없는 오류가 발생했습니다.')
+		}
+	} finally {
+		isJoining.value = false
+		targetId.value = null
+	}
+}
+
+// 참여 요청 취소
+async function onCancel(challengeId) {
+	if (!confirm('참여 요청을 정말 취소하시겠습니까?')) return
+	const participationId = myPartsMap.value[challengeId]
+	if (!participationId) {
+		alert('취소할 요청을 찾을 수 없습니다.')
+		return
+	}
+	isJoining.value = true
+	targetId.value = challengeId
+	try {
+		await cancelParticipation(challengeId, participationId)
+		await fetchChallenges() // 다시 목록 갱신
+		alert('요청이 취소되었습니다.')
+	} catch (err) {
+		if (axios.isAxiosError(err)) {
+			const code = err.response?.status
+			if (code === 404) {
+				alert('요청을 찾을 수 없습니다.')
+				return
+			}
+			if (code === 403) {
+				alert('취소 권한이 없습니다.')
+				return
+			}
+		}
 		handleApiError(err)
 	} finally {
 		isJoining.value = false

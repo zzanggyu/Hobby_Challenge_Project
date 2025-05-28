@@ -10,12 +10,6 @@ export const getChallenges = (page = 1, size = 30, search, categoryId) =>
 		.get('/challenges', { params: { page, size, search, categoryId } })
 		.then((res) => res.data)
 
-// 챌린지 참여
-export const joinChallenge = (userId, challengeId) =>
-	api
-		.post(`/challenges/${challengeId}/participations`, { userId })
-		.then((res) => res.data)
-
 // 챌린지 하트 누르면 관심 챌린지에 저장 또 누르면 제거
 export async function toggleFavoriteChallenge(challengeId) {
 	await api.post(`/challenges/favorite/${challengeId}`)
@@ -35,27 +29,9 @@ export const getMyChallenges = (userId) =>
 export const getChallengeById = (id) =>
 	api.get(`/challenges/${id}`).then((res) => res.data)
 
-// ▶︎ 상세 조회 (참여 여부·즐겨찾기 여부 포함)
+// 상세 조회 (참여 여부/즐겨찾기 여부 포함)
 export const getChallengeDetail = (id) =>
 	api.get(`/challenges/${id}`).then((res) => res.data)
-
-// 승인된 참여자
-export const getApprovedParticipants = (challengeId) =>
-	api.get(`/challenges/${challengeId}/participants`).then((res) => res.data)
-
-// 참여 요청 목록
-export const getRequests = (challengeId) =>
-	api.get(`/challenges/${challengeId}/participations`).then((res) => res.data)
-
-// 참여 상태 변경 (승인/거절)
-export const changeStatus = (participationId, status) =>
-	api
-		.patch(`/participations/${participationId}/status`, { status })
-		.then((res) => res.data)
-
-// 내 참여내역 조회
-export const getMyParticipations = (userId) =>
-	api.get(`/users/${userId}/participations`).then((res) => res.data)
 
 // 카테고리 전체 목록
 export const getCategories = () =>
