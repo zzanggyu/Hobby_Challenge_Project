@@ -48,10 +48,8 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useAuthStore } from '@/stores/auth'
-import {
-	getMyParticipations,
-	getChallengeById,
-} from '@/services/challengeService'
+import { getChallengeById } from '@/services/challengeService'
+import { getMyParticipations } from '@/services/participationService'
 import { useRouter } from 'vue-router'
 
 const auth = useAuthStore()

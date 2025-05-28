@@ -137,11 +137,11 @@
 import { ref, onMounted, computed, watch } from 'vue'
 import {
 	getChallenges,
-	joinChallenge,
 	toggleFavoriteChallenge,
 } from '@/services/challengeService'
 import {
 	getMyParticipations,
+	joinChallenge,
 	cancelParticipation,
 } from '@/services/participationService'
 import { getCategories } from '@/services/categoryService'

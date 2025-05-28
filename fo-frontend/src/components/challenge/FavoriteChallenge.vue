@@ -94,9 +94,11 @@ import axios from 'axios'
 import {
 	getFavoriteChallenges,
 	toggleFavoriteChallenge,
-	joinChallenge,
-	getMyParticipations,
 } from '@/services/challengeService'
+import {
+	getMyParticipations,
+	joinChallenge,
+} from '@/services/participationService'
 import { getCategories } from '@/services/categoryService'
 import { useAuthStore } from '@/stores/auth'
 import { handleApiError } from '@/utils/apiError'
