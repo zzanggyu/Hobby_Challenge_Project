@@ -40,7 +40,7 @@
 					<!-- 방출 버튼 -->
 					<template #append>
 						<v-btn
-							v-if="p.role !== 'OWNER'"
+							v-if="myRole === 'OWNER' && p.role !== 'OWNER'"
 							icon
 							size="20"
 							color="error"
@@ -63,7 +63,8 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { useAuthStore } from '@/stores/auth'
+import { ref, onMounted, computed } from 'vue'
 import { useRoute } from 'vue-router'
 import {
 	getApprovedParticipants,
@@ -75,10 +76,17 @@ const id = Number(route.params.id)
 const participants = ref([])
 const snackbar = ref(false)
 const loading = ref(false)
+const auth = useAuthStore()
 
+// participants에 OWNER가 누구인지도 있다고 가정
+const myUserId = auth.user.userId
+const myParticipant = computed(() =>
+	participants.value.find((p) => p.userId === myUserId)
+)
 async function load() {
 	participants.value = await getApprovedParticipants(id)
 }
+const myRole = computed(() => myParticipant.value?.role || 'MEMBER')
 
 async function expel(pid) {
 	// 1) 브라우저 기본 confirm

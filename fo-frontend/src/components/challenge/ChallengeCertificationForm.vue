@@ -113,20 +113,33 @@ async function save() {
 
 	busy.value = true
 	try {
-		const fd = new FormData()
-		fd.append('comment', comment.value)
-		if (file.value) {
-			fd.append('file', file.value)
+		// FormData 생성
+		const formData = new FormData()
+		formData.append('comment', comment.value)
+
+		// 이미지는 필수
+		if (!file.value) {
+			alert('인증 사진을 선택해주세요.')
+			return
 		}
 
-		await submitCertification(challengeId, fd)
+		formData.append('image', file.value)
+
+		// 서버로 직접 전송
+		await submitCertification(challengeId, formData)
+
 		emit('submitted')
 		reset() // 성공 시 폼 초기화
+		alert('인증이 등록되었습니다!')
 	} catch (err) {
 		const res = err.response?.data
 
 		if (res?.errorCode === '400041') {
 			alert(res.message || '오늘은 이미 인증을 등록했습니다.')
+		} else if (res?.errorCode === '400049') {
+			alert('파일 크기는 최대 5MB까지 가능합니다.')
+		} else if (res?.errorCode === '400040') {
+			alert('JPG, PNG, GIF 형식만 지원합니다.')
 		} else {
 			console.error(err)
 			alert(res?.message || '인증 등록 중 오류가 발생했습니다.')

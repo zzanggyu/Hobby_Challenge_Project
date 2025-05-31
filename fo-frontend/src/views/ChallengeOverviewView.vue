@@ -33,7 +33,7 @@
 		>
 			<v-tab v-if="canWrite" value="0">인증등록</v-tab>
 			<v-tab value="1">전체 인증내역</v-tab>
-			<v-tab v-if="isOwner" value="2">참여자</v-tab>
+			<v-tab value="2">참여자</v-tab>
 			<v-tab v-if="isOwner" value="3">요청</v-tab>
 			<v-tab value="4">내 인증내역</v-tab>
 		</v-tabs>
@@ -61,8 +61,12 @@
 				:challengeId="id"
 				:refreshKey="refreshKey"
 			/>
-			<!-- 참여자 보기기 -->
-			<ChallengeParticipantsView v-if="tab === '2' && isOwner" />
+			<!-- 참여자 보기 -->
+			<ChallengeParticipantsView
+				v-if="tab === '2'"
+				:challengeId="id"
+				:refreshKey="refreshKey"
+			/>
 			<!-- 참여 요청자 보기 -->
 			<ChallengeRequestsView v-if="tab === '3' && isOwner" />
 			<!-- 내 인증 내역만 -->

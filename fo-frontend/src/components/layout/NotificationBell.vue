@@ -12,9 +12,8 @@
 
 		<v-list style="max-height: 400px" class="py-0">
 			<v-list-subheader class="d-flex justify-space-between align-center">
-				<span>알림</span>
 				<v-btn text size="small" color="primary" @click="goToAll">
-					모두 보기
+					알림 모두 보기
 				</v-btn>
 			</v-list-subheader>
 

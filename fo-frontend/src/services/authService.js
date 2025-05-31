@@ -34,8 +34,8 @@ export function verifySignupCode(email, code) {
 }
 
 /* 아이디 찾기 */
-export function findId(email) {
-	return api.post('/auth/find-id', { email })
+export function findId(username, email) {
+	return api.post('/auth/find-id', { username, email })
 }
 
 // 리프레시 토큰

@@ -4,18 +4,27 @@ import api from '@/api'
 export const getCertifications = (challengeId) =>
 	api.get(`/challenges/${challengeId}/certifications`).then((res) => res.data)
 
-// 인증 등록 (이미지 파일 직접 보내지 않고, imageKey+comment만 JSON으로!)
-export function submitCertification(challengeId, payload) {
-	// payload: { imageKey, comment }
-	return api.post(`/challenges/${challengeId}/certifications`, payload)
+// 인증 등록 - FormData로 직접 전송
+export function submitCertification(challengeId, formData) {
+	return api.post(`/challenges/${challengeId}/certifications`, formData, {
+		headers: {
+			'Content-Type': 'multipart/form-data',
+		},
+	})
 }
 
-// 서버에서 S3 업로드용 프리사인드 URL 발급 받기
-export function getPresignedUrl(challengeId, filename, contentType) {
+// 인증 수정도 FormData로
+export function updateCertification(challengeId, certificationId, formData) {
 	return api
-		.get(`/challenges/${challengeId}/certifications/presign`, {
-			params: { filename, contentType },
-		})
+		.put(
+			`/challenges/${challengeId}/certifications/${certificationId}`,
+			formData,
+			{
+				headers: {
+					'Content-Type': 'multipart/form-data',
+				},
+			}
+		)
 		.then((res) => res.data)
 }
 
@@ -24,16 +33,6 @@ export function deleteCertification(challengeId, certificationId) {
 	return api.delete(
 		`/challenges/${challengeId}/certifications/${certificationId}`
 	)
-}
-
-// 인증 수정
-// 인증 본문문 수정
-export function updateCertification(challengeId, certificationId, comment) {
-	return api
-		.put(`/challenges/${challengeId}/certifications/${certificationId}`, {
-			comment,
-		})
-		.then((res) => res.data)
 }
 
 // 인증 상세 가져오기

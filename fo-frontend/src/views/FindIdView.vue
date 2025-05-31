@@ -86,7 +86,7 @@ async function onFindId() {
 	message.value = ''
 
 	try {
-		const res = await findId(email.value, username.value)
+		const res = await findId(username.value, email.value)
 		message.value = `당신의 아이디는 "${res.data.loginId}" 입니다.`
 		form.value.reset()
 	} catch (e) {
