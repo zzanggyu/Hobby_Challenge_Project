@@ -17,8 +17,8 @@
 			 , POINTS AS points <!-- 포인트 컬럼 -->
 			 , LEVEL AS level <!-- 레벨 컬럼 -->
 			 , CREATED_DATE AS createdDate <!-- 생성일(가입일) 커럼 -->
-			FROM USER <!-- 사용자 테이블 -->
-			WHERE LOGIN_ID = #{loginId}
+		  FROM USER <!-- 사용자 테이블 -->
+		 WHERE LOGIN_ID = #{loginId}
 	</select>
 	
 	<select id="findByEmailAndUsername" resultType="User">
@@ -33,6 +33,7 @@
 			 , POINTS AS points <!-- 포인트 컬럼 -->
 			 , LEVEL AS level <!-- 레벨 컬럼 -->
 			 , CREATED_DATE AS createdDate <!-- 생성일(가입일) 커럼 --> 
+		  FROM USER <!-- 사용자 테이블 -->
 		 WHERE EMAIL = #{email} AND USERNAME = #{username}
 	</select>
 	

@@ -39,7 +39,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor // final 필드를 인자로 받는 생성자 자동 생성
 public class AuthServiceImpl implements AuthService{
 	private final AuthenticationManager authManager;
-	private final AuthMapper userMapper;
+	private final AuthMapper authMapper;
 	private final PasswordEncoder passwordEncoder; // Bcrypt 암호화 인코더 (수정)
 	private final JwtTokenProvider tokenProvider;
 	private final LoginHistoryService loginHistoryService;
@@ -59,11 +59,11 @@ public class AuthServiceImpl implements AuthService{
 	// 회원가입
 	public SignupResponseDTO register(SignupRequestDTO dto) {
 		// 아이디 중복 확인
-		if(userMapper.findByLoginId(dto.getLoginId()) != null) {
+		if(authMapper.findByLoginId(dto.getLoginId()) != null) {
 			throw new CustomException(ErrorCode.DUPLICATE_LOGINID);
 		}
 		// 이메일 중복 확인
-		if (userMapper.findByEmail(dto.getEmail()) != null) {
+		if (authMapper.findByEmail(dto.getEmail()) != null) {
 		    throw new CustomException(ErrorCode.DUPLICATE_EMAIL);
 		}
         //  닉네임 기본값 처리
@@ -88,7 +88,7 @@ public class AuthServiceImpl implements AuthService{
 				.birthDate(birth)   
 				.build();
 		
-		userMapper.insertUser(user); // DB에 저장
+		authMapper.insertUser(user); // DB에 저장
 		
 
         SignupResponseDTO response = SignupResponseDTO.builder()
@@ -138,7 +138,7 @@ public class AuthServiceImpl implements AuthService{
                 .toString());
 
         // 3. 로그인 이력
-        User user = userMapper.findByLoginId(dto.getLoginId());
+        User user = authMapper.findByLoginId(dto.getLoginId());
         loginHistoryService.recordLoginHistory(
             LoginHistoryDTO.builder()
                 .userId(user.getUserId())
@@ -208,7 +208,7 @@ public class AuthServiceImpl implements AuthService{
     // 로그인한 사용자의 정보 가져오기
     @Override
     public UserResponseDTO getCurrentUser(String loginId) {
-        User user = userMapper.findByLoginId(loginId);
+        User user = authMapper.findByLoginId(loginId);
         if (user == null) {
             throw new CustomException(ErrorCode.USER_NOT_FOUND);
         }
@@ -245,7 +245,7 @@ public class AuthServiceImpl implements AuthService{
     // 비밀번호 재설정 인증
     @Override
     public void sendPasswordResetCode(String loginId, String email) {
-        User u = userMapper.findByLoginId(loginId);
+        User u = authMapper.findByLoginId(loginId);
         if (u == null || !u.getEmail().equals(email)) {
             throw new CustomException(ErrorCode.INVALID_CREDENTIALS);
         }
@@ -264,13 +264,13 @@ public class AuthServiceImpl implements AuthService{
     @Transactional
     public void resetPassword(String loginId, String newPassword) {
         String enc = passwordEncoder.encode(newPassword);
-        userMapper.updatePassword(loginId, enc);
+        authMapper.updatePassword(loginId, enc);
     }
     
     // 아이디 찾기
     @Override
     public String findLoginIdByEmail(String email, String username) {
-        User u = userMapper.findByEmailAndUsername(email, username);
+        User u = authMapper.findByEmailAndUsername(email, username);
         if (u == null) {
             throw new CustomException(ErrorCode.USER_NOT_FOUND, 
                 "입력하신 정보와 일치하는 계정을 찾을 수 없습니다.");

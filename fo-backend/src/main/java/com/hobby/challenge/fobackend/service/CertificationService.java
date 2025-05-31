@@ -17,7 +17,7 @@ public interface CertificationService {
 	CertificationDTO submitCertification(
 	    Integer userId,
 	    Integer challengeId,
-	    String imageKey,
+	    MultipartFile image,
 	    String comment
  );
     
@@ -29,9 +29,11 @@ public interface CertificationService {
             Integer userId, 
             Integer challengeId,
             Integer certificationId,
-            String imageKey, 
+            MultipartFile image,
             String comment);
     
     // 인증 삭제
     void deleteCertification(Integer userId, Integer challengeId, Integer certificationId);
+    
+    
 }

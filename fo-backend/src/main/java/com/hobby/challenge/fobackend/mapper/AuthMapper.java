@@ -12,6 +12,8 @@ public interface AuthMapper {
 	User findByEmailAndUsername(@Param("email") String email, 
             @Param("username") String username);
 	
+	User findByLoginId(@Param("loginId") String loginId);
+	
 	// 이메일 중복 체크
 	User findByEmail(@Param("email") String email);
 	

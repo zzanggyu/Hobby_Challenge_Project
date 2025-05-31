@@ -135,7 +135,7 @@ public class AuthController {
     @PostMapping("/find-id")
     public ResponseEntity<FindIdResponseDTO> findId(
             @Valid @RequestBody FindIdRequestDTO dto) {
-        String loginId = authService.findLoginIdByEmail(dto.getEmail());
+        String loginId = authService.findLoginIdByEmail(dto.getEmail(), dto.getUsername());
         return ResponseEntity.ok(new FindIdResponseDTO(loginId));
     }
 	
