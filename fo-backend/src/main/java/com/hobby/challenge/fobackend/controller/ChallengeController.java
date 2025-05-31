@@ -72,13 +72,13 @@ public class ChallengeController {
 	    return challengeService.getChallengeDetail(id, userId);
 	}
 	
-	/** 승인된 참여자 목록 조회 */
-	@GetMapping("/{id}/participants")
-	public List<ParticipantDTO> getParticipants(
-	    @PathVariable("id") Integer id
-	) {
-	    return challengeService.getApprovedParticipants(id);
-	}
+//	/** 승인된 참여자 목록 조회 */
+//	@GetMapping("/{id}/participants")
+//	public List<ParticipantDTO> getParticipants(
+//	    @PathVariable("id") Integer id
+//	) {
+//	    return challengeService.getApprovedParticipants(id);
+//	}
 	
 	// 챌린지 수정  챌린지 생성자(owner)만 가능
 	@PutMapping("/{id}")

@@ -41,13 +41,16 @@ public enum ErrorCode {
     CERTIFICATION_DELETE_FORBIDDEN ("400043", "본인의 인증만 삭제할 수 있습니다."),
     CERTIFICATION_UPDATE_FORBIDDEN("400044", "본인의 인증만 수정할 수 있습니다."),
     NOT_FOUND_CERTIFICATION("404045", "인증을 찾을 수 없습니다."),
-    CHALLENGE_LIMIT_EXCEEDED("400026", "챌린지는 하나만 생성할 수 있습니다."),
+    CHALLENGE_LIMIT_EXCEEDED("400046", "챌린지는 하나만 생성할 수 있습니다."),
+    FILE_UPLOAD_FAILED("400047", "이미지 업로드에 실패하였습니다."),
+    FILE_REQUIRED("400048", "이미지 파일은 필수입니다."),
+    FILE_TOO_LARGE("400049", "파일 크기는 최대 5MB까지 가능합니다."),
+    INVALID_FILE_TYPE("400040", "지원하지 않는 이미지 형식입니다. JPG/PNG/GIF만 업로드하세요."),
     
     // 05: CertComment
     COMMENT_UPDATE_FORBIDDEN ("404051", "본인의 댓글만 수정할 수 있습니다."),
     COMMENT_DELETE_FORBIDDEN ("404051", "본인의 댓글만 삭제할 수 있습니다."),
-    
-    
+
     // 06: Participation
     PARTICIPATION_CANCEL_FORBIDDEN ("404061", "권한이 없거나 이미 취소된 요청입니다."),
     PARTICIPATION_LIMIT_EXCEEDED("404062","이미 다른 챌린지에 참여 요청 또는 참여 중입니다.\n먼저 기존 요청을 취소하거나 챌린지에서 탈퇴해주세요."),

@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.hobby.challenge.fobackend.dto.CreateParticipationDTO;
+import com.hobby.challenge.fobackend.dto.ParticipantDTO;
 import com.hobby.challenge.fobackend.dto.ParticipationResponseDTO;
 import com.hobby.challenge.fobackend.service.ParticipationService;
 
@@ -56,6 +57,15 @@ public class ParticipationController {
     	ParticipationResponseDTO updated = participationService.changeStatus(participationId, status);
     	return ResponseEntity.ok(updated);
     }
+    
+    //  승인된 참여자 조회 (새로 추가)
+    @GetMapping("/challenges/{challengeId}/participants")
+    public ResponseEntity<List<ParticipantDTO>> getApprovedParticipants(
+            @PathVariable("challengeId") Integer challengeId) {
+        List<ParticipantDTO> approved = participationService.getApprovedParticipants(challengeId);
+        return ResponseEntity.ok(approved);
+    }
+    
     
     // 챌린지 참여 요청 취소 또는 챌린지 탈퇴
     @DeleteMapping("/challenges/{challengeId}/participations/{participationId}")

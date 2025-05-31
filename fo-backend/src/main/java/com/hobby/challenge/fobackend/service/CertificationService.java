@@ -14,20 +14,23 @@ public interface CertificationService {
     CertificationDTO getCertificationDetail(Integer userId, Integer certificationId);
     
     // 챌린지에 인증 등록
-    CertificationDTO submitCertification(
-    		Integer userId,
-            Integer challengeId,
-            MultipartFile file, // 이미지
-            String comment);
+	CertificationDTO submitCertification(
+	    Integer userId,
+	    Integer challengeId,
+	    String imageKey,
+	    String comment
+ );
     
     // 좋아요 토글
     boolean toggleLike(int certificationId, int userId);
     
     // 인증 수정
     CertificationDTO updateCertification(
-            Integer userId, Integer challengeId,
+            Integer userId, 
+            Integer challengeId,
             Integer certificationId,
-            MultipartFile file, String comment);
+            String imageKey, 
+            String comment);
     
     // 인증 삭제
     void deleteCertification(Integer userId, Integer challengeId, Integer certificationId);

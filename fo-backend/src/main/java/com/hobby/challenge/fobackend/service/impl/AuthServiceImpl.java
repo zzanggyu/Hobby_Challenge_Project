@@ -269,12 +269,14 @@ public class AuthServiceImpl implements AuthService{
     
     // 아이디 찾기
     @Override
-    public String findLoginIdByEmail(String email) {
-        User u = userMapper.findByEmail(email);
+    public String findLoginIdByEmail(String email, String username) {
+        User u = userMapper.findByEmailAndUsername(email, username);
         if (u == null) {
-            throw new CustomException(ErrorCode.USER_NOT_FOUND);
+            throw new CustomException(ErrorCode.USER_NOT_FOUND, 
+                "입력하신 정보와 일치하는 계정을 찾을 수 없습니다.");
         }
         return u.getLoginId();
     }
+
 
 }

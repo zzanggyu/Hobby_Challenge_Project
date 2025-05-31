@@ -30,7 +30,7 @@ public interface AuthService {
     void verifySignupEmailCode(String email, String code);
 
     // 아이디 찾기
-    String findLoginIdByEmail(String email);
+    String findLoginIdByEmail(String email, String username);
     
     // 비밀번호 재설정 인증
     void sendPasswordResetCode(String loginId, String email);

@@ -6,6 +6,7 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 
 import com.hobby.challenge.fobackend.dto.CreateParticipationDTO;
+import com.hobby.challenge.fobackend.dto.ParticipantDTO;
 import com.hobby.challenge.fobackend.dto.ParticipationResponseDTO;
 import com.hobby.challenge.fobackend.entity.Challenge;
 import com.hobby.challenge.fobackend.exception.CustomException;
@@ -59,6 +60,11 @@ public class ParticipationServiceImpl implements ParticipationService {
         return dto;
     }
 	
+	// 승인된 참여자 반환
+    @Override
+    public List<ParticipantDTO> getApprovedParticipants(Integer challengeId) {
+        return participationMapper.findApprovedByChallenge(challengeId);
+    }
 
 	// 챌리지의 모든 요청 조회( OWNER 챌린지 생성자 용)
 	@Override

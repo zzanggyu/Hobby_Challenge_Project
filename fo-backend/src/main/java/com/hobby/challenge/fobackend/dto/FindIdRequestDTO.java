@@ -14,4 +14,7 @@ import lombok.NoArgsConstructor;
 public class FindIdRequestDTO {
     @NotBlank @Email
     private String email;
+    
+    @NotBlank(message = "이름을 입력하세요.")
+    private String username; // 이름 필드 추가
 }

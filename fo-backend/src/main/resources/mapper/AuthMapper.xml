@@ -21,6 +21,21 @@
 			WHERE LOGIN_ID = #{loginId}
 	</select>
 	
+	<select id="findByEmailAndUsername" resultType="User">
+		SELECT USER_ID AS userId
+			 , LOGIN_ID AS loginId <!-- 로그인 아이디 컬럼 -->
+			 , USERNAME AS username <!-- 이름(본명) 컬럼 -->
+			 , PASSWORD AS password <!-- 비밀번호 컬럼 -->
+			 , EMAIL AS email <!-- 이메일 컬럼 -->
+			 , NICKNAME AS nickname <!--  닉네임(별명) 컬럼 -->
+			 , BIRTH_DATE AS birthDate <!--생년월일 컬럼 -->
+			 , ROLE AS role <!-- 역할(member, owner, admin) 컬럼 -->
+			 , POINTS AS points <!-- 포인트 컬럼 -->
+			 , LEVEL AS level <!-- 레벨 컬럼 -->
+			 , CREATED_DATE AS createdDate <!-- 생성일(가입일) 커럼 --> 
+		 WHERE EMAIL = #{email} AND USERNAME = #{username}
+	</select>
+	
 	<!-- 이메일 중복 체크 -->
 	<select id="findByEmail" resultType="com.hobby.challenge.fobackend.entity.User">
 		SELECT USER_ID AS userId

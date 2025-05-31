@@ -90,7 +90,7 @@
 	  		  
 	  	    UPDATE CERTIFICATION
 	  	       SET COMMENT = #{comment}
-	  	         , IMAGE_URL = #{image_url}
+	  	         , IMAGE_URL = #{imageUrl}
 	  	         , MODIFIED_DATE = NOW()
 	  	     WHERE CERTIFICATION_ID = #{certificationId}
 	  	       AND CREATED_BY = #{userId}

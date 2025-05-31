@@ -2,15 +2,13 @@ package com.hobby.challenge.fobackend.service.impl;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.NoSuchElementException;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
 
 import com.hobby.challenge.fobackend.dto.CertificationDTO;
 import com.hobby.challenge.fobackend.dto.ParticipationResponseDTO;
@@ -35,36 +33,33 @@ public class CertificationServiceImpl implements CertificationService {
 	private final ChallengeMapper challengeMapper;
 	private final CertLikeMapper certLikeMapper;
 	// TODO: 실제 이미지 파일 저장을 위한 서비스 (S3) 사용
+	@Value("${aws.s3.bucket-name}")
+	private String bucketName;
+	@Value("${aws.s3.region}")
+	private String region;
 	
-	// 인증내역 가져오기
-	@Override
-	public List<CertificationDTO> getCertifications(Integer userId, Integer challengeId) {
-		// 승인된 참여자인지 확인
-	    if (participationMapper.selectByUserAndChallenge(userId, challengeId) == null) {
-	    	throw new CustomException(ErrorCode.CERTIFICATION_ACCESS_DENIED, "인증은 승인된 참여자만 가능합니다.");
-	    }
-		return certificationMapper.findByChallenge(challengeId);
-	}
+//	private final S3StorageService s3StorageService;
+	// 허용할 확장자/타입
+//	private static final List<String> ALLOWED_TYPES = List.of("image/jpeg", "image/png", "image/gif");
+//	private static final long MAX_SIZE = 5 * 1024 * 1024; // 5MB 파일 크기 제한
 	
-	// 인증 상세 가져오기
-    @Override
-    public CertificationDTO getCertificationDetail(Integer userId, Integer certificationId) {
-        CertificationDTO dto = certificationMapper.selectById(certificationId);
-        if (dto==null) throw new CustomException(ErrorCode.NOT_FOUND_CERTIFICATION, "인증을 찾을 수 없습니다.");
-        // 접근 권한 추가 검증 가능
-        return dto;
-    }
-
 	// 인증 등록하기
 	@Override
 	@Transactional
 	public CertificationDTO submitCertification(
 			Integer userId,
 			Integer challengeId, 
-			MultipartFile file, 
-			String comment
-			
-	) {
+			String imageKey,
+			String comment) {
+	
+		// 1) imageKey 유효성 검증
+		if (imageKey == null || imageKey.isBlank()) {
+		  throw new CustomException(
+		    ErrorCode.FILE_REQUIRED,
+		    "이미지 키가 전달되지 않았습니다."
+		  );
+		}
+
 	    ParticipationResponseDTO participation =
 	            participationMapper.selectByUserAndChallenge(userId, challengeId);
 	    	// 참여 승인 확인
@@ -86,18 +81,24 @@ public class CertificationServiceImpl implements CertificationService {
        }
 
         //  챌린지-사용자 참여 ID 조회
-        Integer participationId = participationMapper
+       Integer participationId = participationMapper
             .selectByUserAndChallenge(userId, challengeId)
             .getParticipationId();
 		
-        // 파일 저장 → URL 생성 (예: S3 업로드, 로컬 저장)
-        // String fileUrl = storage.store(file);
-        String imageUrl = "/uploads/" + file.getOriginalFilename();
+
+       
+       // imageKey → S3 퍼블릭 URL 조합
+       String url = String.format(
+    		     "https://%s.s3.%s.amazonaws.com/%s",
+    		     bucketName,
+    		     region,
+    		     imageKey
+    		   );
 
         // 엔티티 생성 & DB에 저장
         Certification cert = Certification.builder()
         		.participationId(participationId)
-                .imageUrl(imageUrl)           // 엔티티 필드에 맞춰서
+        		.imageUrl(url)          // 엔티티 필드에 맞춰서
                 .comment(comment)
                 .likeCount(0)
                 .createdBy(userId)            // 엔티티 필드명(createdBy)
@@ -114,11 +115,34 @@ public class CertificationServiceImpl implements CertificationService {
         }
 
         // DTO로 변환해서 반환
-        return certificationMapper.findByChallenge(challengeId).stream()
+        return certificationMapper
+        		.findByChallenge(challengeId)
+        		.stream()
                 .filter(d -> d.getCertificationId().equals(cert.getCertificationId()))
                 .findFirst()
                 .orElseThrow();
 	}
+	
+	// 인증내역 가져오기
+	@Override
+	public List<CertificationDTO> getCertifications(Integer userId, Integer challengeId) {
+		// 승인된 참여자인지 확인
+	    if (participationMapper.selectByUserAndChallenge(userId, challengeId) == null) {
+	    	throw new CustomException(ErrorCode.CERTIFICATION_ACCESS_DENIED, "인증은 승인된 참여자만 가능합니다.");
+	    }
+		return certificationMapper.findByChallenge(challengeId);
+	}
+	
+	// 인증 상세 가져오기
+    @Override
+    public CertificationDTO getCertificationDetail(Integer userId, Integer certificationId) {
+        CertificationDTO dto = certificationMapper.selectById(certificationId);
+        if (dto==null) throw new CustomException(ErrorCode.NOT_FOUND_CERTIFICATION, "인증을 찾을 수 없습니다.");
+        // 접근 권한 추가 검증 가능
+        return dto;
+    }
+
+
 	
 	// 좋아요 토글
 	@Override
@@ -145,24 +169,49 @@ public class CertificationServiceImpl implements CertificationService {
 
 	
 	// 인증 수정
-	@Override
+    @Override
     @Transactional
     public CertificationDTO updateCertification(
-        Integer userId, Integer challengeId,
+        Integer userId,
+        Integer challengeId,
         Integer certificationId,
-        MultipartFile file, String comment
+        String imageKey,
+        String comment
     ) {
+        // 1) 기존 인증 조회 및 본인 여부 검증
         CertificationDTO old = getCertificationDetail(userId, certificationId);
-        if (!old.getUserId().equals(userId))
-            throw new CustomException(ErrorCode.CERTIFICATION_UPDATE_FORBIDDEN,
-                "본인의 인증만 수정 가능합니다.");
-        String img = file!=null
-            ? "/uploads/"+file.getOriginalFilename()
-            : old.getImageUrl();
+        if (!old.getUserId().equals(userId)) {
+            throw new CustomException(
+                ErrorCode.CERTIFICATION_UPDATE_FORBIDDEN,
+                "본인의 인증만 수정 가능합니다."
+            );
+        }
+
+        // 2) 이미지 URL 결정
+        //    - imageKey가 있으면 새로운 URL 조합
+        //    - 없으면 기존 URL 유지
+        String url = old.getImageUrl();
+        if (imageKey != null && !imageKey.isBlank()) {
+            url = String.format(
+                "https://%s.s3.%s.amazonaws.com/%s",
+                bucketName,
+                region,
+                imageKey
+            );
+        }
+
+        // 3) DB 업데이트
         certificationMapper.updateCertification(
-            certificationId, userId, comment, img);
+            certificationId,
+            userId,
+            comment,
+            url
+        );
+
+        // 4) 수정된 데이터 다시 조회해 반환
         return getCertificationDetail(userId, certificationId);
     }
+
 	
 	// 인증 삭제
 	@Override

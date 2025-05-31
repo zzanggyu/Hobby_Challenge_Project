@@ -9,7 +9,8 @@ import com.hobby.challenge.fobackend.entity.User;
 public interface AuthMapper {
 	// 로그인 아이디로 조회 로그인 시 정보 가져오기
 	// SELECT * FROM USER WHERE LOGIN_ID = #{loginId}
-	User findByLoginId(@Param("loginId") String loginId);
+	User findByEmailAndUsername(@Param("email") String email, 
+            @Param("username") String username);
 	
 	// 이메일 중복 체크
 	User findByEmail(@Param("email") String email);
