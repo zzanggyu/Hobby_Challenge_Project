@@ -2,16 +2,15 @@
 	<v-container>
 		<v-row class="mb-4" align="center">
 			<v-col cols="12" class="d-flex align-center justify-space-between">
-				<h2 class="text-h5 mb-0">관심 챌린지</h2>
-				<!-- 챌린지 목록으로 돌아가기 버튼 -->
-				<v-btn
-					color="secondary"
-					variant="tonal"
-					size="large"
-					@click="goToList"
-					class="ml-auto"
-				>
-					<v-icon left>mdi-arrow-left</v-icon>
+				<!-- 새 헤더 스타일 -->
+				<div class="title d-flex align-center">
+					<v-icon class="mr-3" size="36" color="white"
+						>mdi-star-outline</v-icon
+					>
+					<span class="title-text">관심 챌린지</span>
+				</div>
+				<v-btn size="large" class="favorite-btn" @click="goToList">
+					<v-icon left>mdi-format-list-bulleted</v-icon>
 					챌린지 목록으로
 				</v-btn>
 			</v-col>
@@ -30,6 +29,8 @@
 						height="310"
 						width="100%"
 						rounded="xl"
+						outlined
+						class="d-flex flex-column"
 						:style="{
 							border: '1px solid rgba(165, 243, 212, 0.6)',
 							backgroundColor: '#f9fdfc',
@@ -60,25 +61,50 @@
 							{{ formatDate(fav.challenge.endDate) }}
 						</v-card-subtitle>
 
-						<v-card-actions class="mt-auto">
+						<v-card-actions class="mt-auto px-4">
 							<v-chip small outlined color="green-accent-4">
 								{{ categoryName(fav.challenge.categoryId) }}
 							</v-chip>
-							<small class="grey--text text--darken-1">
-								by: {{ fav.challenge.creatorNickname }}
-							</small>
-							<v-spacer />
-							<v-btn
-								small
-								:color="fav.requested ? 'black' : 'secondary'"
-								:loading="
-									isJoining && targetId === fav.challenge.challengeId
-								"
-								:disabled="fav.requested || isJoining"
-								@click="onJoin(fav.challenge.challengeId)"
+							<small class="grey--text text--darken-1"
+								>by: {{ fav.challenge.creatorNickname }}</small
 							>
-								{{ fav.requested ? '요청중' : '참여하기' }}
-							</v-btn>
+
+							<v-spacer />
+
+							<!--  승인됨 -->
+							<template v-if="fav.approved">
+								<v-btn small color="success" disabled>승인됨</v-btn>
+							</template>
+							<!-- 요청 중 -->
+							<template v-else-if="fav.requested">
+								<v-btn
+									small
+									color="error"
+									:loading="
+										isJoining &&
+										targetId === fav.challenge.challengeId
+									"
+									:disabled="isJoining"
+									@click="onCancel(fav.challenge.challengeId)"
+								>
+									요청 취소
+								</v-btn>
+							</template>
+							<!--  아직 요청 안 함 -->
+							<template v-else>
+								<v-btn
+									small
+									color="secondary"
+									:loading="
+										isJoining &&
+										targetId === fav.challenge.challengeId
+									"
+									:disabled="isJoining"
+									@click="onJoin(fav.challenge.challengeId)"
+								>
+									참여하기
+								</v-btn>
+							</template>
 						</v-card-actions>
 					</v-card>
 				</v-col>
@@ -98,6 +124,7 @@ import {
 import {
 	getMyParticipations,
 	joinChallenge,
+	cancelParticipation,
 } from '@/services/participationService'
 import { getCategories } from '@/services/categoryService'
 import { useAuthStore } from '@/stores/auth'
@@ -111,6 +138,7 @@ const categories = ref([])
 
 // 내 참여 요청/승인된 챌린지 ID 저장용 Set 선언
 const myParts = ref(new Set())
+const myPartsMap = ref({})
 
 const isLoadingFavorites = ref(false)
 const isToggling = ref(false)
@@ -119,7 +147,7 @@ const targetId = ref(null)
 
 function categoryName(id) {
 	const cat = categories.value.find((x) => x.categoryId === id)
-	return cat ? cat.name : '알 수 없음'
+	return cat ? cat.categoryName : '알 수 없음'
 }
 
 // 날짜 포맷
@@ -138,27 +166,43 @@ async function fetchMyParticipations() {
 	if (!userId) return
 	try {
 		const res = await getMyParticipations(userId)
-		console.log('fetchMyParticipations response:', res)
 		const list = Array.isArray(res)
 			? res
 			: res.items || res.participations || []
-		myParts.value = new Set(
-			list.filter((p) => p.status !== 'REJECTED').map((p) => p.challengeId)
-		)
+		const set = new Set()
+		const map = {}
+		list.forEach((p) => {
+			if (p.status !== 'REJECTED') {
+				set.add(p.challengeId)
+				map[p.challengeId] = {
+					id: p.participationId,
+					status: p.status,
+				}
+			}
+		})
+		myParts.value = set
+		myPartsMap.value = map
 	} catch (err) {
 		handleApiError(err)
 	}
 }
 
-// 내 관심 챌린지 목록 가져오기
 async function fetchFavorites() {
 	isLoadingFavorites.value = true
 	try {
+		// 내 참여 상태 동기화
+		await fetchMyParticipations()
+		// 즐겨찾기 목록 가져오기
 		const data = await getFavoriteChallenges()
-		favorites.value = data.map((item) => ({
-			...item,
-			requested: myParts.value.has(item.challenge.challengeId),
-		}))
+		favorites.value = data.map((item) => {
+			const cid = item.challenge.challengeId
+			const part = myPartsMap.value[cid] || {}
+			return {
+				...item,
+				requested: part.status === 'REQUESTED',
+				approved: part.status === 'APPROVED', // ← 여기 추가
+			}
+		})
 	} catch (err) {
 		handleApiError(err)
 	} finally {
@@ -171,9 +215,8 @@ async function onToggleFavorite(challengeId) {
 	isToggling.value = true
 	try {
 		await toggleFavoriteChallenge(challengeId)
-		favorites.value = favorites.value.filter(
-			(f) => f.challenge.challengeId !== challengeId
-		)
+		// 즐겨찾기 토글 후 최신 목록으로 동기화
+		await fetchFavorites()
 	} catch (err) {
 		handleApiError(err)
 	} finally {
@@ -206,6 +249,31 @@ async function onJoin(challengeId) {
 	}
 }
 
+// 참여 취소
+async function onCancel(challengeId) {
+	if (!confirm('참여 요청을 정말 취소하시겠습니까?')) return
+	const participationId = myPartsMap.value[challengeId]
+	if (!participationId) {
+		alert('취소할 요청을 찾을 수 없습니다.')
+		return
+	}
+
+	isJoining.value = true
+	targetId.value = challengeId
+	try {
+		await cancelParticipation(challengeId, participationId)
+		// 취소 후 다시 내 요청 목록과 favorites 갱신
+		await fetchMyParticipations()
+		await fetchFavorites()
+		alert('참여 요청이 취소되었습니다.')
+	} catch (e) {
+		handleApiError(e)
+	} finally {
+		isJoining.value = false
+		targetId.value = null
+	}
+}
+
 // 카테고리 이름 매핑
 async function loadCategories() {
 	try {
@@ -223,4 +291,49 @@ onMounted(async () => {
 })
 </script>
 
-<style scoped></style>
+<style scoped>
+.title {
+	width: 100%;
+	max-width: 1400px;
+	margin-bottom: 1rem;
+	padding: 0.75rem 1.5rem;
+	background: linear-gradient(to right, #66bb6a 0%, #43a047 50%, #2e7d32 100%);
+	border-radius: 8px;
+	box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+	color: white;
+}
+
+.title-text {
+	font-size: 1.75rem;
+	font-weight: 600;
+	text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.favorite-btn {
+	background: linear-gradient(135deg, #81c784 0%, #4caf50 100%);
+	color: white !important;
+	font-weight: 600;
+	border-radius: 24px;
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+	text-transform: none;
+	padding: 0.6rem 1.6rem;
+	transition: transform 0.2s, box-shadow 0.2s;
+}
+.favorite-btn:hover {
+	transform: translateY(-2px);
+	box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+}
+.favorite-btn .v-icon {
+	font-size: 1.2rem;
+	margin-right: 0.5rem;
+}
+
+@media (max-width: 600px) {
+	.title-text {
+		font-size: 1.25rem;
+	}
+	.title {
+		padding: 0.5rem 1rem;
+	}
+}
+</style>

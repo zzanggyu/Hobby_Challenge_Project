@@ -137,6 +137,7 @@
 					format="yyyy.MM.dd"
 					value-format="yyyy.MM.dd"
 					:mask="['####.##.##']"
+					:max="maxDate"
 					locale="ko"
 					label="생년월일"
 					placeholder="예) 2000.01.01"
@@ -211,6 +212,12 @@ const timer = ref(0) // 남은 재요청 대기 시간(초)
 let timerId = null // setInterval ID
 const emailCode = ref('') // 사용자가 입력한 코드
 const emailVerified = ref(false) // 인증 성공 여부
+
+const pad = (n) => n.toString().padStart(2, '0')
+const today = new Date()
+const maxDate = `${today.getFullYear()}.${pad(today.getMonth() + 1)}.${pad(
+	today.getDate()
+)}`
 
 const credentials = reactive({
 	loginid: '',
@@ -363,7 +370,16 @@ async function onSubmit() {
 		// 잠시 대기 후 이동
 		setTimeout(() => router.push('/login'), 1000)
 	} catch (e) {
-		error.value = e.response?.data?.message || '회원가입에 실패했습니다.'
+		const msg = e.response?.data?.message || '회원가입에 실패했습니다.'
+		// 이미 가입된 이메일/아이디인 경우
+		if (msg.includes('아이디') || msg.includes('이메일')) {
+			if (confirm(`${msg}\n로그인 페이지로 이동할까요?`)) {
+				router.push('/login')
+				return
+			}
+		}
+
+		error.value = msg
 		console.error('signup failed response:', e.response?.data)
 	} finally {
 		loading.value = false

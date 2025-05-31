@@ -113,6 +113,8 @@ const editedContent = ref('')
 const editing = ref(false)
 const editedComment = ref('')
 
+const emit = defineEmits(['close', 'deleted'])
+
 // 데이터 로딩
 async function load() {
 	cert.value = await fetchCertDetail(props.challengeId, props.certificationId)
@@ -170,8 +172,8 @@ async function removeComment(commentId) {
 async function onDelete() {
 	if (!confirm('정말 삭제하시겠습니까?')) return
 	await deleteCertification(props.challengeId, props.certificationId)
-	$emit('deleted', props.certificationId)
-	$emit('close')
+	emit('deleted', props.certificationId)
+	emit('close')
 }
 
 // 인증 편집

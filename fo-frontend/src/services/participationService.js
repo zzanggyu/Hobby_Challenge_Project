@@ -26,6 +26,4 @@ export const getMyParticipations = (userId) =>
 
 // 요청 취소/탈퇴
 export const cancelParticipation = (challengeId, participationId) =>
-	api
-		.delete(`/challenges/${challengeId}/participations/${participationId}`)
-		.then((res) => res.data)
+	api.delete(`/challenges/${challengeId}/participations/${participationId}`)

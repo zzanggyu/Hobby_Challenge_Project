@@ -1,5 +1,26 @@
 <template>
 	<v-container>
+		<!-- ① 타이틀 영역 -->
+		<!-- ① 타이틀 + 내 관심 버튼 한 줄에 -->
+		<v-row class="mb-4" align="center">
+			<v-col cols="12" class="d-flex align-center justify-space-between">
+				<div class="title d-flex align-center">
+					<v-icon class="mr-3" size="36" color="white"
+						>mdi-format-list-bulleted</v-icon
+					>
+					<span class="title-text">챌린지 목록</span>
+				</div>
+				<v-btn
+					size="large"
+					class="favorite-btn"
+					@click="goToFavoriteChallenge"
+				>
+					<v-icon left>mdi-star-outline</v-icon>
+					내 관심 챌린지
+				</v-btn>
+			</v-col>
+		</v-row>
+
 		<!-- 검색 & 카테고리 필터 바 -->
 		<v-row class="mb-4" align="center">
 			<v-col cols="12" md="6">
@@ -12,7 +33,7 @@
 			</v-col>
 			<v-col cols="12" md="4">
 				<v-select
-					v-model="categoryId"
+					v-model="selectedCategory"
 					:items="categories"
 					item-title="categoryName"
 					item-value="categoryId"
@@ -21,16 +42,6 @@
 				/>
 			</v-col>
 			<v-spacer />
-			<!-- 내 관심 챌린지 버튼 -->
-			<v-col cols="auto" class="d-flex align-center">
-				<v-btn
-					size="large"
-					color="secondary"
-					@click="goToFavoriteChallenge"
-				>
-					내 관심 챌린지
-				</v-btn>
-			</v-col>
 		</v-row>
 
 		<!-- 챌린지 카드 리스트 -->
@@ -95,18 +106,25 @@
 						<v-spacer />
 
 						<!-- 토글 버튼 -->
-						<template v-if="!c.requested">
+						<!-- 참여 상태에 따른 버튼 -->
+						<template v-if="!c.requested && !c.approved">
+							<!-- 아직 요청도 승인도 안 된 경우 -->
 							<v-btn
 								small
 								color="secondary"
 								:loading="isJoining && targetId === c.challengeId"
-								:disabled="isJoining"
+								:disabled="isJoining || (myParts.value?.size || 0) > 0"
 								@click="onJoin(c.challengeId)"
 							>
-								참여하기
+								{{
+									(myParts.value?.size || 0) > 0
+										? '다른 챌린지 참여 중'
+										: '참여하기'
+								}}
 							</v-btn>
 						</template>
-						<template v-else>
+						<template v-else-if="c.requested">
+							<!-- 요청 중인 경우 -->
 							<v-btn
 								small
 								color="error"
@@ -116,6 +134,10 @@
 							>
 								요청 취소
 							</v-btn>
+						</template>
+						<template v-else-if="c.approved">
+							<!-- 승인된 경우 -->
+							<v-btn small color="success" disabled> 승인됨 </v-btn>
 						</template>
 					</v-card-actions>
 				</v-card>
@@ -200,15 +222,21 @@ async function fetchMyParticipations() {
 			: res.items || res.participations || []
 		// Set 과 Map 동시 채우기
 		const set = new Set()
-		const idMap = {}
+		const map = {}
 		list.forEach((p) => {
 			if (p.status !== 'REJECTED') {
 				set.add(p.challengeId)
-				idMap[p.challengeId] = p.participationId
+				map[p.challengeId] = {
+					id: p.participationId,
+					status: p.status, // ← 여기서 status 저장
+				}
 			}
 		})
 		myParts.value = set
-		myPartsMap.value = idMap
+		myPartsMap.value = map
+
+		console.log('▶ fetchMyParticipations → myParts:', myParts.value)
+		console.log('▶ fetchMyParticipations → myPartsMap:', myPartsMap.value)
 	} catch (err) {
 		handleApiError(err)
 	}
@@ -227,12 +255,17 @@ async function fetchChallenges() {
 			selectedCategory.value //  카테고리 필터
 		)
 		totalCount.value = totalFromAPi // 총 챌린지 수
-		challenges.value = items.map((c) => ({
-			//관심 챌린지 여부 (빈하트/꽉하트)
-			...c,
-			isFavorite: c.isFavorite ?? false,
-			requested: myParts.value.has(c.challengeId),
-		}))
+		// 한 번만 map 해서 requested/approved 결정
+		challenges.value = items.map((c) => {
+			const participation = myPartsMap.value[c.challengeId] || {}
+			return {
+				...c,
+				isFavorite: c.isFavorite,
+				// status 기반으로 분기
+				requested: participation.status === 'REQUESTED',
+				approved: participation.status === 'APPROVED',
+			}
+		})
 	} catch (err) {
 		if (axios.isAxiosError(err) && [401, 403].includes(err.response.status)) {
 			alert('로그인해야 이용할 수 있습니다.')
@@ -262,14 +295,10 @@ async function fetchCategories() {
 async function onToggleFavorite(challenge) {
 	try {
 		const id = challenge.challengeId
-		if (!id) {
-			alert('챌린지 아이디가 없습니다!')
-			return
-		}
 		await toggleFavoriteChallenge(id)
-		challenge.isFavorite = !challenge.isFavorite
+		// 2) 전체 챌린지를 다시 불러와서 갱신
+		await fetchChallenges()
 	} catch (err) {
-		console.error(err)
 		handleApiError(err)
 	}
 }
@@ -291,16 +320,11 @@ async function onJoin(challengeId) {
 	isJoining.value = true
 	targetId.value = challengeId
 	try {
-		await joinChallenge(userId, challengeId)
-		// 바로 서버 기준 참여내역을 다시 불러와 myParts를 갱신
+		// 1) 실제 서버에 요청
+		await joinChallenge(challengeId)
+		// 2) 최신 내 참여내역과 챌린지 목록을 통째로 다시 불러와 화면 동기화
 		await fetchMyParticipations()
-		// myParts가 갱신됐으니 challenges 리스트도 다시 매핑
-		const c = challenges.value.find((x) => x.challengeId === challengeId)
-		if (c) {
-			c.requested = true
-			myParts.value.add(challengeId) // 새로 참여 요청한 챌린지 ID를 Set에도 추가
-		} // 로컬 상태 업데이트
-
+		await fetchChallenges()
 		alert('참여 요청이 완료되었습니다!')
 	} catch (err) {
 		if (axios.isAxiosError(err)) {
@@ -329,6 +353,7 @@ async function onJoin(challengeId) {
 // 참여 요청 취소
 async function onCancel(challengeId) {
 	if (!confirm('참여 요청을 정말 취소하시겠습니까?')) return
+	// await fetchMyParticipations()
 	const participationId = myPartsMap.value[challengeId]
 	if (!participationId) {
 		alert('취소할 요청을 찾을 수 없습니다.')
@@ -338,6 +363,7 @@ async function onCancel(challengeId) {
 	targetId.value = challengeId
 	try {
 		await cancelParticipation(challengeId, participationId)
+		await fetchMyParticipations()
 		await fetchChallenges() // 다시 목록 갱신
 		alert('요청이 취소되었습니다.')
 	} catch (err) {
@@ -368,15 +394,27 @@ onMounted(async () => {
 
 // 검색 + 카테고리 필터 적용
 const filteredChallenges = computed(() => {
-	return challenges.value.filter((c) => {
-		// 검색어 (챌린지 제목) 매칭
-		const matchesText =
-			c.title.includes(search.value) || c.description.includes(search.value)
-		// 카테고리 선택 없으면 모두
-		const matchesCategory =
-			!selectedCategory.value || c.categoryId === selectedCategory.value
-		return matchesText && matchesCategory
-	})
+	return (
+		challenges.value
+			// 1) 검색/카테고리 필터
+			.filter((c) => {
+				const matchesText =
+					c.title.includes(search.value) ||
+					c.description.includes(search.value)
+				const matchesCategory =
+					!selectedCategory.value ||
+					c.categoryId === selectedCategory.value
+				return matchesText && matchesCategory
+			})
+			// 2) 매 렌더링마다 myParts를 보고 requested 재계산
+			// 2) 필터링 후에도 요청/승인 상태 그대로 유지
+			.map((c) => ({
+				...c,
+				// (필요하면 다시 동기화)
+				requested: c.requested,
+				approved: c.approved,
+			}))
+	)
 })
 
 function goToFavoriteChallenge() {
@@ -387,4 +425,49 @@ function goToFavoriteChallenge() {
 const totalPages = computed(() => Math.ceil(totalCount.value / pageSize.value))
 </script>
 
-<style scoped></style>
+<style scoped>
+.title {
+	width: 100%;
+	max-width: 1400px;
+	margin-bottom: 1rem;
+	padding: 0.75rem 1.5rem;
+	background: linear-gradient(to right, #66bb6a 0%, #43a047 50%, #2e7d32 100%);
+	border-radius: 8px;
+	box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+	color: white;
+}
+
+.title-text {
+	font-size: 1.75rem;
+	font-weight: 600;
+	text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+@media (max-width: 600px) {
+	.title-text {
+		font-size: 1.25rem;
+	}
+	.favorite-title {
+		padding: 0.5rem 1rem;
+	}
+}
+
+.favorite-btn {
+	background: linear-gradient(135deg, #81c784 0%, #4caf50 100%);
+	color: white;
+	font-weight: 600;
+	border-radius: 24px;
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+	text-transform: none;
+	padding: 0.6rem 1.6rem;
+	transition: transform 0.2s, box-shadow 0.2s;
+}
+.favorite-btn:hover {
+	transform: translateY(-2px);
+	box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+}
+.favorite-btn .v-icon {
+	font-size: 1.2rem;
+	margin-right: 0.5rem;
+}
+</style>

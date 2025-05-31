@@ -3,7 +3,8 @@
 		<v-card class="mx-auto" max-width="800" elevation="4">
 			<!-- 카드 헤더 -->
 			<v-card-title class="headline grey--text text--darken-1">
-				챌린지 생성
+				<v-icon class="mr-3" size="36" color="yellow">mdi-trophy</v-icon
+				>챌린지 생성
 			</v-card-title>
 			<v-divider></v-divider>
 
@@ -39,13 +40,18 @@
 
 					<!-- 설명 -->
 					<v-col cols="12">
+						<!-- 설명 -->
 						<v-textarea
 							v-model="description"
 							:rules="rules.description"
 							label="설명"
-							outlined
-							rows="4"
-							auto-grow
+							clearable
+							h
+							min-rows="10"
+							max-rows="10"
+							rows="10"
+							counter="500"
+							class="mb-4"
 						/>
 					</v-col>
 
@@ -132,8 +138,10 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { createChallenge, getCategories } from '@/services/challengeService'
+
 import { useRouter } from 'vue-router'
 import axios from 'axios'
+import { handleApiError } from '@/utils/apiError'
 
 const router = useRouter()
 const title = ref('')
@@ -230,26 +238,26 @@ async function onSubmit() {
 	} catch (e) {
 		if (axios.isAxiosError(e)) {
 			const { status, data } = e.response || {}
-			// 사용자당 챌린지 1개 제한 에러
+			console.log('>>> createChallenge error response:', data)
+			// 1) 사용자당 챌린지 1개 제한
 			if (status === 400 && data.errorCode === 'CHALLENGE_LIMIT_EXCEEDED') {
-				alert(
-					'하나의 챌린지만 생성할 수 있습니다.\n이미 생성하신 챌린지가 있습니다.'
-				)
+				alert(data.message || '하나의 챌린지만 생성할 수 있습니다.')
 			}
-			// validation 에러(detail 필드 있는 경우)
+			// 2) DTO 유효성 (detail 필드)
 			else if (status === 400 && data.detail) {
-				const msg = data.detail
+				const msgs = data.detail
 					.replace(/[{}]/g, '')
 					.split(', ')
 					.map((s) => s.split('=').pop())
-					.join('\n')
-				alert(msg)
-			} else {
-				handleApiError(e)
+				alert(msgs.join('\n'))
+			}
+			// 3) 그 외 예상치 못한 400+
+			else {
+				alert(data.message || '챌린지 생성에 실패했습니다.')
 			}
 		} else {
 			console.error(e)
-			alert('알 수 없는 오류가 발생했습니다.')
+			handleApiError(e)
 		}
 	}
 }

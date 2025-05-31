@@ -1,45 +1,21 @@
 <template>
 	<v-container>
 		<!-- 상단 헤더 카드 -->
-		<v-card
-			color="primary"
-			elevation="2"
-			rounded="xl"
-			class="pa-6 mb-8 text-white"
-		>
-			<div class="d-flex flex-column flex-sm-row justify-space-between">
+		<v-card class="header-card mb-8">
+			<div class="header-content">
 				<div>
-					<h2 class="text-h6 text-sm-h5 font-weight-bold mb-1 text-white">
-						{{ detail.title }}
-					</h2>
-					<div
-						class="text-body-2 text-sm-body-1 text-white text-opacity-75"
-					>
-						기간 : {{ formatDate(detail.startDate) }} &nbsp;~&nbsp;{{
-							formatDate(detail.endDate)
-						}}
+					<h1 class="header-title">{{ detail.title }}</h1>
+					<div class="header-subtitle">
+						기간: {{ formatDate(detail.startDate) }} ~
+						{{ formatDate(detail.endDate) }}
 					</div>
 				</div>
-
-				<div v-if="isOwner" class="d-flex align-center mt-4 mt-sm-0">
-					<v-btn
-						density="comfortable"
-						variant="outlined"
-						color="white"
-						class="mr-2"
-						@click="onEdit"
-					>
-						<v-icon icon="mdi-pencil" size="18" class="mr-1" /> 수정
+				<div v-if="isOwner" class="header-actions">
+					<v-btn outlined color="white" class="mr-2" @click="onEdit">
+						<v-icon left size="18">mdi-pencil</v-icon> 수정
 					</v-btn>
-
-					<v-btn
-						density="comfortable"
-						variant="outlined"
-						color="white"
-						@click="onDelete"
-					>
-						<v-icon icon="mdi-delete-outline" size="18" class="mr-1" />
-						삭제
+					<v-btn outlined color="white" @click="onDelete">
+						<v-icon left size="18">mdi-delete</v-icon> 삭제
 					</v-btn>
 				</div>
 			</div>
@@ -242,3 +218,56 @@ onMounted(async () => {
 	await Promise.all([loadDetail(), loadMyStatus()])
 })
 </script>
+
+<style scoped>
+.header-card {
+	background: linear-gradient(
+		135deg,
+		#2e7d32 0%,
+		/* 진한 녹색 */ #81c784 50%,
+		/* 중간 연두 */ #66bb6a 100%
+	);
+	color: white;
+	border-radius: 12px;
+	box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+	padding: 1.5rem;
+}
+
+.header-content {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	justify-content: space-between;
+}
+
+@media (min-width: 600px) {
+	.header-content {
+		flex-direction: row;
+		align-items: center;
+	}
+}
+
+.header-title {
+	font-size: 2rem;
+	font-weight: 700;
+	margin: 0;
+	text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.header-subtitle {
+	font-size: 1rem;
+	opacity: 0.85;
+	margin-top: 0.25rem;
+}
+
+@media (min-width: 600px) {
+	.header-subtitle {
+		margin-top: 0.5rem;
+	}
+}
+
+.header-actions .v-btn {
+	text-transform: none;
+	font-weight: 500;
+}
+</style>
