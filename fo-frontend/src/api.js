@@ -26,7 +26,7 @@ api.interceptors.response.use(
 			} catch (refreshErr) {
 				// 리프레시도 실패하면 로그아웃 처리
 				logout()
-				alert('세션이 만료되었습니다. 다시 로그인해주세요.')
+				// alert('세션이 만료되었습니다. 다시 로그인해주세요.')
 				const redirect = router.currentRoute.value.fullPath
 				router.push({ name: 'login', query: { redirect } })
 			}

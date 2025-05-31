@@ -122,7 +122,18 @@ async function onSubmit() {
 		// 임시로 홈으로 리다이렉트
 		router.push('/')
 	} catch (e) {
-		error.value = e.message || '로그인 중 오류가 발생했습니다.'
+		// 서버에서 내려주는 에러코드/메시지를 최대한 활용!
+		const code = e.response?.data?.errorCode
+		const msg = e.response?.data?.message
+
+		if (code === 'USER_NOT_FOUND') {
+			error.value = msg || '존재하지 않는 계정입니다. 회원가입 하시겠습니까?'
+			// 여기서 회원가입 페이지로 자동 이동하거나, 안내 모달 띄워도 좋음
+		} else if (code === 'INVALID_PASSWORD') {
+			error.value = msg || '비밀번호가 일치하지 않습니다.'
+		} else {
+			error.value = msg || e.message || '로그인 중 오류가 발생했습니다.'
+		}
 	} finally {
 		loading.value = false
 	}

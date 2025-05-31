@@ -251,13 +251,11 @@ async function fetchMyParticipations() {
 		const set = new Set()
 		const map = {}
 		list.forEach((p) => {
-			if (p.status === 'APPROVED' || p.role === 'OWNER') {
-				set.add(p.challengeId)
-				map[p.challengeId] = {
-					id: p.participationId,
-					status: p.status,
-					role: p.role,
-				}
+			set.add(p.challengeId)
+			map[p.challengeId] = {
+				id: p.participationId,
+				status: p.status,
+				role: p.role,
 			}
 		})
 		myParts.value = set
@@ -384,7 +382,8 @@ async function onJoin(challengeId) {
 async function onCancel(challengeId) {
 	if (!confirm('참여 요청을 정말 취소하시겠습니까?')) return
 	// await fetchMyParticipations()
-	const participationId = myPartsMap.value[challengeId]
+	const participationObj = myPartsMap.value[challengeId]
+	const participationId = participationObj?.id
 	if (!participationId) {
 		alert('취소할 요청을 찾을 수 없습니다.')
 		return

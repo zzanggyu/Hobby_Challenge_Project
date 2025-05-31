@@ -122,6 +122,13 @@ const routes = [
 		component: MyNotificationsView,
 		meta: { requiresAuth: true },
 	},
+	// router/index.js에 추가
+	{
+		path: '/mypage',
+		name: 'mypage',
+		component: () => import('@/views/MyPageView.vue'),
+		meta: { requiresAuth: true },
+	},
 
 	// 서브뷰들 (탭 내에서 라우팅)
 
