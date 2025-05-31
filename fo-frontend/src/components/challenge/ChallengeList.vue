@@ -11,12 +11,23 @@
 					<span class="title-text">챌린지 목록</span>
 				</div>
 				<v-btn
+					color="success"
 					size="large"
 					class="favorite-btn"
 					@click="goToFavoriteChallenge"
 				>
 					<v-icon left>mdi-star-outline</v-icon>
 					내 관심 챌린지
+				</v-btn>
+
+				<v-btn
+					color="success"
+					size="large"
+					class="my-challenge-btn"
+					@click="goMyChallenge"
+				>
+					<v-icon left>mdi-trophy</v-icon>
+					참여 중인 챌린지
 				</v-btn>
 			</v-col>
 		</v-row>
@@ -173,7 +184,6 @@ import { useAuthStore } from '@/stores/auth'
 import { handleApiError } from '@/utils/apiError'
 
 const authStore = useAuthStore()
-
 const router = useRouter()
 
 // 참여 상태
@@ -211,6 +221,23 @@ function categoryName(id) {
 	return cat ? cat.categoryName : '알 수 없음'
 }
 
+async function goMyChallenge() {
+	// 참여 중인 챌린지 조회
+	const parts = await getMyParticipations(authStore.user.userId)
+	const myApproved = parts.find(
+		(p) => p.status === 'APPROVED' || p.role === 'OWNER'
+	)
+	if (!myApproved) {
+		alert('참여중인 챌린지가 없습니다.')
+		return
+	}
+	// 챌린지 상세로 이동
+	router.push({
+		name: 'challenge-overview',
+		params: { id: myApproved.challengeId },
+	})
+}
+
 // 내 참여내역 불러와 myParts Set을 채우기
 async function fetchMyParticipations() {
 	const userId = authStore.user?.userId
@@ -224,11 +251,12 @@ async function fetchMyParticipations() {
 		const set = new Set()
 		const map = {}
 		list.forEach((p) => {
-			if (p.status !== 'REJECTED') {
+			if (p.status === 'APPROVED' || p.role === 'OWNER') {
 				set.add(p.challengeId)
 				map[p.challengeId] = {
 					id: p.participationId,
-					status: p.status, // ← 여기서 status 저장
+					status: p.status,
+					role: p.role,
 				}
 			}
 		})
@@ -256,14 +284,16 @@ async function fetchChallenges() {
 		)
 		totalCount.value = totalFromAPi // 총 챌린지 수
 		// 한 번만 map 해서 requested/approved 결정
+		// challenge 카드에서 approved: 참여 or 생성
 		challenges.value = items.map((c) => {
 			const participation = myPartsMap.value[c.challengeId] || {}
 			return {
 				...c,
 				isFavorite: c.isFavorite,
-				// status 기반으로 분기
 				requested: participation.status === 'REQUESTED',
-				approved: participation.status === 'APPROVED',
+				approved:
+					participation.status === 'APPROVED' ||
+					participation.role === 'OWNER',
 			}
 		})
 	} catch (err) {
@@ -451,7 +481,7 @@ const totalPages = computed(() => Math.ceil(totalCount.value / pageSize.value))
 		padding: 0.5rem 1rem;
 	}
 }
-
+/* 
 .favorite-btn {
 	background: linear-gradient(135deg, #81c784 0%, #4caf50 100%);
 	color: white;
@@ -469,5 +499,5 @@ const totalPages = computed(() => Math.ceil(totalCount.value / pageSize.value))
 .favorite-btn .v-icon {
 	font-size: 1.2rem;
 	margin-right: 0.5rem;
-}
+} */
 </style>

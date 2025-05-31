@@ -10,7 +10,7 @@ import SignupView from '@/views/SignupView.vue'
 import CreateChallengeView from '@/views/CreateChallengeView.vue'
 import ChallengeListView from '@/views/ChallengeListView.vue'
 import FavoriteChallengeView from '@/views/FavoriteChallengeView.vue'
-import MyChallengesView from '@/views/MyChallengesView.vue'
+// import MyChallengesView from '@/views/MyChallengesView.vue' // 삭제제
 import ChallengeOverviewView from '@/views/ChallengeOverviewView.vue'
 import ChallengeParticipantsView from '@/views/ChallengeParticipantsView.vue'
 import ChallengeRequestsView from '@/views/ChallengeRequestsView.vue'
@@ -19,6 +19,7 @@ import ChallengeEditView from '../views/ChallengeEditView.vue'
 import ChallengeCertificationForm from '../components/challenge/ChallengeCertificationForm.vue'
 import ChallengeCertificationList from '../components/challenge/ChallengeCertificationList.vue'
 import CertificationDetailDialog from '@/components/challenge/CertificationDetailDialog.vue'
+import MyNotificationsView from '../views/MyNotificationsView.vue'
 
 // import ChallengesView from '@/views/ChallengesView.vue'
 // import MyPageView    from '@/views/MyPageView.vue'
@@ -55,13 +56,13 @@ const routes = [
 		meta: { requiresAuth: true },
 	},
 
-	// 내가 참여·생성한 챌린지 보기
-	{
-		path: '/challenges/my',
-		name: 'my-challenges',
-		component: MyChallengesView,
-		meta: { requiresAuth: true },
-	},
+	// // 내가 참여·생성한 챌린지 보기
+	// {
+	// 	path: '/challenges/my',
+	// 	name: 'my-challenges',
+	// 	component: MyChallengesView,
+	// 	meta: { requiresAuth: true },
+	// },
 
 	// 챌린지 상세
 	{
@@ -113,6 +114,13 @@ const routes = [
 		component: ChallengeEditView,
 		meta: { requiresAuth: true },
 		props: true,
+	},
+	// 내 알림
+	{
+		path: '/notifications',
+		name: 'my-notifications',
+		component: MyNotificationsView,
+		meta: { requiresAuth: true },
 	},
 
 	// 서브뷰들 (탭 내에서 라우팅)

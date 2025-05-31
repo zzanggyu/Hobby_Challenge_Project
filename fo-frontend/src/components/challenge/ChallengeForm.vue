@@ -222,7 +222,7 @@ const rules = {
 // 최종 제출출
 async function onSubmit() {
 	try {
-		await createChallenge({
+		const res = await createChallenge({
 			title: title.value,
 			description: description.value,
 			startDate: startDate.value
@@ -233,8 +233,17 @@ async function onSubmit() {
 				: null,
 			categoryId: categoryId.value,
 		})
-		alert('챌린지가 성공적으로 생성되었습니다!')
-		router.push({ name: 'my-challenges' })
+		console.log('챌린지 생성 응답:', res)
+		const challengeId = res.challengeId || res.id
+		if (challengeId) {
+			alert('챌린지가 성공적으로 생성되었습니다!')
+			router.push({
+				name: 'challenge-overview',
+				params: { id: challengeId },
+			})
+		} else {
+			alert('챌린지 생성 결과를 확인할 수 없습니다.')
+		}
 	} catch (e) {
 		if (axios.isAxiosError(e)) {
 			const { status, data } = e.response || {}
