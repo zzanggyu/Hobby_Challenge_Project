@@ -103,7 +103,11 @@ public class AuthServiceImpl implements AuthService{
     // 로그인 검증
     @Override
     public LoginResponseDTO login(LoginRequestDTO dto,  HttpServletResponse response) {
-    	
+    	// 회원 정보 찾기 db에서
+        User user = authMapper.findByLoginId(dto.getLoginId());
+        if (user == null) {
+            throw new CustomException(ErrorCode.USER_NOT_FOUND, "존재하지 않는 계정입니다. 회원가입 하세요!");
+        }
         // 1. 인증 
         Authentication auth = authManager.authenticate(
             new UsernamePasswordAuthenticationToken(dto.getLoginId(), dto.getPassword()));

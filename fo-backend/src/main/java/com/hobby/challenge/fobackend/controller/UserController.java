@@ -1,73 +1,64 @@
-//package com.hobby.challenge.fobackend.controller;
-//
-//import java.util.Map;
-//
-//import org.springframework.http.ResponseEntity;
-//import org.springframework.security.core.annotation.AuthenticationPrincipal;
-//import org.springframework.web.bind.annotation.GetMapping;
-//import org.springframework.web.bind.annotation.PathVariable;
-//import org.springframework.web.bind.annotation.RequestMapping;
-//import org.springframework.web.bind.annotation.RequestParam;
-//import org.springframework.web.bind.annotation.RestController;
-//
-//import com.hobby.challenge.fobackend.dto.UserResponseDTO;
-//import com.hobby.challenge.fobackend.entity.User;
-//import com.hobby.challenge.fobackend.service.AuthService;
-//
-//import lombok.RequiredArgsConstructor;
-//
-//@RestController
-//@RequestMapping("/api/user")
-//@RequiredArgsConstructor
-//public class UserController {
-//	private final AuthService userService;
-//	
-//	// 특정 Id의 사용자 조회
-//	@GetMapping("/{userId}")
-//	public ResponseEntity<UserResponseDTO> getUserById(@PathVariable("userId") Integer userId){
-//		User user = userService.getUserInfoById(userId);
-//		if (user == null) {
-//			return ResponseEntity.notFound().build();
-//		}
-//		return ResponseEntity.ok(toDto(user));
-//	}
-//	
-//	// 로그인 아이디로 사용자 조회(로그인 아이디 중복 검사)
-//	@GetMapping("login/{loginId}")
-//	public ResponseEntity<UserResponseDTO> getUserLogin(@RequestParam("loginId") String loginId){
-//		User user = userService.getUserInfoByLoginId(loginId);
-//		if(user == null) {
-//			return ResponseEntity.notFound().build();
-//		}
-//		return ResponseEntity.ok(toDto(user));
-//	}
-//	
-//	
-//	// JWT 테스트 내 프로필 조회
-//    @GetMapping("/me")
-//    public ResponseEntity<UserResponseDTO> getMyProfile(
-//        @AuthenticationPrincipal org.springframework.security.core.userdetails.User principal
-//    ) {
-//        // principal.getUsername() == loginId
-//        User user = userService.getUserByLoginId(principal.getUsername());
-//        return ResponseEntity.ok(toDto(user));
-//    }
-//    
-//
-//    // 엔티티 → DTO 변환 헬퍼 
-//    private UserResponseDTO toDto(User u) {
-//        return new UserResponseDTO(
-//            u.getUserId(),
-//            u.getLoginId(),
-//            u.getUsername(),
-//            u.getNickname(),
-//            u.getEmail(),
-//            u.getBirthDate(),
-//            u.getImageUrl(),
-//            u.getRole(),     
-//            u.getPoints(),
-//            u.getLevel(),
-//            u.getCreatedDate().toLocalDateTime()       // LocalDateTime 인 경우
-//        );
-//    }
-//}
+package com.hobby.challenge.fobackend.controller;
+
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.hobby.challenge.fobackend.dto.ChangePasswordDTO;
+import com.hobby.challenge.fobackend.dto.DeleteAccountDTO;
+import com.hobby.challenge.fobackend.dto.UpdateNicknameDTO;
+import com.hobby.challenge.fobackend.dto.UserResponseDTO;
+import com.hobby.challenge.fobackend.service.UserService;
+
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+
+@RestController
+@RequestMapping("/api/users")
+@RequiredArgsConstructor
+public class UserController {
+    private final UserService userService;
+    
+    // 내 정보 조회 (로그인 필요)
+    @GetMapping("/me")
+    public ResponseEntity<UserResponseDTO> getMyInfo(
+        @AuthenticationPrincipal(expression="userId") Integer userId
+    ) {
+        return ResponseEntity.ok(userService.getUserInfo(userId));
+    }
+    
+    // 닉네임 변경
+    @PatchMapping("/me/nickname")
+    public ResponseEntity<UserResponseDTO> updateNickname(
+        @AuthenticationPrincipal(expression="userId") Integer userId,
+        @Valid @RequestBody UpdateNicknameDTO dto
+    ) {
+        return ResponseEntity.ok(userService.updateNickname(userId, dto.getNickname()));
+    }
+    
+    // 비밀번호 변경
+    @PutMapping("/me/password")
+    public ResponseEntity<Void> changePassword(
+        @AuthenticationPrincipal(expression="userId") Integer userId,
+        @Valid @RequestBody ChangePasswordDTO dto
+    ) {
+        userService.changePassword(userId, dto);
+        return ResponseEntity.ok().build();
+    }
+    
+    // 회원 탈퇴
+    @DeleteMapping("/me")
+    public ResponseEntity<Void> deleteAccount(
+        @AuthenticationPrincipal(expression="userId") Integer userId,
+        @Valid @RequestBody DeleteAccountDTO dto
+    ) {
+        userService.deleteAccount(userId, dto.getPassword());
+        return ResponseEntity.noContent().build();
+    }
+}
