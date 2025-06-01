@@ -13,6 +13,7 @@ import com.hobby.challenge.fobackend.exception.CustomException;
 import com.hobby.challenge.fobackend.exception.ErrorCode;
 import com.hobby.challenge.fobackend.mapper.ChallengeMapper;
 import com.hobby.challenge.fobackend.mapper.ParticipationMapper;
+import com.hobby.challenge.fobackend.service.NotificationService;
 import com.hobby.challenge.fobackend.service.ParticipationService;
 
 import lombok.RequiredArgsConstructor;
@@ -22,6 +23,7 @@ import lombok.RequiredArgsConstructor;
 public class ParticipationServiceImpl implements ParticipationService {
 	private final ParticipationMapper participationMapper;
 	private final ChallengeMapper challengeMapper;
+	private final NotificationService notificationService;
 
 	// 챌린지 참여 요청
 	@Override
@@ -56,7 +58,14 @@ public class ParticipationServiceImpl implements ParticipationService {
             .role("MEMBER")
             .build();
         participationMapper.insertParticipation(dto);
-        // useGeneratedKeys 설정으로 dto.participationId에 자동 세팅
+        
+        // 알림 생성: 챌린지 생성자에게 새로운 참여 요청 알림
+        Challenge challenge = challengeMapper.selectById(challengeId, null);
+        notificationService.createChallengeRequestNotification(
+            challenge.getCreatedBy(), 
+            dto.getParticipationId()
+        );
+        
         return dto;
     }
 	
@@ -78,11 +87,25 @@ public class ParticipationServiceImpl implements ParticipationService {
 		return participationMapper.findByUser(userId);
 	}
 
-	// 참여 상태 업데이트
+	// 참여 상태 업데이트 , 알림 생성
 	@Override
 	public ParticipationResponseDTO changeStatus(Integer participationId, String status) {
         participationMapper.updateStatus(participationId, status);
-        return participationMapper.selectById(participationId);
+        ParticipationResponseDTO participation = participationMapper.selectById(participationId);
+        
+        // 알림 생성: 승인/거절 알림을 요청자에게 전송
+        if ("APPROVED".equals(status)) {
+            notificationService.createParticipationApprovedNotification(
+                participation.getUserId(), 
+                participation.getChallengeId()
+            );
+        } else if ("REJECTED".equals(status)) {
+            notificationService.createParticipationRejectedNotification(
+                participation.getUserId(), 
+                participation.getChallengeId()
+            );
+        }
+        return participation;
 	}
 	
 	// 참여 취소 요청 취소

@@ -46,6 +46,9 @@ public interface ChallengeService {
             UpdateChallengeRequestDTO dto,
             Integer userId);
 	
+    // 만료된 챌린지 논리 삭제
+    int expireChallenges();
+	
 	// 챌린지 삭제 챌린지 생성자(owner)용 
 	void deleteChallenge(Integer challengeId, Integer userId);
 }

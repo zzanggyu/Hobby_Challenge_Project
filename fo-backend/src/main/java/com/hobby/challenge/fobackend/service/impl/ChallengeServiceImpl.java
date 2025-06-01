@@ -1,5 +1,6 @@
 package com.hobby.challenge.fobackend.service.impl;
 
+import java.time.LocalDate;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
@@ -27,23 +28,7 @@ public class ChallengeServiceImpl implements ChallengeService{
 	private final ChallengeMapper challengeMapper;
 	private final ParticipationMapper participationMapper;
 	
-	// 페이징 전체 챌린지 조회
-//	@Override
-//	public List<ChallengeResponseDTO> getAllChallenges(Integer userId, int size, int offset) {
-//	  return challengeMapper.findAllWithPaging(userId, size, offset).stream()
-//	    .map(c -> ChallengeResponseDTO.builder()
-//	        .challengeId(c.getChallengeId())
-//	        .title(c.getTitle())
-//	        .description(c.getDescription())
-//	        .categoryId(c.getCategoryId()) 
-//	        .creatorNickname(c.getCreator().getNickname())
-//	        .startDate(c.getStartDate())
-//	        .endDate(c.getEndDate())
-//	        .createdDate(c.getCreatedDate())
-//	        .isFavorite(c.getIsFavorite()) 
-//	        .build())
-//	    .toList();
-//	}
+
 	// 챌린지 생성 
     @Override
     @Transactional // 중간에 예외가 나면 롤백시킴
@@ -205,12 +190,11 @@ public class ChallengeServiceImpl implements ChallengeService{
     }
 
     // 챌린지 삭제 챌린지 생성자(owner)용 
+    // 챌린지 물리 삭제 (생성자가 직접 삭제)
     @Override
     @Transactional
     public void deleteChallenge(Integer challengeId, Integer userId) {
-        // 챌린지 조회
         Challenge c = challengeMapper.selectById(challengeId, userId);
-        int rows = challengeMapper.softDeleteChallenge(challengeId);
         
         if (c == null || Boolean.TRUE.equals(c.getIsDeleted())) {
             throw new CustomException(ErrorCode.CHALLENGE_NOT_FOUND);
@@ -222,10 +206,20 @@ public class ChallengeServiceImpl implements ChallengeService{
                                       "챌린지 생성자만 삭제할 수 있습니다.");
         }
         
-        // 삭제처리 소프트 딜리트
+        // 하드 삭제: 챌린지 테이블에서 완전히 제거
+        // CASCADE 설정으로 PARTICIPATION 테이블 데이터도 자동 삭제됨
+        int rows = challengeMapper.hardDeleteChallenge(challengeId);
         if (rows == 0) {
             throw new CustomException(ErrorCode.CHALLENGE_NOT_FOUND,
                                       "이미 삭제되었거나 존재하지 않는 챌린지입니다.");
         }
+    }
+    
+    // 만료된 챌린지 소프트 삭제
+    @Override
+    @Transactional
+    public int expireChallenges() {
+        LocalDate today = LocalDate.now();
+        return challengeMapper.softDeleteExpiredChallenges(today);
     }
 }

@@ -56,6 +56,9 @@ public interface ChallengeMapper {
     // 챌린지 수정 챌린지 생성자용
     int updateChallenge(Challenge challenge);
 	
-    // 챌린지 삭제 챌린지 생성자용
-    int softDeleteChallenge(@Param("challengeId") Integer challengeId);
+    // 챌린지 삭제 (물리 삭제)
+    int hardDeleteChallenge(@Param("challengeId") Integer challengeId);
+    
+    // 만료된 챌린지 삭제 (논리 삭제)
+    int softDeleteExpiredChallenges(@Param("today") LocalDate today);
 }

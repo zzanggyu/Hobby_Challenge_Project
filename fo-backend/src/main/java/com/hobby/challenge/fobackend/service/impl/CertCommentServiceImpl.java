@@ -5,11 +5,14 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 
 import com.hobby.challenge.fobackend.dto.CertCommentResponseDTO;
+import com.hobby.challenge.fobackend.dto.CertificationDTO;
 import com.hobby.challenge.fobackend.entity.CertComment;
 import com.hobby.challenge.fobackend.exception.CustomException;
 import com.hobby.challenge.fobackend.exception.ErrorCode;
 import com.hobby.challenge.fobackend.mapper.CertCommentMapper;
+import com.hobby.challenge.fobackend.mapper.CertificationMapper;
 import com.hobby.challenge.fobackend.service.CertCommentService;
+import com.hobby.challenge.fobackend.service.NotificationService;
 
 import lombok.RequiredArgsConstructor;
 
@@ -17,8 +20,10 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class CertCommentServiceImpl implements CertCommentService {
 	private final CertCommentMapper certCommentMapper;
+    private final CertificationMapper certificationMapper; 
+    private final NotificationService notificationService; 
 	
-	// 댓글 등록
+	// 댓글 등록, 인증 작성자에게 알림
 	@Override
 	public void addComment(int certificationId, int userId, String content) {
 		CertComment comment = new CertComment();
@@ -26,6 +31,15 @@ public class CertCommentServiceImpl implements CertCommentService {
 		comment.setCreatedBy(userId);
 		comment.setContent(content);
 		certCommentMapper.insertComment(comment);
+		
+        // 알림 생성: 인증 작성자에게 새 댓글 알림 (본인 댓글 제외)
+        CertificationDTO cert = certificationMapper.selectById(certificationId);
+        if (!cert.getUserId().equals(userId)) {
+            notificationService.createNewCommentNotification(
+                cert.getUserId(), 
+                certificationId
+            );
+        }
 		
 	}
 	

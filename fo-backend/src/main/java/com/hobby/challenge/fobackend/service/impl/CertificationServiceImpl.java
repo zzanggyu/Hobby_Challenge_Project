@@ -24,6 +24,7 @@ import com.hobby.challenge.fobackend.mapper.CertificationMapper;
 import com.hobby.challenge.fobackend.mapper.ChallengeMapper;
 import com.hobby.challenge.fobackend.mapper.ParticipationMapper;
 import com.hobby.challenge.fobackend.service.CertificationService;
+import com.hobby.challenge.fobackend.service.NotificationService;
 import com.hobby.challenge.fobackend.service.S3StorageService;
 
 import lombok.RequiredArgsConstructor;
@@ -36,12 +37,14 @@ public class CertificationServiceImpl implements CertificationService {
 	private final ParticipationMapper participationMapper;
 	private final ChallengeMapper challengeMapper;
 	private final CertLikeMapper certLikeMapper;
+	private final NotificationService notificationService;
 	// TODO: 실제 이미지 파일 저장을 위한 서비스 (S3) 사용
 	private final S3StorageService s3StorageService; // S3 서비스 주입
 	@Value("${aws.s3.bucket-name}")
 	private String bucketName;
 	@Value("${aws.s3.region}")
 	private String region;
+
 	
     // 허용할 이미지 타입
     private static final Set<String> ALLOWED_TYPES = Set.of(
@@ -159,27 +162,35 @@ public class CertificationServiceImpl implements CertificationService {
 
 
 	
-	// 좋아요 토글
+	// 좋아요 토글, 알림
 	@Override
 	public boolean toggleLike(int certificationId, int userId) {
+		
 	    CertificationDTO cert = certificationMapper.selectById(certificationId);
 	    if (cert == null) {
 	        throw new NoSuchElementException("해당 인증이 존재하지 않습니다.");
 	    }
 
-
-
 	    boolean alreadyLiked = certLikeMapper.isLiked(certificationId, userId) > 0;
 
-	    if (alreadyLiked) {
-	    	certLikeMapper.deleteLike(certificationId, userId);
-	    	certLikeMapper.decrementLikeCount(certificationId);
-	        return false;
-	    } else {
-	    	certLikeMapper.insertLike(certificationId, userId);
-	    	certLikeMapper.incrementLikeCount(certificationId);
-	        return true;
-	    }
+        if (alreadyLiked) {
+            certLikeMapper.deleteLike(certificationId, userId);
+            certLikeMapper.decrementLikeCount(certificationId);
+            return false;
+        } else {
+            certLikeMapper.insertLike(certificationId, userId);
+            certLikeMapper.incrementLikeCount(certificationId);
+            
+            // 알림 생성: 인증 작성자에게 좋아요 알림 (본인 좋아요 제외)
+            if (!cert.getUserId().equals(userId)) {
+                notificationService.createNewLikeNotification(
+                    cert.getUserId(), 
+                    certificationId
+                );
+            }
+            
+            return true;
+        }
 	}
 
 	
