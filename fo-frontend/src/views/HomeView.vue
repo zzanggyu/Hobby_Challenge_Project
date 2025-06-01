@@ -1,28 +1,46 @@
-<!-- src/views/HomeView.vue -->
 <template>
 	<div class="home-view">
-		<!-- 1) 슬라이드 -->
-		<ChallengeCarousel :challenges="Cards.slice(0, 10)" />
-
+		<ChallengeCarousel
+			:challenges="popularChallenges"
+			:categories="categories"
+		/>
 		<br />
 		<hr />
-		<!-- 2) 사이트 설명 섹션 -->
 		<AboutSection />
 		<hr />
-		<!-- 3) 랭킹 섹션 -->
 		<RankingSection />
 	</div>
 </template>
 
 <script setup>
+import { ref, onMounted } from 'vue'
 import ChallengeCarousel from '@/components/sections/ChallengeCarousel.vue'
-import { Cards } from '@/composables/useChallenges'
 import AboutSection from '@/components/sections/AboutSection.vue'
 import RankingSection from '@/components/sections/RankingSection.vue'
-</script>
+import { getPopularChallenges } from '@/services/challengeService'
+import { getCategories } from '../services/categoryService'
 
-<style scoped>
-.home-view {
-	padding: 0 1rem;
-}
-</style>
+const popularChallenges = ref([])
+const categories = ref([]) // ✅ 카테고리 상태 선언
+const loading = ref(false)
+
+onMounted(async () => {
+	loading.value = true
+	try {
+		// ✅ 인기 챌린지 + 카테고리 동시 요청 (병렬로 요청해도 됨)
+		;[popularChallenges.value, categories.value] = await Promise.all([
+			getPopularChallenges(10),
+			getCategories(),
+		])
+		// console.log('카테고리 데이터:', categories.value)
+		// console.log('챌린지 데이터:', popularChallenges.value)
+	} catch (e) {
+		console.error('데이터 로딩 실패:', e)
+		error.value = '인기 챌린지를 불러오는데 실패했습니다.'
+		// 기본값 설정
+		popularChallenges.value = []
+		categories.value = []
+	}
+	loading.value = false
+})
+</script>

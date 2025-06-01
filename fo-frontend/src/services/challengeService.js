@@ -37,6 +37,10 @@ export const getChallengeDetail = (id) =>
 export const getCategories = () =>
 	api.get('/categories').then((res) => res.data)
 
+// 인기 챌린지 가져오기
+export const getPopularChallenges = (size = 12) =>
+	api.get('/challenges/popular', { params: { size } }).then((res) => res.data)
+
 // 챌린지 수정
 export const updateChallenge = (id, payload) =>
 	api.put(`/challenges/${id}`, payload).then((res) => res.data)
