@@ -1,6 +1,10 @@
-// stores/notification.js 수정
+// src/stores/notification.js (기존 파일 교체)
 import { defineStore } from 'pinia'
-import api from '@/api'
+import {
+	getNotifications,
+	markAsRead as apiMarkAsRead,
+	markAllAsRead as apiMarkAllAsRead,
+} from '@/services/notificationService'
 
 export const useNotificationStore = defineStore('notification', {
 	state: () => ({
@@ -13,7 +17,7 @@ export const useNotificationStore = defineStore('notification', {
 	}),
 
 	getters: {
-		// 최신 5개만 가져오기
+		// 최신 5개만 가져오기 (벨 드롭다운용)
 		recentNotifications: (state) => state.notifications.slice(0, 5),
 	},
 
@@ -25,12 +29,10 @@ export const useNotificationStore = defineStore('notification', {
 
 			this.loading = true
 			try {
-				const { data } = await api.get('/notifications', {
-					params: {
-						page: loadMore ? this.page + 1 : 1,
-						size: this.pageSize,
-					},
-				})
+				const data = await getNotifications(
+					loadMore ? this.page + 1 : 1,
+					this.pageSize
+				)
 
 				if (loadMore) {
 					this.notifications.push(...data.items)
@@ -41,7 +43,7 @@ export const useNotificationStore = defineStore('notification', {
 				}
 
 				this.hasMore = data.items.length === this.pageSize
-				this.unreadCount = data.unreadCount
+				this.unreadCount = data.unreadCount || 0
 			} catch (error) {
 				console.error('알림 로드 실패:', error)
 			} finally {
@@ -52,9 +54,9 @@ export const useNotificationStore = defineStore('notification', {
 		// 알림 읽음 처리
 		async markAsRead(id) {
 			try {
-				await api.patch(`/notifications/${id}/read`)
+				await apiMarkAsRead(id)
 				const notification = this.notifications.find((n) => n.id === id)
-				if (notification) {
+				if (notification && !notification.read) {
 					notification.read = true
 					this.unreadCount = Math.max(0, this.unreadCount - 1)
 				}
@@ -66,11 +68,27 @@ export const useNotificationStore = defineStore('notification', {
 		// 모든 알림 읽음 처리
 		async markAllAsRead() {
 			try {
-				await api.patch('/notifications/read-all')
+				await apiMarkAllAsRead()
 				this.notifications.forEach((n) => (n.read = true))
 				this.unreadCount = 0
 			} catch (error) {
 				console.error('전체 읽음 처리 실패:', error)
+			}
+		},
+
+		// 주기적으로 알림 업데이트 (새로고침)
+		async refreshNotifications() {
+			this.notifications = []
+			await this.fetchNotifications()
+		},
+
+		// 새 알림이 있는지 확인 (주기적 호출용)
+		async checkNewNotifications() {
+			try {
+				const data = await getNotifications(1, 1)
+				this.unreadCount = data.unreadCount || 0
+			} catch (error) {
+				console.error('알림 확인 실패:', error)
 			}
 		},
 	},

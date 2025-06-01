@@ -169,11 +169,20 @@ function onEdit() {
 	router.push({ name: 'challenge-edit', params: { id } })
 }
 // 챌린지 삭제
+// 챌린지 삭제 경고 메시지 강화
 async function onDelete() {
-	if (!confirm('정말 삭제하시겠습니까?')) return
+	const confirmed = confirm(
+		'⚠️ 경고: 챌린지를 삭제하면 완전히 제거되며 복구할 수 없습니다.\n' +
+			'모든 참여자 데이터와 인증 내역도 함께 삭제됩니다.\n\n' +
+			'정말 삭제하시겠습니까?'
+	)
+	if (!confirmed) return
+
 	await deleteChallenge(id)
 	router.push({ name: 'challenge-list' })
 }
+
+// 탭 권한한
 function onTabChange(newTab) {
 	if (newTab === '0' && !canWrite.value) {
 		alert('승인된 참여자만 인증을 등록할 수 있습니다.')

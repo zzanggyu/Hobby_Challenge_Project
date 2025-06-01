@@ -1,56 +1,91 @@
-<!-- NotificationBell.vue 수정 -->
+<!-- src/components/layout/NotificationBell.vue -->
 <template>
-	<v-menu v-model="open" location="bottom end" offset-y max-width="360">
+	<v-menu v-model="open" location="bottom end" offset-y max-width="380">
 		<template #activator="{ props }">
-			<v-btn icon v-bind="props">
-				<v-badge :content="unread" color="red" v-if="unread">
+			<v-btn icon v-bind="props" @click="onOpenBell">
+				<v-badge :content="unreadCount" color="red" v-if="unreadCount > 0">
 					<v-icon>mdi-bell-outline</v-icon>
 				</v-badge>
 				<v-icon v-else>mdi-bell-outline</v-icon>
 			</v-btn>
 		</template>
 
-		<v-list style="max-height: 400px" class="py-0">
-			<v-list-subheader class="d-flex justify-space-between align-center">
+		<v-card style="max-height: 450px" class="pa-0">
+			<!-- 헤더 -->
+			<v-card-title
+				class="d-flex justify-space-between align-center py-3 px-4"
+			>
+				<span class="text-h6">🔔 알림</span>
 				<v-btn text size="small" color="primary" @click="goToAll">
-					알림 모두 보기
+					모두 보기
 				</v-btn>
-			</v-list-subheader>
+			</v-card-title>
 
 			<v-divider />
 
-			<v-list-item
-				v-for="n in recentNotifications"
-				:key="n.id"
-				@click="handleClick(n)"
-				:class="{ 'bg-grey-lighten-4': !n.read }"
-				density="compact"
+			<!-- 로딩 상태 -->
+			<div v-if="loading" class="text-center py-6">
+				<v-progress-circular indeterminate color="primary" size="30" />
+				<p class="mt-2 text-caption">알림을 불러오는 중...</p>
+			</div>
+
+			<!-- 알림 리스트 -->
+			<v-list
+				v-else-if="recentNotifications.length"
+				style="max-height: 350px; overflow-y: auto"
+				class="py-0"
 			>
-				<template #prepend>
-					<v-icon size="small" :color="getNotificationColor(n.type)">
-						{{ getNotificationIcon(n.type) }}
-					</v-icon>
-				</template>
+				<v-list-item
+					v-for="n in recentNotifications"
+					:key="n.id"
+					@click="handleClick(n)"
+					:class="{ 'bg-grey-lighten-4': !n.read }"
+					density="compact"
+					class="py-2"
+				>
+					<template #prepend>
+						<v-avatar size="36" :color="getNotificationColor(n.type)">
+							<v-icon size="18" color="white">
+								{{ getNotificationIcon(n.type) }}
+							</v-icon>
+						</v-avatar>
+					</template>
 
-				<v-list-item-title class="text-body-2">
-					{{ n.title }}
-				</v-list-item-title>
-				<v-list-item-subtitle class="text-caption">
-					{{ formatRelativeTime(n.createdAt) }}
-				</v-list-item-subtitle>
-			</v-list-item>
+					<div class="notification-content">
+						<v-list-item-title
+							class="text-body-2 font-weight-medium mb-1"
+						>
+							{{ n.title }}
+							<v-chip
+								v-if="!n.read"
+								x-small
+								color="primary"
+								class="ml-1"
+							>
+								NEW
+							</v-chip>
+						</v-list-item-title>
+						<v-list-item-subtitle class="text-caption mb-1">
+							{{ n.message }}
+						</v-list-item-subtitle>
+						<v-list-item-subtitle class="text-caption text-grey">
+							{{ formatRelativeTime(n.createdAt) }}
+						</v-list-item-subtitle>
+					</div>
+				</v-list-item>
+			</v-list>
 
-			<v-list-item v-if="!recentNotifications.length" class="text-center">
-				<v-list-item-title class="text-grey">
-					알림이 없습니다
-				</v-list-item-title>
-			</v-list-item>
-		</v-list>
+			<!-- 알림이 없을 때 -->
+			<div v-else class="text-center py-8">
+				<v-icon size="48" color="grey lighten-2">mdi-bell-off</v-icon>
+				<p class="text-body-2 grey--text mt-2">새로운 알림이 없습니다</p>
+			</div>
+		</v-card>
 	</v-menu>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useNotificationStore } from '@/stores/notification'
 import { formatDistanceToNow } from 'date-fns'
@@ -61,18 +96,29 @@ const store = useNotificationStore()
 const open = ref(false)
 
 const recentNotifications = computed(() => store.recentNotifications)
-const unread = computed(() => store.unreadCount)
+const unreadCount = computed(() => store.unreadCount)
+const loading = computed(() => store.loading)
 
-// 알림 타입별 아이콘 (동일한 함수)
+// 주기적 알림 확인을 위한 인터벌
+let notificationInterval = null
+
+// 알림 벨 클릭 시 최신 알림 로드
+async function onOpenBell() {
+	if (!open.value) {
+		await store.refreshNotifications()
+	}
+}
+
+// 알림 타입별 아이콘
 function getNotificationIcon(type) {
 	const icons = {
-		challenge_request: 'mdi-account-plus',
-		challenge_approved: 'mdi-check-circle',
-		challenge_rejected: 'mdi-close-circle',
-		certification_like: 'mdi-heart',
-		certification_comment: 'mdi-comment',
-		challenge_reminder: 'mdi-bell',
-		challenge_complete: 'mdi-trophy',
+		CHALLENGE_REQUEST: 'mdi-account-plus',
+		CHALLENGE_REQUEST_APPROVED: 'mdi-check-circle',
+		CHALLENGE_REQUEST_REJECTED: 'mdi-close-circle',
+		NEW_CERT: 'mdi-camera',
+		NEW_COMMENT: 'mdi-comment',
+		NEW_LIKE: 'mdi-heart',
+		SYSTEM_NOTICE: 'mdi-bell',
 	}
 	return icons[type] || 'mdi-bell'
 }
@@ -80,13 +126,13 @@ function getNotificationIcon(type) {
 // 알림 타입별 색상
 function getNotificationColor(type) {
 	const colors = {
-		challenge_request: 'blue',
-		challenge_approved: 'green',
-		challenge_rejected: 'red',
-		certification_like: 'pink',
-		certification_comment: 'purple',
-		challenge_reminder: 'orange',
-		challenge_complete: 'yellow',
+		CHALLENGE_REQUEST: 'blue',
+		CHALLENGE_REQUEST_APPROVED: 'green',
+		CHALLENGE_REQUEST_REJECTED: 'red',
+		NEW_CERT: 'purple',
+		NEW_COMMENT: 'orange',
+		NEW_LIKE: 'pink',
+		SYSTEM_NOTICE: 'grey',
 	}
 	return colors[type] || 'grey'
 }
@@ -115,6 +161,7 @@ async function handleClick(notification) {
 			params: { id: notification.targetId },
 		})
 	}
+	// 다른 타입들도 필요시 추가
 }
 
 // 전체 보기로 이동
@@ -123,8 +170,46 @@ function goToAll() {
 	router.push({ name: 'my-notifications' })
 }
 
-// 마운트 시 알림 로드
+// 주기적으로 알림 확인 (30초마다)
+function startNotificationPolling() {
+	notificationInterval = setInterval(() => {
+		store.checkNewNotifications()
+	}, 30000) // 30초마다
+}
+
+// 주기적 확인 중지
+function stopNotificationPolling() {
+	if (notificationInterval) {
+		clearInterval(notificationInterval)
+		notificationInterval = null
+	}
+}
+
+// 컴포넌트 마운트 시
 onMounted(() => {
 	store.fetchNotifications()
+	startNotificationPolling()
+})
+
+// 컴포넌트 언마운트 시
+onUnmounted(() => {
+	stopNotificationPolling()
 })
 </script>
+
+<style scoped>
+.notification-content {
+	flex: 1;
+	min-width: 0; /* 텍스트 오버플로우 방지 */
+}
+
+.v-list-item {
+	cursor: pointer;
+	transition: background-color 0.2s;
+	min-height: 72px;
+}
+
+.v-list-item:hover {
+	background-color: rgba(0, 0, 0, 0.04);
+}
+</style>

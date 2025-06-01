@@ -20,6 +20,7 @@ import ChallengeCertificationForm from '../components/challenge/ChallengeCertifi
 import ChallengeCertificationList from '../components/challenge/ChallengeCertificationList.vue'
 import CertificationDetailDialog from '@/components/challenge/CertificationDetailDialog.vue'
 import MyNotificationsView from '../views/MyNotificationsView.vue'
+import MyPageView from '../views/MyPageView.vue'
 
 // import ChallengesView from '@/views/ChallengesView.vue'
 // import MyPageView    from '@/views/MyPageView.vue'
@@ -126,7 +127,7 @@ const routes = [
 	{
 		path: '/mypage',
 		name: 'mypage',
-		component: () => import('@/views/MyPageView.vue'),
+		component: MyPageView,
 		meta: { requiresAuth: true },
 	},
 
