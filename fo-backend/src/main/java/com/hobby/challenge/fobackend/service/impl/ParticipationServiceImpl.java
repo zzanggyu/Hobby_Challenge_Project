@@ -76,10 +76,20 @@ public class ParticipationServiceImpl implements ParticipationService {
     }
 
 	// 챌리지의 모든 요청 조회( OWNER 챌린지 생성자 용)
-	@Override
-	public List<ParticipationResponseDTO> getRequests(Integer challengeId) {
-		return participationMapper.findRequestsByChallenge(challengeId);
-	}
+    @Override
+    public List<ParticipationResponseDTO> getRequests(Integer challengeId, Integer requestUserId) {
+        // 권한 체크: 챌린지 생성자인지 확인
+        Challenge challenge = challengeMapper.selectById(challengeId, null);
+        if (challenge == null) {
+            throw new CustomException(ErrorCode.CHALLENGE_NOT_FOUND);
+        }
+        
+        if (!challenge.getCreatedBy().equals(requestUserId)) {
+            throw new CustomException(ErrorCode.REQUEST_PARTICIPANTS_FORBIDDEN, "챌린지 생성자만 요청 목록을 볼 수 있습니다.");
+        }
+        
+        return participationMapper.findRequestsByChallenge(challengeId);
+    }
 
 	// 내 참여 내역 조회
 	@Override

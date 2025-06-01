@@ -34,17 +34,21 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter { // 모든 HT
 	        return;
 	    }
 		
-		// HTTP 요청에 담겨 온 쿠키들 중 "token" 쿠키를 찾아 값을 저장
-		String token = null; // JWT를 담을 token을 null로 초기화
-		if(request.getCookies() != null) { // requst.getCookie는 요청에 쿠키가 없으면 null 반환, 하나라도 있으면 Cookie[] 배열 반환
-			for (Cookie cookie : request.getCookies()) {
-				if ("token".equals(cookie.getName())) {
-					token = cookie.getValue(); // "token"인 쿠키 JWT 문자열이  token에 저장됨 
-					break;
-				}
-			}
-		}
-		
+	 // HTTP 요청에 담겨 온 쿠키들 중 "token" 쿠키를 찾아 값을 저장
+	    String token = null; // JWT를 담을 token을 null로 초기화
+	    Cookie[] cookies = request.getCookies(); // 쿠키 배열을 변수에 저장
+	    System.out.println("🔍 Cookies: " + (cookies != null ? cookies.length : "null")); // 디버깅용
+
+	    if(cookies != null && cookies.length > 0) { // null 체크 + 길이 체크
+	        for (Cookie cookie : cookies) {
+	            if ("token".equals(cookie.getName())) {
+	                token = cookie.getValue(); // "token"인 쿠키 JWT 문자열이  token에 저장됨 
+	                break;
+	            }
+	        }
+	    }
+	    System.out.println("🔍 Token found: " + (token != null)); // 디버깅용
+	    
 		// 토큰 유효 시 스프링 시큐리티 컨텍스트에 인증 정보 세팅하고 항상 다음 필터로 요청을 넘긴다.
 		if (token != null && tokenProvider.validateToken(token)) { // 토큰 존재 여부와 서명만료 검사
 			String loginId = tokenProvider.getLoginId(token); // payload(claim) 중 sub클레임인 loginId를 추출

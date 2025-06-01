@@ -11,7 +11,7 @@ public interface ParticipationService {
 	CreateParticipationDTO  requestJoin(Integer userId, Integer challengeId);
     
     // 챌리지의 모든 요청 조회( OWNER 챌린지 생성자 용)
-    List<ParticipationResponseDTO> getRequests(Integer challengeId);
+    List<ParticipationResponseDTO> getRequests(Integer challengeId, Integer requestUserId);
     
     // 내 참여 내역 조회
     List<ParticipationResponseDTO> getMyParticipations(Integer userId);

@@ -85,7 +85,11 @@ public class AuthController {
 	// 리프레시 토큰
 	@PostMapping("/refresh")
     public ResponseEntity<Void> refresh(HttpServletRequest req, HttpServletResponse res) {
-        String refreshToken = Arrays.stream(req.getCookies())
+	    Cookie[] cookies = req.getCookies(); // ✅ 추가
+	    if (cookies == null || cookies.length == 0) { // ✅ 추가
+	        throw new CustomException(ErrorCode.REFRESH_TOKEN_MISSING);
+	    }
+	    String refreshToken = Arrays.stream(cookies)
             .filter(c -> "refreshToken".equals(c.getName()))
             .findFirst()
             .map(Cookie::getValue)
@@ -98,7 +102,13 @@ public class AuthController {
 	// 로그아웃
 	@PostMapping("/logout")
 	public ResponseEntity<Void> logout(HttpServletRequest req, HttpServletResponse res) {
-	    String refreshToken = Arrays.stream(req.getCookies())
+	    Cookie[] cookies = req.getCookies();
+	    if (cookies == null || cookies.length == 0) { 
+	        throw new CustomException(ErrorCode.REFRESH_TOKEN_MISSING);
+	    }
+	    
+		
+	    String refreshToken = Arrays.stream(cookies)
 	        .filter(c -> "refreshToken".equals(c.getName()))
 	        .map(Cookie::getValue)
 	        .findFirst()

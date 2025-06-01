@@ -29,7 +29,7 @@ public class CertCommentController {
 	@PostMapping
 	public void addComment(@PathVariable("certificationId") int certificationId,
 							@Valid @RequestBody CertCommentRequestDTO dto,
-							@AuthenticationPrincipal(expression = "userId") int userId){
+							@AuthenticationPrincipal(expression = "userId", errorOnInvalidType = false) int userId){
 		certCommentService.addComment(certificationId, userId, dto.getContent());
 	}
 	
@@ -45,7 +45,7 @@ public class CertCommentController {
     public void updateComment(@PathVariable("certificationId") int certificationId,
                               @PathVariable("commentId") int commentId,
                               @Valid @RequestBody CertCommentRequestDTO dto,
-                              @AuthenticationPrincipal (expression = "userId") int userId) {
+                              @AuthenticationPrincipal(expression = "userId", errorOnInvalidType = false) int userId) {
         certCommentService.updateComment(commentId, userId, dto.getContent());
     }
 	
@@ -53,7 +53,7 @@ public class CertCommentController {
     @DeleteMapping("/{commentId}")
     public void deleteComment(@PathVariable("certificationId") int certificationId,
                               @PathVariable("commentId") int commentId,
-                              @AuthenticationPrincipal (expression = "userId") int userId) {
+                              @AuthenticationPrincipal(expression = "userId", errorOnInvalidType = false) int userId) {
         certCommentService.deleteComment(commentId, userId);
     }
 }

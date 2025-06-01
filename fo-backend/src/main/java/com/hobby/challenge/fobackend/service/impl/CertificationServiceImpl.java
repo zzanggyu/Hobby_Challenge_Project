@@ -125,11 +125,12 @@ public class CertificationServiceImpl implements CertificationService {
 	// 인증내역 가져오기
 	@Override
 	public List<CertificationDTO> getCertifications(Integer userId, Integer challengeId) {
-		// 승인된 참여자인지 확인
-	    if (participationMapper.selectByUserAndChallenge(userId, challengeId) == null) {
-	    	throw new CustomException(ErrorCode.CERTIFICATION_ACCESS_DENIED, "인증은 승인된 참여자만 가능합니다.");
+	    // 챌린지가 존재하고 삭제되지 않았는지만 확인
+	    Challenge challenge = challengeMapper.selectById(challengeId, null);
+	    if (challenge == null || Boolean.TRUE.equals(challenge.getIsDeleted())) {
+	        throw new CustomException(ErrorCode.CHALLENGE_NOT_FOUND, "존재하지 않거나 삭제된 챌린지입니다.");
 	    }
-		return certificationMapper.findByChallenge(challengeId);
+	    return certificationMapper.findByChallenge(challengeId);
 	}
 	
     // 파일 검증 헬퍼 메서드

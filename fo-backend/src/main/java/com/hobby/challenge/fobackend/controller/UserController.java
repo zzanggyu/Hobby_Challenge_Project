@@ -28,15 +28,14 @@ public class UserController {
     // 내 정보 조회 (로그인 필요)
     @GetMapping("/me")
     public ResponseEntity<UserResponseDTO> getMyInfo(
-        @AuthenticationPrincipal(expression="userId") Integer userId
-    ) {
+    	@AuthenticationPrincipal(expression="userId", errorOnInvalidType = false) Integer userId) {
         return ResponseEntity.ok(userService.getUserInfo(userId));
     }
     
     // 닉네임 변경
     @PatchMapping("/me/nickname")
     public ResponseEntity<UserResponseDTO> updateNickname(
-        @AuthenticationPrincipal(expression="userId") Integer userId,
+    	@AuthenticationPrincipal(expression="userId", errorOnInvalidType = false) Integer userId,
         @Valid @RequestBody UpdateNicknameDTO dto
     ) {
         return ResponseEntity.ok(userService.updateNickname(userId, dto.getNickname()));
@@ -45,7 +44,7 @@ public class UserController {
     // 비밀번호 변경
     @PutMapping("/me/password")
     public ResponseEntity<Void> changePassword(
-        @AuthenticationPrincipal(expression="userId") Integer userId,
+    	@AuthenticationPrincipal(expression="userId", errorOnInvalidType = false) Integer userId,
         @Valid @RequestBody ChangePasswordDTO dto
     ) {
         userService.changePassword(userId, dto);
@@ -55,7 +54,7 @@ public class UserController {
     // 회원 탈퇴
     @DeleteMapping("/me")
     public ResponseEntity<Void> deleteAccount(
-        @AuthenticationPrincipal(expression="userId") Integer userId,
+    	@AuthenticationPrincipal(expression="userId", errorOnInvalidType = false) Integer userId,
         @Valid @RequestBody DeleteAccountDTO dto
     ) {
         userService.deleteAccount(userId, dto.getPassword());

@@ -17,6 +17,10 @@ import org.springframework.web.bind.annotation.RestController;
 import com.hobby.challenge.fobackend.dto.CreateParticipationDTO;
 import com.hobby.challenge.fobackend.dto.ParticipantDTO;
 import com.hobby.challenge.fobackend.dto.ParticipationResponseDTO;
+import com.hobby.challenge.fobackend.entity.Challenge;
+import com.hobby.challenge.fobackend.exception.CustomException;
+import com.hobby.challenge.fobackend.exception.ErrorCode;
+import com.hobby.challenge.fobackend.service.ChallengeService;
 import com.hobby.challenge.fobackend.service.ParticipationService;
 
 import lombok.RequiredArgsConstructor;
@@ -26,12 +30,13 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class ParticipationController {
 	private final ParticipationService participationService;
+	private final ChallengeService challengeService;
 	
     // 참여 요청
 	@PostMapping("/challenges/{challengeId}/participations")
 	public ResponseEntity<CreateParticipationDTO> requestJoin(
 	    @PathVariable("challengeId") Integer challengeId,
-	    @AuthenticationPrincipal(expression="userId") Integer userId
+	    @AuthenticationPrincipal(expression="userId", errorOnInvalidType = false) Integer userId
 	) {
 	    CreateParticipationDTO result = participationService.requestJoin(userId, challengeId);
 	    return ResponseEntity.status(HttpStatus.CREATED).body(result);
@@ -45,8 +50,11 @@ public class ParticipationController {
 
     // 챌린지별 요청 목록 (OWNER)
     @GetMapping("/challenges/{challengeId}/participations")
-    public ResponseEntity<List<ParticipationResponseDTO>> getRequests(@PathVariable("challengeId") Integer challengeId) {
-        return ResponseEntity.ok(participationService.getRequests(challengeId));
+    public ResponseEntity<List<ParticipationResponseDTO>> getRequests(
+            @PathVariable("challengeId") Integer challengeId,
+            @AuthenticationPrincipal(expression = "userId", errorOnInvalidType = false) Integer userId) {
+        
+        return ResponseEntity.ok(participationService.getRequests(challengeId, userId)); // userId 추가
     }
 
     // 상태 변경
@@ -72,7 +80,7 @@ public class ParticipationController {
     public ResponseEntity<Void> cancelParticipation(
             @PathVariable("challengeId") Integer challengeId,
             @PathVariable("participationId") Integer participationId,
-            @AuthenticationPrincipal(expression = "userId") Integer userId) {
+            @AuthenticationPrincipal(expression="userId", errorOnInvalidType = false) Integer userId) {
         // service 쪽에서 userId 검증 포함해서 처리
         participationService.cancelParticipation(userId, participationId);
         return ResponseEntity.noContent().build();

@@ -46,8 +46,7 @@ public class CertificationController {
         @PathVariable("challengeId") Integer challengeId,
         @RequestParam("comment") String comment,
         @RequestPart(value = "image", required = false) MultipartFile image,
-        @AuthenticationPrincipal(expression="userId") Integer userId
-    ) {
+        @AuthenticationPrincipal(expression="userId", errorOnInvalidType = false) Integer userId) {
         // 이미지 필수 체크
         if (image == null || image.isEmpty()) {
             throw new CustomException(ErrorCode.FILE_REQUIRED, "인증 사진은 필수입니다.");
@@ -62,7 +61,7 @@ public class CertificationController {
     @PostMapping("/{certificationId}/like")
     public ResponseEntity<?> toggleLike(
         @PathVariable("certificationId") int certificationId,
-        @AuthenticationPrincipal(expression = "userId") Integer userId) {
+        @AuthenticationPrincipal(expression="userId", errorOnInvalidType = false) Integer userId) {
 
         if (userId == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("로그인이 필요합니다.");
@@ -87,8 +86,7 @@ public class CertificationController {
     @GetMapping
     public ResponseEntity<List<CertificationDTO>> getCertifications(
         @PathVariable("challengeId") Integer challengeId,
-        @AuthenticationPrincipal(expression="userId") Integer userId
-    ) {
+        @AuthenticationPrincipal(expression="userId", errorOnInvalidType = false) Integer userId){
         List<CertificationDTO> list = certificationService.getCertifications(userId, challengeId);
         return ResponseEntity.ok(list);
     }
@@ -98,8 +96,7 @@ public class CertificationController {
     public ResponseEntity<CertificationDTO> getCertificationDetail(
         @PathVariable("challengeId") Integer challengeId,
         @PathVariable("certificationId") Integer certificationId,
-        @AuthenticationPrincipal(expression = "userId") Integer userId
-    ) {
+        @AuthenticationPrincipal(expression="userId", errorOnInvalidType = false) Integer userId) {
         CertificationDTO cert = certificationService.getCertificationDetail(userId, certificationId);
         return ResponseEntity.ok(cert);
     }
@@ -111,7 +108,7 @@ public class CertificationController {
     // 인증 수정도 MultipartFile로 변경
     @PutMapping(value = "/{certificationId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<CertificationDTO> updateCertification(
-        @AuthenticationPrincipal(expression="userId") Integer userId,
+    	@AuthenticationPrincipal(expression="userId", errorOnInvalidType = false) Integer userId,
         @PathVariable("challengeId") Integer challengeId,
         @PathVariable("certificationId") Integer certificationId,
         @RequestParam("comment") String comment,
@@ -128,8 +125,7 @@ public class CertificationController {
     public ResponseEntity<Void> deleteCertification(
         @PathVariable("challengeId") Integer challengeId,
         @PathVariable("certificationId") Integer certificationId,
-        @AuthenticationPrincipal(expression="userId") Integer userId
-    ) {
+        @AuthenticationPrincipal(expression="userId", errorOnInvalidType = false) Integer userId) {
         certificationService.deleteCertification(userId, challengeId, certificationId);
         return ResponseEntity.noContent().build();
     }

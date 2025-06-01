@@ -35,7 +35,7 @@ public class ChallengeController {
 	// 챌린지 생성
 	@PostMapping
 	public ResponseEntity<ChallengeResponseDTO> createChallenge(@Valid @RequestBody CreateChallengeRequestDTO dto,
-			@AuthenticationPrincipal(expression = "userId") Integer userId){ // JWT에서 세팅한 사용자 아이디 꺼냄
+			@AuthenticationPrincipal(expression = "userId", errorOnInvalidType = false) Integer userId){ // JWT에서 세팅한 사용자 아이디 꺼냄
 			
 	    ChallengeResponseDTO created = challengeService.createChallenge(dto, userId);
 	    return ResponseEntity.ok(created);
@@ -48,7 +48,7 @@ public class ChallengeController {
 	    @RequestParam(name ="size", defaultValue = "30") int size,
 	    @RequestParam(name="search", required=false) String search,
 	    @RequestParam(name="categoryId", required=false) Integer categoryId,
-	    @AuthenticationPrincipal(expression = "userId") Integer userId
+	    @AuthenticationPrincipal(expression = "userId", errorOnInvalidType = false) Integer userId
 	) {
 	    int offset = (page - 1) * size;
 //	    if (userId == null) userId = -1;
@@ -67,7 +67,7 @@ public class ChallengeController {
 	@GetMapping("/{id:\\d+}")
 	public ChallengeDetailDTO getDetail(
 	    @PathVariable("id") Integer id,
-	    @AuthenticationPrincipal(expression="userId") Integer userId
+	    @AuthenticationPrincipal(expression="userId", errorOnInvalidType = false) Integer userId
 	) {
 	    return challengeService.getChallengeDetail(id, userId);
 	}
@@ -75,9 +75,10 @@ public class ChallengeController {
 	// 인기 챌린지 조회 메인화면
 	@GetMapping("/popular")
 	public ResponseEntity<List<ChallengeResponseDTO>> getPopularChallenges(
-	        @AuthenticationPrincipal(expression = "userId") Integer userId,
+//	        @AuthenticationPrincipal(expression = "userId", errorOnInvalidType = false) Integer userId,
 	        @RequestParam(name = "size", defaultValue = "12") int size) {
-	    
+	    Integer userId = null;
+	    // 로그인하지 않은 사용자는 userId가 null일 수 있음
 	    List<ChallengeResponseDTO> popular = challengeService.getPopularChallenges(userId, size);
 	    return ResponseEntity.ok(popular);
 	}
@@ -95,7 +96,7 @@ public class ChallengeController {
 	public ChallengeResponseDTO updateChallenge(
 	        @PathVariable("id") Integer id,
 	        @Valid @RequestBody UpdateChallengeRequestDTO dto,
-	        @AuthenticationPrincipal(expression = "userId") Integer userId) {
+	        @AuthenticationPrincipal(expression = "userId", errorOnInvalidType = false) Integer userId) {
 	    return challengeService.updateChallenge(id, dto, userId);
 	}
 
@@ -104,7 +105,7 @@ public class ChallengeController {
 	@DeleteMapping("/{id}")
 	public ResponseEntity<Void> deleteChallenge(
 			 @PathVariable("id") Integer id,
-	        @AuthenticationPrincipal(expression = "userId") Integer userId) {
+			 @AuthenticationPrincipal(expression = "userId", errorOnInvalidType = false) Integer userId) {
 
 	    challengeService.deleteChallenge(id, userId);
 	    return ResponseEntity.noContent().build();

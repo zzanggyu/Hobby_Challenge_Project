@@ -24,7 +24,7 @@ public class FavoriteChallengeController {
 	// 관심 챌린지 목록 가져오기
 	@GetMapping
 	public ResponseEntity<List<FavoriteChallengeDTO>> listMyFavorite(
-			@AuthenticationPrincipal(expression="userId") int userId){
+			@AuthenticationPrincipal(expression = "userId", errorOnInvalidType = false) int userId){
 		return ResponseEntity.ok(favService.getMyFavorites(userId));
 	}
 	
@@ -32,7 +32,7 @@ public class FavoriteChallengeController {
     // 토글: 이미 있으면 삭제, 없으면 추가
     @PostMapping("/{challengeId}")
     public ResponseEntity<Void> toggleFavorite(
-            @AuthenticationPrincipal(expression="userId") int userId,
+    		@AuthenticationPrincipal(expression = "userId", errorOnInvalidType = false) int userId,
             @PathVariable("challengeId") int challengeId) {
 
         favService.toggleFavorite(userId, challengeId);
