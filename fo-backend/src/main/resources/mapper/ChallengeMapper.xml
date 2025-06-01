@@ -133,8 +133,7 @@
 	        ON C.CHALLENGE_ID = FC.CHALLENGE_ID AND FC.USER_ID = #{userId}
     INNER JOIN USER U 
 	        ON C.CREATED_BY = U.USER_ID
-	     WHERE (C.IS_DELETED = 0 OR C.IS_DELETED IS NULL)
-	       AND C.CHALLENGE_ID = #{challengeId}
+	     WHERE C.CHALLENGE_ID = #{challengeId}
 	</select>
 	
 
@@ -171,15 +170,14 @@
 	                   AND P.USER_ID = #{userId}
 	                   AND P.STATUS = 'APPROVED'
 	                ) THEN TRUE ELSE FALSE END AS joined
-	                     , U.NICKNAME AS creatorNickname
+	         , U.NICKNAME AS creatorNickname
 	      FROM CHALLENGE C
-	      LEFT JOIN FAVORITE_CHALLENGE FC
+	 LEFT JOIN FAVORITE_CHALLENGE FC
 	        ON C.CHALLENGE_ID = FC.CHALLENGE_ID
 	       AND FC.USER_ID = #{userId}
-	      JOIN USER U
+	INNER JOIN USER U
 	        ON C.CREATED_BY = U.USER_ID
-	     WHERE (C.IS_DELETED = 0 OR C.IS_DELETED IS NULL)
-	       AND C.CHALLENGE_ID = #{challengeId}
+	     WHERE C.CHALLENGE_ID = #{challengeId}
 	</select>
 	
 	<!-- 사용자의 활성 챌린지 개수 조회 챌린지 생성 하나만 하게 하기 위함-->
@@ -192,6 +190,45 @@
 		 WHERE CREATED_BY = #{userId}
 		   AND (IS_DELETED = 0 OR IS_DELETED IS NULL)
 		
+	</select>
+	
+	<!-- 🔥 참여한 챌린지 조회용 ResultMap (상태 포함) -->
+	<resultMap id="ChallengeWithStatus" type="com.hobby.challenge.fobackend.entity.Challenge" extends="ChallengeWithCreator">
+	    <result column="challengeStatus" property="challengeStatus"/>
+	</resultMap>
+
+	<!-- 참여한 챌린지 목록 조회 (만료된 것도 포함) -->
+	<select id="findByParticipation" resultMap="ChallengeWithStatus">
+	    SELECT C.CHALLENGE_ID AS challengeId
+	         , C.TITLE AS title
+	         , C.DESCRIPTION AS description
+	         , C.CATEGORY_ID AS categoryId
+	         , C.CREATED_BY AS createdBy
+	         , C.START_DATE AS startDate
+	         , C.END_DATE AS endDate
+	         , C.CREATED_DATE createdDate
+	         , C.MODIFIED_DATE modifiedDate
+	         , C.IS_DELETED AS isDeleted
+	         , CASE WHEN FC.USER_ID IS NOT NULL THEN TRUE ELSE FALSE END AS isFavorite
+	         , U.USER_ID AS userId
+	         , U.NICKNAME AS nickname
+	         , CASE 
+	               WHEN C.IS_DELETED = 1 THEN 'EXPIRED'
+	               WHEN C.END_DATE &lt; CURDATE() THEN 'EXPIRED' 
+	               WHEN C.START_DATE > CURDATE() THEN 'UPCOMING'
+	               ELSE 'ACTIVE'
+	           END AS challengeStatus
+	      FROM CHALLENGE C
+	 LEFT JOIN FAVORITE_CHALLENGE FC 
+	        ON C.CHALLENGE_ID = FC.CHALLENGE_ID 
+	       AND FC.USER_ID = #{userId}
+	INNER JOIN USER U
+	        ON C.CREATED_BY = U.USER_ID
+	     WHERE C.CHALLENGE_ID IN 
+	           <foreach collection="challengeIds" item="id" open="(" close=")" separator=",">
+	               #{id}
+	           </foreach>
+	  ORDER BY C.CREATED_DATE DESC
 	</select>
 	
 	<!-- 챌린지 수정 챌린지 생성자만 가능 -->

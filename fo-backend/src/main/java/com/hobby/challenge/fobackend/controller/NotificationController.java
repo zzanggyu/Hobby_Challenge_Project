@@ -19,8 +19,8 @@ public class NotificationController {
     @GetMapping
     public ResponseEntity<Map<String, Object>> getNotifications(
             @AuthenticationPrincipal(expression="userId") Integer userId,
-            @RequestParam(defaultValue = "1") int page,
-            @RequestParam(defaultValue = "20") int size) {
+            @RequestParam(name = "page", defaultValue = "1") int page,
+            @RequestParam(name = "size", defaultValue = "20") int size) {
         
         List<NotificationResponseDTO> notifications = 
             notificationService.getNotifications(userId, page, size);
@@ -35,7 +35,7 @@ public class NotificationController {
     // 알림 읽음 처리
     @PatchMapping("/{id}/read")
     public ResponseEntity<Void> markAsRead(
-            @PathVariable Integer id,
+            @PathVariable("id") Integer id,
             @AuthenticationPrincipal(expression="userId") Integer userId) {
         
         notificationService.markAsRead(id, userId);

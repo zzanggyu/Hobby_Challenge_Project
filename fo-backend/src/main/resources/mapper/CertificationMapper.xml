@@ -49,12 +49,12 @@
 		         , C.IMAGE_URL AS IMAGE_URL
 		         , C.CREATED_DATE AS CREATED_DATE
 		         , DATE(C.CREATED_DATE) AS certDate
-		         , C.CREATED_BY AS userId,
+		         , C.CREATED_BY AS userId
 		         , C.LIKE_COUNT AS LIKE_COUNT
 		         , U.NICKNAME AS NICKNAME
 		         , U.LEVEL AS LEVEL
-				    (SELECT COUNT(*) FROM CERT_COMMENT CC  <!-- 댓글 수 계산 -->
-				      WHERE CC.CERTIFICATION_ID = C.CERTIFICATION_ID) as commentCount
+				 , (SELECT COUNT(*) FROM CERT_COMMENT CC  <!-- 댓글 수 계산 -->
+				     WHERE CC.CERTIFICATION_ID = C.CERTIFICATION_ID) as commentCount
 		      FROM CERTIFICATION C
 		INNER JOIN PARTICIPATION P
 		        ON C.PARTICIPATION_ID = P.PARTICIPATION_ID

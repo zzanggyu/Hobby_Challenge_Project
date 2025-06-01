@@ -43,7 +43,7 @@ public class AuthServiceImpl implements AuthService{
 	private final PasswordEncoder passwordEncoder; // Bcrypt 암호화 인코더 (수정)
 	private final JwtTokenProvider tokenProvider;
 	private final LoginHistoryService loginHistoryService;
-	private final StringRedisTemplate redisTemplate;   // ★ RedisTemplate
+	private final StringRedisTemplate redisTemplate;   // RedisTemplate
 	private final EmailAuthService emailAuthService;
 	@Value("${jwt.expiration}")
 	private long jwtExpirationMs;  // 엑세스 토큰 만료 시간
@@ -142,7 +142,6 @@ public class AuthServiceImpl implements AuthService{
                 .toString());
 
         // 3. 로그인 이력
-        User user = authMapper.findByLoginId(dto.getLoginId());
         loginHistoryService.recordLoginHistory(
             LoginHistoryDTO.builder()
                 .userId(user.getUserId())

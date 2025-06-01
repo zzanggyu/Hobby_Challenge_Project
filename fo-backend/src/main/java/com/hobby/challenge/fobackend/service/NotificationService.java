@@ -23,6 +23,4 @@ public interface NotificationService {
     void createNewCertNotification(Integer challengeId, Integer certId);
     void createNewCommentNotification(Integer certOwnerId, Integer certId);
     void createNewLikeNotification(Integer certOwnerId, Integer certId);
-}public interface NotificationService {
-
 }
