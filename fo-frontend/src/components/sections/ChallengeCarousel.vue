@@ -23,9 +23,10 @@
 			>
 				<v-card
 					class="challenge-card mx-3 bg-primary"
-					style="color: white; border-radius: 30px"
+					style="color: white; border-radius: 30px; cursor: pointer"
 					:elevation="isSelected ? 6 : 2"
 					width="320"
+					@click="goToDetail(item.challengeId)"
 				>
 					<!-- (1) 썸네일 이미지가 있을 때 이미지 카드 -->
 					<template v-if="item.thumbnail">
@@ -56,10 +57,16 @@
 									{{ item.title }}
 								</h2>
 								<p class="text-body-2">
-									{{ item.description }}
+									{{ truncateDescription(item.description) }}
 								</p>
 							</div>
-							<v-btn color="white" variant="outlined" size="small">
+							<!-- 자세히 보기 버튼 - 클릭 이벤트 전파 방지 -->
+							<v-btn
+								color="white"
+								variant="outlined"
+								size="small"
+								@click.stop="goToDetail(item.challengeId)"
+							>
 								자세히 보기
 							</v-btn>
 						</div>
@@ -93,6 +100,9 @@
 
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
+import { useRouter } from 'vue-router'
+
+const router = useRouter()
 
 const props = defineProps({
 	challenges: { type: Array, required: true }, // 슬라이드로 보여줄 챌린지 배열
@@ -106,6 +116,23 @@ const props = defineProps({
 function getCategoryName(categoryId) {
 	const found = props.categories.find((c) => c.categoryId === categoryId)
 	return found ? found.categoryName : '기타'
+}
+
+// 설명 글자 수 제한 함수 (카드 내 텍스트가 너무 길면 말줄임표로 처리)
+function truncateDescription(description) {
+	if (!description) return ''
+	return description.length > 80
+		? description.substring(0, 80) + '...'
+		: description
+}
+
+// 챌린지 상세 페이지로 이동하는 함수
+function goToDetail(challengeId) {
+	// Vue Router를 사용해서 챌린지 상세 페이지로 이동
+	router.push({
+		name: 'challenge-overview', // 라우터에 정의된 챌린지 상세 페이지 이름
+		params: { id: challengeId }, // 챌린지 ID를 파라미터로 전달
+	})
 }
 
 // limited: 상위 maxItems개로 잘라서 실제 슬라이드로 보여줌
@@ -151,12 +178,26 @@ onBeforeUnmount(stopAuto)
 .challenge-card {
 	border-radius: 30px;
 	overflow: hidden;
+	transition: transform 0.2s ease-in-out; /* 호버 효과를 위한 부드러운 전환 */
 }
+
+.challenge-card:hover {
+	transform: translateY(
+		-5px
+	); /* 마우스 올렸을 때 카드가 위로 살짝 올라가는 효과 */
+}
+
 .color-card {
 	height: calc(320px * 4 / 3);
 }
+
 .v-btn--size-8 {
 	--v-btn-height: 8px;
 	--v-btn-size: 8px;
+}
+
+/* 카드 전체를 클릭 가능하게 하는 커서 스타일 */
+.challenge-card {
+	cursor: pointer;
 }
 </style>

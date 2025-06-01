@@ -11,6 +11,4 @@
 import FavoriteChallenge from '@/components/challenge/FavoriteChallenge.vue'
 </script>
 
-<style scoped>
-/* 페이지 단위 스타일이 필요하다면 여기에 */
-</style>
+<style scoped></style>

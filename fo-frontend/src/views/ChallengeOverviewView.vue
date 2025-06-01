@@ -53,7 +53,7 @@
 				@submitted="onSubmitted"
 			/>
 			<v-alert type="info" v-if="!joined">
-				참여 요청이 승인될 때까지 인증내역을 볼 수 없습니다.
+				챌린지에 참여해 요청이 승인되면 인증 등록 탭이 활성화됩니다.
 			</v-alert>
 			<!-- 1: 전체 인증내역 보기 -->
 			<ChallengeCertificationList
@@ -182,17 +182,9 @@ async function onDelete() {
 	router.push({ name: 'challenge-list' })
 }
 
-// 탭 권한한
+// 탭 권한
 function onTabChange(newTab) {
-	if (newTab === '0' && !canWrite.value) {
-		alert('승인된 참여자만 인증을 등록할 수 있습니다.')
-		return
-	}
-	if (newTab === '1' && !joined.value) {
-		alert('승인된 참여자만 전체 인증내역을 볼 수 있습니다.')
-		return
-	}
-	tab.value = newTab
+	tab.value = newTab // 모든 탭 접근 허용
 }
 
 // 폼에서 제출이 완료되면 호출됩니다

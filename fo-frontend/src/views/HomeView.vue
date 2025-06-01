@@ -8,7 +8,7 @@
 		<hr />
 		<AboutSection />
 		<hr />
-		<RankingSection />
+		<!-- <RankingSection /> -->
 	</div>
 </template>
 
@@ -16,7 +16,7 @@
 import { ref, onMounted } from 'vue'
 import ChallengeCarousel from '@/components/sections/ChallengeCarousel.vue'
 import AboutSection from '@/components/sections/AboutSection.vue'
-import RankingSection from '@/components/sections/RankingSection.vue'
+// import RankingSection from '@/components/sections/RankingSection.vue'
 import { getPopularChallenges } from '@/services/challengeService'
 import { getCategories } from '../services/categoryService'
 
@@ -36,7 +36,7 @@ onMounted(async () => {
 		// console.log('챌린지 데이터:', popularChallenges.value)
 	} catch (e) {
 		console.error('데이터 로딩 실패:', e)
-		error.value = '인기 챌린지를 불러오는데 실패했습니다.'
+
 		// 기본값 설정
 		popularChallenges.value = []
 		categories.value = []

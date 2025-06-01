@@ -1,6 +1,15 @@
 <template>
-	<v-card outlined max-width="600" class="mx-auto">
+	<v-card outlined max-width="650" class="mx-auto">
 		<v-card-title>오늘의 인증 등록</v-card-title>
+		<!-- 권한 없는 사용자에게 안내 메시지 -->
+		<v-alert v-if="!canWrite" type="info" variant="tonal" class="ma-4">
+			<div>
+				<strong>인증 등록 안내</strong><br />
+				챌린지에 참여하고 승인을 받은 후 인증을 등록할 수 있습니다.
+				<br />하루 하나의 사진과 코멘트로 인증을 등록해 나의 활동을
+				공유하세요
+			</div>
+		</v-alert>
 		<v-card-text>
 			<!-- 텍스트 영역 개선 -->
 			<v-textarea
@@ -109,6 +118,13 @@ function reset() {
 const emit = defineEmits(['submitted'])
 
 async function save() {
+	// 인증 등록 권한 체크
+	const auth = useAuthStore()
+	if (!auth.isAuthenticated) {
+		alert('로그인 후 인증을 등록할 수 있습니다.')
+		return
+	}
+
 	if (!valid.value) return
 
 	busy.value = true

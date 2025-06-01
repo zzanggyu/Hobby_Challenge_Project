@@ -24,18 +24,13 @@ api.interceptors.response.use(
 				// 2. 원래 요청을 재시도
 				return api(config)
 			} catch (refreshErr) {
-				// 리프레시도 실패하면 로그아웃 처리
-				logout()
-				// alert('세션이 만료되었습니다. 다시 로그인해주세요.')
+				// 리프레시도 실패하면 조용히 처리 (에러 로그 제거)
+				console.log('Refresh failed, redirecting to login') // 단순 로그로 변경
+				// logout() // 일시적으로 주석 처리
 				const redirect = router.currentRoute.value.fullPath
-				router.push({ name: 'login', query: { redirect } })
+				// router.push({ name: 'login', query: { redirect } }) // 일시적으로 주석 처리
 			}
 		}
-		//  하루 1회 인증 , 중복 불가
-		// if (data?.errorCode === '400041') {
-		// 	alert(data.message) // 또는 Pinia Snackbar
-		// 	return Promise.resolve() // 여기서 소모해버림
-		// }
 		return Promise.reject(err)
 	}
 )
