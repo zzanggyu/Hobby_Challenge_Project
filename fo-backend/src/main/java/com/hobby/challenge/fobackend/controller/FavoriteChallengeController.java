@@ -22,11 +22,20 @@ public class FavoriteChallengeController {
 	private final FavoriteChallengeService favService;
 	
 	// 관심 챌린지 목록 가져오기
-	@GetMapping
-	public ResponseEntity<List<FavoriteChallengeDTO>> listMyFavorite(
-			@AuthenticationPrincipal(expression = "userId", errorOnInvalidType = false) int userId){
-		return ResponseEntity.ok(favService.getMyFavorites(userId));
-	}
+//	@GetMapping
+//	public ResponseEntity<List<FavoriteChallengeDTO>> listMyFavorite(
+//			@AuthenticationPrincipal(expression = "userId", errorOnInvalidType = false) int userId){
+//		return ResponseEntity.ok(favService.getMyFavorites(userId));
+//	}
+	
+    // 관심 챌린지 + 참여요청 중인 챌린지 목록 가져오기
+    @GetMapping
+    public ResponseEntity<List<FavoriteChallengeDTO>> listMyFavorite(
+            @AuthenticationPrincipal(expression = "userId", errorOnInvalidType = false) int userId) {
+        
+        // ✅ 새로운 메서드 사용
+        return ResponseEntity.ok(favService.getFavoritesAndRequestedChallenges(userId));
+    }
 	
 
     // 토글: 이미 있으면 삭제, 없으면 추가

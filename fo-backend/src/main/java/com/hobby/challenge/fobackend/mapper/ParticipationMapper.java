@@ -19,6 +19,12 @@ public interface ParticipationMapper {
 
     // 특정 사용자의 참여 내역 조회
     List<ParticipationResponseDTO> findByUser(@Param("userId") Integer userId);
+    
+    // 특정 사용자의 특정 상태 참여 내역 조회
+    List<ParticipationResponseDTO> findByUserAndStatus(
+        @Param("userId") Integer userId, 
+        @Param("status") String status
+    );
 
     // 상태 업데이트 (승인/거절)
     void updateStatus(@Param("participationId") Integer participationId,

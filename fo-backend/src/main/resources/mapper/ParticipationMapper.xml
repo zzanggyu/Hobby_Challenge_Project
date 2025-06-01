@@ -64,6 +64,22 @@
 	     WHERE USER_ID = #{userId}
 	</select>
 	
+	<!-- 특정 사용자의 특정 상태 참여 내역 조회 -->
+	<select id="findByUserAndStatus" 
+	        resultType="com.hobby.challenge.fobackend.dto.ParticipationResponseDTO">
+	    SELECT PARTICIPATION_ID AS participationId
+	         , USER_ID AS userId
+	         , CHALLENGE_ID AS challengeId
+	         , STATUS AS status
+	         , REQUEST_DATE AS requestDate
+	         , PARTICIPATED_DATE AS participatedDate
+	         , ROLE AS role
+	      FROM PARTICIPATION
+	     WHERE USER_ID = #{userId}
+	       AND STATUS = #{status}
+	  ORDER BY REQUEST_DATE DESC
+	</select>
+	
 
 	
 	<select id="selectById" 
