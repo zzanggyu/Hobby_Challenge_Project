@@ -1,114 +1,175 @@
 <template>
 	<v-container>
-		<v-row class="mb-4" align="center">
+		<!-- 헤더 -->
+		<v-row class="mb-6" align="center">
 			<v-col cols="12" class="d-flex align-center justify-space-between">
-				<!-- 새 헤더 스타일 -->
-				<div class="title d-flex align-center">
-					<v-icon class="mr-3" size="36" color="white"
-						>mdi-star-outline</v-icon
-					>
-					<span class="title-text">관심 챌린지</span>
+				<div class="d-flex align-center">
+					<v-avatar size="48" color="pink-lighten-4" class="mr-4">
+						<v-icon color="pink" size="28">mdi-heart</v-icon>
+					</v-avatar>
+					<div>
+						<h1 class="text-h4 font-weight-bold mb-1">관심 챌린지</h1>
+						<p class="text-body-2 text-grey ma-0">
+							저장한 챌린지와 요청중인 챌린지
+						</p>
+					</div>
 				</div>
-				<v-btn size="large" class="favorite-btn" @click="goToList">
+
+				<v-btn
+					color="primary"
+					variant="outlined"
+					size="large"
+					rounded="lg"
+					@click="goToList"
+				>
 					<v-icon left>mdi-format-list-bulleted</v-icon>
-					챌린지 목록으로
+					전체 챌린지
 				</v-btn>
 			</v-col>
 		</v-row>
 
-		<!-- 로딩 스피너 -->
-		<v-row v-if="isLoadingFavorites" justify="center">
-			<v-progress-circular indeterminate />
+		<!-- 로딩 -->
+		<v-row v-if="isLoadingFavorites" justify="center" class="my-12">
+			<v-progress-circular indeterminate color="primary" size="64" />
 		</v-row>
 
-		<v-row align="stretch">
-			<template v-for="fav in favorites" :key="fav.challengeId">
-				<v-col v-if="fav.challenge" cols="12" md="6" lg="4" class="d-flex">
-					<v-card
-						elevation="4"
-						height="310"
-						width="100%"
-						rounded="xl"
-						outlined
-						class="d-flex flex-column"
-						:style="{
-							border: '1px solid rgba(165, 243, 212, 0.6)',
-							backgroundColor: '#f9fdfc',
-						}"
-					>
-						<v-card-title class="px-4">
-							<div
-								class="d-flex w-100 justify-space-between align-center"
+		<!-- 빈 상태 -->
+		<v-row v-else-if="favorites.length === 0" justify="center" class="my-12">
+			<v-col cols="12" md="6" class="text-center">
+				<v-icon size="80" color="grey-lighten-2" class="mb-4">
+					mdi-heart-outline
+				</v-icon>
+				<h2 class="text-h5 mb-4">아직 관심 챌린지가 없어요</h2>
+				<p class="text-body-1 text-grey mb-6">
+					마음에 드는 챌린지에 하트를 눌러 저장해보세요!
+				</p>
+				<v-btn color="primary" size="large" @click="goToList">
+					<v-icon left>mdi-format-list-bulleted</v-icon>
+					챌린지 둘러보기
+				</v-btn>
+			</v-col>
+		</v-row>
+
+		<!-- 챌린지 카드 -->
+		<v-row v-else>
+			<v-col
+				v-for="fav in favorites"
+				:key="fav.challengeId"
+				cols="12"
+				md="6"
+				lg="4"
+			>
+				<v-card
+					v-if="fav.challenge"
+					elevation="2"
+					class="d-flex flex-column"
+					height="350"
+				>
+					<!-- 카드 헤더 -->
+					<v-card-title class="d-flex justify-space-between align-center">
+						<v-chip
+							size="small"
+							color="primary"
+							variant="outlined"
+							class="mr-2"
+						>
+							{{ categoryName(fav.challenge.categoryId) }}
+						</v-chip>
+
+						<v-btn
+							icon
+							size="small"
+							@click.stop="onToggleFavorite(fav.challenge.challengeId)"
+						>
+							<v-icon color="red">mdi-heart</v-icon>
+						</v-btn>
+					</v-card-title>
+
+					<!-- 카드 내용 -->
+					<v-card-text class="flex-grow-1">
+						<h3 class="text-h6 mb-3">{{ fav.challenge.title }}</h3>
+						<p class="text-body-2 text-grey-darken-1 mb-4">
+							{{ truncateDescription(fav.challenge.description) }}
+						</p>
+					</v-card-text>
+					<!-- 정보 -->
+					<div class="px-4 pb-2">
+						<!-- 기간 정보 -->
+						<div class="d-flex align-center mb-2">
+							<v-icon size="16" class="mr-2">mdi-calendar-range</v-icon>
+							<span class="text-caption">
+								{{ formatDate(fav.challenge.startDate) }} ~
+								{{ formatDate(fav.challenge.endDate) }}
+							</span>
+						</div>
+						<!-- 생성자 정보 -->
+						<div class="d-flex align-center mb-3">
+							<v-icon size="16" class="mr-2">mdi-account</v-icon>
+							<span class="text-caption">
+								{{ fav.challenge.creatorNickname }}
+							</span>
+						</div>
+					</div>
+
+					<!-- 카드 액션 -->
+					<v-card-actions class="pt-0">
+						<!-- 참여 상태 버튼 -->
+						<template v-if="fav.approved">
+							<v-btn
+								color="success"
+								variant="tonal"
+								size="small"
+								disabled
+								@click.stop
 							>
-								<span class="text-h6">{{ fav.challenge.title }}</span>
-								<v-icon
-									color="red"
-									@click="onToggleFavorite(fav.challenge.challengeId)"
-									style="cursor: pointer"
-									>mdi-heart</v-icon
-								>
-							</div>
-						</v-card-title>
+								<v-icon left size="16">mdi-check</v-icon>
+								승인됨
+							</v-btn>
+						</template>
 
-						<v-divider color="green lighten-2" />
-
-						<v-card-text class="flex-grow-1">
-							{{ fav.challenge.description }}
-						</v-card-text>
-
-						<v-card-subtitle>
-							기간: {{ formatDate(fav.challenge.startDate) }} ~
-							{{ formatDate(fav.challenge.endDate) }}
-						</v-card-subtitle>
-
-						<v-card-actions class="mt-auto px-4">
-							<v-chip small outlined color="green-accent-4">
-								{{ categoryName(fav.challenge.categoryId) }}
-							</v-chip>
-							<small class="grey--text text--darken-1"
-								>by: {{ fav.challenge.creatorNickname }}</small
+						<template v-else-if="fav.requested">
+							<v-btn
+								color="error"
+								variant="tonal"
+								size="small"
+								:loading="
+									isJoining && targetId === fav.challenge.challengeId
+								"
+								@click.stop="onCancel(fav.challenge.challengeId)"
 							>
+								<v-icon left size="16">mdi-close</v-icon>
+								요청 취소
+							</v-btn>
+						</template>
 
-							<v-spacer />
+						<template v-else>
+							<v-btn
+								color="primary"
+								variant="tonal"
+								size="small"
+								:loading="
+									isJoining && targetId === fav.challenge.challengeId
+								"
+								@click.stop="onJoin(fav.challenge.challengeId)"
+							>
+								<v-icon left size="16">mdi-account-plus</v-icon>
+								참여하기
+							</v-btn>
+						</template>
 
-							<!--  승인됨 -->
-							<template v-if="fav.approved">
-								<v-btn small color="success" disabled>승인됨</v-btn>
-							</template>
-							<!-- 요청 중 -->
-							<template v-else-if="fav.requested">
-								<v-btn
-									small
-									color="error"
-									:loading="
-										isJoining &&
-										targetId === fav.challenge.challengeId
-									"
-									:disabled="isJoining"
-									@click="onCancel(fav.challenge.challengeId)"
-								>
-									요청 취소
-								</v-btn>
-							</template>
-							<!--  아직 요청 안 함 -->
-							<template v-else>
-								<v-btn
-									small
-									color="secondary"
-									:loading="
-										isJoining &&
-										targetId === fav.challenge.challengeId
-									"
-									:disabled="isJoining"
-									@click="onJoin(fav.challenge.challengeId)"
-								>
-									참여하기
-								</v-btn>
-							</template>
-						</v-card-actions>
-					</v-card>
-				</v-col>
-			</template>
+						<v-spacer />
+
+						<v-btn
+							variant="text"
+							size="small"
+							@click.stop="goToDetail(fav.challenge.challengeId)"
+						>
+							상세보기
+							<v-icon right size="16">mdi-arrow-right</v-icon>
+						</v-btn>
+					</v-card-actions>
+				</v-card>
+			</v-col>
 		</v-row>
 	</v-container>
 </template>
@@ -116,7 +177,6 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import axios from 'axios'
 import {
 	getFavoriteChallenges,
 	toggleFavoriteChallenge,
@@ -133,34 +193,51 @@ import { handleApiError } from '@/utils/apiError'
 const authStore = useAuthStore()
 const router = useRouter()
 
+// 상태 관리
 const favorites = ref([])
 const categories = ref([])
-
-// 내 참여 요청/승인된 챌린지 ID 저장용 Set 선언
-const myParts = ref(new Set())
 const myPartsMap = ref({})
-
 const isLoadingFavorites = ref(false)
-const isToggling = ref(false)
 const isJoining = ref(false)
 const targetId = ref(null)
 
+// 설명 글자 수 제한
+function truncateDescription(description) {
+	if (!description) return ''
+	return description.length > 200
+		? description.substring(0, 200) + '...'
+		: description
+}
+
+// 날짜 포맷터
+function formatDate(date) {
+	if (!date) return '-'
+	return new Date(date).toLocaleDateString('ko-KR', {
+		month: 'short',
+		day: 'numeric',
+	})
+}
+
+// 카테고리명 반환
 function categoryName(id) {
 	const cat = categories.value.find((x) => x.categoryId === id)
-	return cat ? cat.categoryName : '알 수 없음'
+	return cat ? cat.categoryName : '기타'
 }
 
-// 날짜 포맷
-function formatDate(d) {
-	return d ? new Date(d).toLocaleDateString() : '-'
+// 상세 페이지로 이동
+function goToDetail(challengeId) {
+	router.push({
+		name: 'challenge-overview',
+		params: { id: challengeId },
+	})
 }
 
-// 챌린지 목록으로 돌아가기기
+// 챌린지 목록으로 이동
 function goToList() {
 	router.push({ name: 'challenge-list' })
 }
 
-// 내 참여내역 불러와 myParts Set을 채우기
+// 내 참여내역 불러오기
 async function fetchMyParticipations() {
 	const userId = authStore.user?.userId
 	if (!userId) return
@@ -169,30 +246,26 @@ async function fetchMyParticipations() {
 		const list = Array.isArray(res)
 			? res
 			: res.items || res.participations || []
-		const set = new Set()
 		const map = {}
 		list.forEach((p) => {
 			if (p.status !== 'REJECTED') {
-				set.add(p.challengeId)
 				map[p.challengeId] = {
 					id: p.participationId,
 					status: p.status,
 				}
 			}
 		})
-		myParts.value = set
 		myPartsMap.value = map
 	} catch (err) {
 		handleApiError(err)
 	}
 }
 
+// 관심 챌린지 목록 가져오기
 async function fetchFavorites() {
 	isLoadingFavorites.value = true
 	try {
-		// 내 참여 상태 동기화
 		await fetchMyParticipations()
-		// 즐겨찾기 목록 가져오기
 		const data = await getFavoriteChallenges()
 		favorites.value = data.map((item) => {
 			const cid = item.challenge.challengeId
@@ -200,7 +273,7 @@ async function fetchFavorites() {
 			return {
 				...item,
 				requested: part.status === 'REQUESTED',
-				approved: part.status === 'APPROVED', // ← 여기 추가
+				approved: part.status === 'APPROVED',
 			}
 		})
 	} catch (err) {
@@ -212,15 +285,11 @@ async function fetchFavorites() {
 
 // 관심 챌린지 토글(취소)
 async function onToggleFavorite(challengeId) {
-	isToggling.value = true
 	try {
 		await toggleFavoriteChallenge(challengeId)
-		// 즐겨찾기 토글 후 최신 목록으로 동기화
 		await fetchFavorites()
 	} catch (err) {
 		handleApiError(err)
-	} finally {
-		isToggling.value = false
 	}
 }
 
@@ -235,12 +304,9 @@ async function onJoin(challengeId) {
 	isJoining.value = true
 	targetId.value = challengeId
 	try {
-		await joinChallenge(userId, challengeId)
+		await joinChallenge(challengeId)
 		alert('참여 요청이 완료되었습니다!')
-		const fav = favorites.value.find(
-			(x) => x.challenge.challengeId === challengeId
-		)
-		if (fav) fav.requested = true
+		await fetchFavorites()
 	} catch (err) {
 		handleApiError(err)
 	} finally {
@@ -252,7 +318,7 @@ async function onJoin(challengeId) {
 // 참여 취소
 async function onCancel(challengeId) {
 	if (!confirm('참여 요청을 정말 취소하시겠습니까?')) return
-	const participationId = myPartsMap.value[challengeId]
+	const participationId = myPartsMap.value[challengeId]?.id
 	if (!participationId) {
 		alert('취소할 요청을 찾을 수 없습니다.')
 		return
@@ -262,8 +328,6 @@ async function onCancel(challengeId) {
 	targetId.value = challengeId
 	try {
 		await cancelParticipation(challengeId, participationId)
-		// 취소 후 다시 내 요청 목록과 favorites 갱신
-		await fetchMyParticipations()
 		await fetchFavorites()
 		alert('참여 요청이 취소되었습니다.')
 	} catch (e) {
@@ -274,7 +338,7 @@ async function onCancel(challengeId) {
 	}
 }
 
-// 카테고리 이름 매핑
+// 카테고리 목록 가져오기
 async function loadCategories() {
 	try {
 		categories.value = await getCategories()
@@ -283,57 +347,20 @@ async function loadCategories() {
 	}
 }
 
-// 마운트 시 초기 로드
+// 컴포넌트 마운트 시 초기 로드
 onMounted(async () => {
 	await authStore.fetchUser()
-	await fetchMyParticipations() // 수정: 먼저 내 참여내역 로드
 	await Promise.all([fetchFavorites(), loadCategories()])
 })
 </script>
 
 <style scoped>
-.title {
-	width: 100%;
-	max-width: 1400px;
-	margin-bottom: 1rem;
-	padding: 0.75rem 1.5rem;
-	background: linear-gradient(to right, #66bb6a 0%, #43a047 50%, #2e7d32 100%);
-	border-radius: 8px;
-	box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-	color: white;
+/* Vuetify 기본 스타일만 사용하므로 추가 CSS 최소화 */
+.v-card {
+	cursor: default; /* 일반 커서 강제 적용 */
 }
-
-.title-text {
-	font-size: 1.75rem;
-	font-weight: 600;
-	text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
-}
-
-.favorite-btn {
-	background: linear-gradient(135deg, #81c784 0%, #4caf50 100%);
-	color: white !important;
-	font-weight: 600;
-	border-radius: 24px;
-	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-	text-transform: none;
-	padding: 0.6rem 1.6rem;
-	transition: transform 0.2s, box-shadow 0.2s;
-}
-.favorite-btn:hover {
+.v-card:hover {
 	transform: translateY(-2px);
-	box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
-}
-.favorite-btn .v-icon {
-	font-size: 1.2rem;
-	margin-right: 0.5rem;
-}
-
-@media (max-width: 600px) {
-	.title-text {
-		font-size: 1.25rem;
-	}
-	.title {
-		padding: 0.5rem 1rem;
-	}
+	transition: transform 0.2s ease;
 }
 </style>

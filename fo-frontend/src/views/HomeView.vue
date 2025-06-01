@@ -3,6 +3,7 @@
 		<ChallengeCarousel
 			:challenges="popularChallenges"
 			:categories="categories"
+			@refresh-needed="refreshData"
 		/>
 		<br />
 		<hr />
@@ -23,6 +24,15 @@ import { getCategories } from '../services/categoryService'
 const popularChallenges = ref([])
 const categories = ref([]) // ✅ 카테고리 상태 선언
 const loading = ref(false)
+
+// 데이터 새로고침 함수 추가
+async function refreshData() {
+	try {
+		popularChallenges.value = await getPopularChallenges(10)
+	} catch (e) {
+		console.error('데이터 새로고침 실패:', e)
+	}
+}
 
 onMounted(async () => {
 	loading.value = true

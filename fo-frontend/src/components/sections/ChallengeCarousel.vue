@@ -23,10 +23,10 @@
 			>
 				<v-card
 					class="challenge-card mx-3 bg-primary"
-					style="color: white; border-radius: 30px; cursor: pointer"
+					style="color: white; border-radius: 30px"
 					:elevation="isSelected ? 6 : 2"
-					width="320"
-					@click="goToDetail(item.challengeId)"
+					width="350"
+					height="480"
 				>
 					<!-- (1) 썸네일 이미지가 있을 때 이미지 카드 -->
 					<template v-if="item.thumbnail">
@@ -37,11 +37,11 @@
 					<!-- (2) 썸네일이 없으면 컬러 배경 카드 -->
 					<template v-else>
 						<div
-							class="color-card d-flex flex-column justify-space-between pa-10 text-white"
+							class="color-card d-flex flex-column justify-space-between pa-6 text-white"
 							:style="{ background: item.bg || '#7e5bef' }"
 						>
-							<!-- 카테고리명 칩 -->
-							<div class="d-flex align-center mb-2">
+							<!-- 상단: 카테고리명 칩 -->
+							<div class="d-flex align-center mb-3">
 								<v-chip
 									size="small"
 									color="white"
@@ -52,23 +52,60 @@
 									{{ getCategoryName(item.categoryId) }}
 								</v-chip>
 							</div>
-							<div>
-								<h2 class="text-h5 font-weight-bold mb-2">
+
+							<!-- 중간: 제목과 설명 -->
+							<div class="flex-grow-1">
+								<h2 class="text-h5 font-weight-bold mb-3">
 									{{ item.title }}
 								</h2>
-								<p class="text-body-2">
+								<p class="text-body-2 mb-4" style="line-height: 1.4">
 									{{ truncateDescription(item.description) }}
 								</p>
 							</div>
-							<!-- 자세히 보기 버튼 - 클릭 이벤트 전파 방지 -->
-							<v-btn
-								color="white"
-								variant="outlined"
-								size="small"
-								@click.stop="goToDetail(item.challengeId)"
-							>
-								자세히 보기
-							</v-btn>
+
+							<!-- 하단: 챌린지 정보들 -->
+							<div class="challenge-info">
+								<!-- 기간 정보 -->
+								<div class="info-row mb-2">
+									<v-icon size="16" class="mr-2"
+										>mdi-calendar-range</v-icon
+									>
+									<span class="text-caption">
+										{{ formatDate(item.startDate) }} ~
+										{{ formatDate(item.endDate) }}
+									</span>
+								</div>
+
+								<!-- 생성자 정보 -->
+								<div class="info-row mb-3">
+									<v-icon size="16" class="mr-2">mdi-account</v-icon>
+									<span class="text-caption">
+										by {{ item.creatorNickname || '익명' }}
+									</span>
+								</div>
+
+								<!-- 생성일 -->
+								<div class="info-row mb-3">
+									<v-icon size="16" class="mr-2"
+										>mdi-clock-outline</v-icon
+									>
+									<span class="text-caption">
+										{{ formatCreatedDate(item.createdDate) }}
+									</span>
+								</div>
+
+								<!-- 자세히 보기 버튼 - 이것만 클릭 가능 -->
+								<!-- <v-btn
+									color="white"
+									variant="outlined"
+									size="small"
+									class="detail-button w-100"
+									@click="goToDetail(item.challengeId)"
+								>
+									<v-icon left size="16">mdi-arrow-right</v-icon>
+									자세히 보기
+								</v-btn> -->
+							</div>
 						</div>
 					</template>
 				</v-card>
@@ -121,12 +158,36 @@ function getCategoryName(categoryId) {
 // 설명 글자 수 제한 함수 (카드 내 텍스트가 너무 길면 말줄임표로 처리)
 function truncateDescription(description) {
 	if (!description) return ''
-	return description.length > 80
-		? description.substring(0, 80) + '...'
+	return description.length > 200
+		? description.substring(0, 200) + '...'
 		: description
 }
 
-// 챌린지 상세 페이지로 이동하는 함수
+// 날짜 포맷팅 함수 (챌린지 리스트와 동일하게)
+function formatDate(dateStr) {
+	if (!dateStr) return '-'
+	const date = new Date(dateStr)
+	return date.toLocaleDateString('ko-KR', {
+		month: 'short',
+		day: 'numeric',
+	})
+}
+
+// 생성일 포맷팅 함수
+function formatCreatedDate(dateStr) {
+	if (!dateStr) return '-'
+	const date = new Date(dateStr)
+	const now = new Date()
+	const diffDays = Math.floor((now - date) / (1000 * 60 * 60 * 24))
+
+	if (diffDays === 0) return '오늘 생성'
+	if (diffDays === 1) return '어제 생성'
+	if (diffDays < 7) return `${diffDays}일 전 생성`
+	if (diffDays < 30) return `${Math.floor(diffDays / 7)}주 전 생성`
+	return `${Math.floor(diffDays / 30)}개월 전 생성`
+}
+
+// 챌린지 상세 페이지로 이동하는 함수 - 오직 버튼을 통해서만 호출됨
 function goToDetail(challengeId) {
 	// Vue Router를 사용해서 챌린지 상세 페이지로 이동
 	router.push({
@@ -179,6 +240,7 @@ onBeforeUnmount(stopAuto)
 	border-radius: 30px;
 	overflow: hidden;
 	transition: transform 0.2s ease-in-out; /* 호버 효과를 위한 부드러운 전환 */
+	/* cursor: pointer; 제거 - 카드 전체가 클릭 가능하지 않음을 명시 */
 }
 
 .challenge-card:hover {
@@ -188,7 +250,42 @@ onBeforeUnmount(stopAuto)
 }
 
 .color-card {
-	height: calc(320px * 4 / 3);
+	height: 100%;
+	min-height: 460px;
+}
+
+/* 정보 행 스타일링 */
+.info-row {
+	display: flex;
+	align-items: center;
+	opacity: 0.9;
+}
+
+.info-row .v-icon {
+	opacity: 0.8;
+}
+
+/* 자세히 보기 버튼 스타일 - 이것만 클릭 가능함을 강조 */
+.detail-button {
+	background: rgba(255, 255, 255, 0.1) !important;
+	border: 1px solid rgba(255, 255, 255, 0.3) !important;
+	backdrop-filter: blur(10px);
+	transition: all 0.3s ease;
+	cursor: pointer; /* 버튼만 클릭 가능함을 명시 */
+}
+
+.detail-button:hover {
+	background: rgba(255, 255, 255, 0.2) !important;
+	transform: translateY(-2px);
+	box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* 챌린지 정보 영역 */
+.challenge-info {
+	background: rgba(0, 0, 0, 0.1);
+	border-radius: 12px;
+	padding: 12px;
+	backdrop-filter: blur(5px);
 }
 
 .v-btn--size-8 {
@@ -196,8 +293,16 @@ onBeforeUnmount(stopAuto)
 	--v-btn-size: 8px;
 }
 
-/* 카드 전체를 클릭 가능하게 하는 커서 스타일 */
-.challenge-card {
-	cursor: pointer;
+/* 텍스트 가독성 향상 */
+.text-h5 {
+	text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.text-body-2 {
+	text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.2);
+}
+
+.text-caption {
+	text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.2);
 }
 </style>

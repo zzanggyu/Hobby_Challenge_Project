@@ -1,7 +1,6 @@
 <template>
 	<v-container>
-		<!-- ① 타이틀 영역 -->
-		<!-- ① 타이틀 + 내 관심 버튼 한 줄에 -->
+		<!-- ① 타이틀 영역 - 개선된 네비게이션 -->
 		<v-row class="mb-4" align="center">
 			<v-col cols="12" class="d-flex align-center justify-space-between">
 				<div class="title d-flex align-center">
@@ -10,34 +9,68 @@
 					>
 					<span class="title-text">챌린지 목록</span>
 				</div>
-				<v-btn
-					color="success"
-					size="large"
-					class="favorite-btn"
-					@click="goToFavoriteChallenge"
-				>
-					<v-icon left>mdi-star-outline</v-icon>
-					내 관심 챌린지
-				</v-btn>
 
-				<v-btn
-					color="success"
-					size="large"
-					class="my-challenge-btn"
-					@click="goMyChallenge"
-				>
-					<v-icon left>mdi-trophy</v-icon>
-					참여 중인 챌린지
-				</v-btn>
+				<!-- ✅ 새로운 네비게이션 메뉴 -->
+				<div class="navigation-section">
+					<v-menu offset-y>
+						<template v-slot:activator="{ props }">
+							<v-btn
+								v-bind="props"
+								color="white"
+								variant="outlined"
+								class="nav-menu-btn"
+								size="large"
+							>
+								<v-icon left color="primary">mdi-view-dashboard</v-icon>
+								<span class="nav-text">내 챌린지</span>
+								<v-icon right color="primary">mdi-chevron-down</v-icon>
+							</v-btn>
+						</template>
+
+						<v-list class="navigation-menu">
+							<v-list-item
+								class="nav-item"
+								@click="goToFavoriteChallenge"
+							>
+								<v-list-item-prepend>
+									<v-icon color="pink">mdi-heart</v-icon>
+								</v-list-item-prepend>
+								<v-list-item-title class="nav-item-title">
+									관심 챌린지
+								</v-list-item-title>
+								<v-list-item-subtitle class="nav-item-subtitle">
+									저장한 챌린지 보기
+								</v-list-item-subtitle>
+							</v-list-item>
+
+							<v-divider class="my-1"></v-divider>
+
+							<v-list-item class="nav-item" @click="goMyChallenge">
+								<v-list-item-prepend>
+									<v-icon color="orange">mdi-trophy</v-icon>
+								</v-list-item-prepend>
+								<v-list-item-title class="nav-item-title">
+									참여 중인 챌린지
+								</v-list-item-title>
+								<v-list-item-subtitle class="nav-item-subtitle">
+									현재 진행중인 챌린지
+								</v-list-item-subtitle>
+							</v-list-item>
+						</v-list>
+					</v-menu>
+				</div>
 			</v-col>
 		</v-row>
 
 		<!-- 검색 & 카테고리 필터 바 -->
-		<v-row class="mb-4" align="center">
+		<v-row class="mb-6" align="center">
 			<v-col cols="12" md="6">
 				<v-text-field
 					v-model="search"
 					label="챌린지 제목 검색"
+					prepend-inner-icon="mdi-magnify"
+					rounded="lg"
+					variant="outlined"
 					clearable
 					@keyup.enter="fetchChallenges"
 				/>
@@ -49,10 +82,12 @@
 					item-title="categoryName"
 					item-value="categoryId"
 					label="카테고리 필터"
+					prepend-inner-icon="mdi-filter"
+					rounded="lg"
+					variant="outlined"
 					clearable
 				/>
 			</v-col>
-			<v-spacer />
 		</v-row>
 
 		<!-- 챌린지 카드 리스트 -->
@@ -66,101 +101,156 @@
 				class="d-flex"
 			>
 				<v-card
-					elevation="4"
-					height="310"
-					width="100%"
+					class="challenge-card"
+					elevation="6"
 					rounded="xl"
-					:tile="false"
-					variant="outlined"
-					class="d-flex flex-column"
-					outlined
-					:style="{
-						border: '1px solid rgba(165, 243, 212, 0.6)',
-						backgroundColor: '#f9fdfc',
-					}"
+					width="100%"
+					height="420"
 				>
-					<!-- 카드 상단: 제목/설명 -->
-					<v-card-title class="px-4">
-						<div class="d-flex w-100 justify-space-between align-center">
-							<span class="text-h6">{{ c.title }}</span>
+					<!-- 카드 배경과 전체 내용 - 단일 색상 -->
+					<div class="card-content" style="background: #7e5bef">
+						<!-- 상단: 카테고리와 하트 -->
+						<div class="card-header">
+							<v-chip
+								size="small"
+								color="white"
+								text-color="primary"
+								class="font-weight-bold elevation-2"
+								style="border-radius: 12px"
+							>
+								{{ categoryName(c.categoryId) }}
+							</v-chip>
 
-							<v-icon
-								:color="c.isFavorite ? 'red' : 'grey'"
+							<v-btn
+								icon
+								size="small"
+								class="heart-btn"
 								@click="onToggleFavorite(c)"
-								class="mr-2"
-								style="cursor: pointer"
 							>
-								{{ c.isFavorite ? 'mdi-heart' : 'mdi-heart-outline' }}
-							</v-icon>
+								<v-icon
+									:color="
+										c.isFavorite ? 'red' : 'rgba(255,255,255,0.7)'
+									"
+									size="24"
+								>
+									{{
+										c.isFavorite ? 'mdi-heart' : 'mdi-heart-outline'
+									}}
+								</v-icon>
+							</v-btn>
 						</div>
-					</v-card-title>
 
-					<v-divider color="green lighten-2" />
+						<!-- 중간: 제목과 설명 -->
+						<div class="card-body">
+							<h3 class="card-title">{{ c.title }}</h3>
+							<p class="card-description">
+								{{ truncateDescription(c.description) }}
+							</p>
+						</div>
 
-					<v-card-text class="flex-grow-1">
-						{{ c.description }}
-					</v-card-text>
+						<!-- 하단: 정보와 버튼들 -->
+						<div class="card-footer">
+							<!-- 기간 정보 -->
+							<div class="info-row mb-2">
+								<v-icon
+									size="16"
+									class="mr-2"
+									color="rgba(255,255,255,0.8)"
+								>
+									mdi-calendar-range
+								</v-icon>
+								<span class="info-text">
+									{{ formatDate(c.startDate) }} ~
+									{{ formatDate(c.endDate) }}
+								</span>
+							</div>
 
-					<!-- 카드 하단: 날짜 / 카테고리 / 버튼 -->
-					<v-card-subtitle>
-						기간: {{ formatDate(c.startDate) }} ~
-						{{ formatDate(c.endDate) }}
-					</v-card-subtitle>
+							<!-- 생성자 정보 -->
+							<div class="info-row mb-3">
+								<v-icon
+									size="16"
+									class="mr-2"
+									color="rgba(255,255,255,0.8)"
+								>
+									mdi-account
+								</v-icon>
+								<span class="info-text">
+									by {{ c.creatorNickname }}
+								</span>
+							</div>
 
-					<v-card-actions class="mt-auto">
-						<v-chip small outlined color="green-accent-4">
-							{{ categoryName(c.categoryId) }}
-						</v-chip>
-						<small class="grey--text text--darken-1"
-							>by: {{ c.creatorNickname }}</small
-						>
-						<v-spacer />
+							<!-- 액션 버튼들 -->
+							<div class="action-buttons">
+								<!-- 참여 상태에 따른 버튼 -->
+								<template v-if="!c.requested && !c.approved">
+									<v-btn
+										class="action-button join-btn"
+										size="small"
+										:loading="isJoining && targetId === c.challengeId"
+										:disabled="
+											isJoining || (myParts.value?.size || 0) > 0
+										"
+										@click="onJoin(c.challengeId)"
+									>
+										<v-icon left size="16">mdi-account-plus</v-icon>
+										{{
+											(myParts.value?.size || 0) > 0
+												? '다른 챌린지 참여 중'
+												: '참여하기'
+										}}
+									</v-btn>
+								</template>
 
-						<!-- 토글 버튼 -->
-						<!-- 참여 상태에 따른 버튼 -->
-						<template v-if="!c.requested && !c.approved">
-							<!-- 아직 요청도 승인도 안 된 경우 -->
-							<v-btn
-								small
-								color="secondary"
-								:loading="isJoining && targetId === c.challengeId"
-								:disabled="isJoining || (myParts.value?.size || 0) > 0"
-								@click="onJoin(c.challengeId)"
-							>
-								{{
-									(myParts.value?.size || 0) > 0
-										? '다른 챌린지 참여 중'
-										: '참여하기'
-								}}
-							</v-btn>
-						</template>
-						<template v-else-if="c.requested">
-							<!-- 요청 중인 경우 -->
-							<v-btn
-								small
-								color="error"
-								:loading="isJoining && targetId === c.challengeId"
-								:disabled="isJoining"
-								@click="onCancel(c.challengeId)"
-							>
-								요청 취소
-							</v-btn>
-						</template>
-						<template v-else-if="c.approved">
-							<!-- 승인된 경우 -->
-							<v-btn small color="success" disabled> 승인됨 </v-btn>
-						</template>
-					</v-card-actions>
+								<template v-else-if="c.requested">
+									<v-btn
+										class="action-button cancel-btn"
+										size="small"
+										:loading="isJoining && targetId === c.challengeId"
+										:disabled="isJoining"
+										@click="onCancel(c.challengeId)"
+									>
+										<v-icon left size="16">mdi-close</v-icon>
+										요청 취소
+									</v-btn>
+								</template>
+
+								<template v-else-if="c.approved">
+									<v-btn
+										class="action-button approved-btn"
+										size="small"
+										disabled
+									>
+										<v-icon left size="16">mdi-check</v-icon>
+										승인됨
+									</v-btn>
+								</template>
+
+								<!-- 상세보기 버튼 -->
+								<v-btn
+									class="action-button detail-btn"
+									size="small"
+									@click="goToDetail(c.challengeId)"
+								>
+									<v-icon left size="16">mdi-arrow-right</v-icon>
+									상세보기
+								</v-btn>
+							</div>
+						</div>
+					</div>
 				</v-card>
 			</v-col>
 		</v-row>
-		<v-row justify="center" class="my-4">
+
+		<!-- 페이지네이션 -->
+		<v-row justify="center" class="my-8">
 			<v-pagination
 				v-model="currentPage"
 				:length="totalPages"
 				total-visible="10"
 				show-first-last-page
 				class="my-4"
+				color="primary"
+				rounded="circle"
 			/>
 		</v-row>
 	</v-container>
@@ -204,21 +294,38 @@ const search = ref('')
 const selectedCategory = ref(null)
 
 // 내 참여내역을 id → participationId 매핑해서 저장
-// 내 참여 요청/승인된 챌린지 ID 저장용 Set 선언
 const myParts = ref(new Set())
 const myPartsMap = ref({})
 
+// 설명 글자 수 제한
+function truncateDescription(description) {
+	if (!description) return ''
+	return description.length > 200
+		? description.substring(0, 200) + '...'
+		: description
+}
+
 // 날짜 포맷터
 function formatDate(date) {
-	return date ? new Date(date).toLocaleDateString() : '-'
+	if (!date) return '-'
+	return new Date(date).toLocaleDateString('ko-KR', {
+		month: 'short',
+		day: 'numeric',
+	})
 }
 
 // 카테고리 ID → 이름 매핑
 function categoryName(id) {
-	// console.log('categoryName got id:', id)
-	// console.log('categories list:', categories.value)
 	const cat = categories.value.find((x) => x.categoryId === id)
-	return cat ? cat.categoryName : '알 수 없음'
+	return cat ? cat.categoryName : '기타'
+}
+
+// 상세 페이지로 이동
+function goToDetail(challengeId) {
+	router.push({
+		name: 'challenge-overview',
+		params: { id: challengeId },
+	})
 }
 
 async function goMyChallenge() {
@@ -231,7 +338,6 @@ async function goMyChallenge() {
 		alert('참여중인 챌린지가 없습니다.')
 		return
 	}
-	// 챌린지 상세로 이동
 	router.push({
 		name: 'challenge-overview',
 		params: { id: myApproved.challengeId },
@@ -247,7 +353,6 @@ async function fetchMyParticipations() {
 		const list = Array.isArray(res)
 			? res
 			: res.items || res.participations || []
-		// Set 과 Map 동시 채우기
 		const set = new Set()
 		const map = {}
 		list.forEach((p) => {
@@ -260,9 +365,6 @@ async function fetchMyParticipations() {
 		})
 		myParts.value = set
 		myPartsMap.value = map
-
-		console.log('▶ fetchMyParticipations → myParts:', myParts.value)
-		console.log('▶ fetchMyParticipations → myPartsMap:', myPartsMap.value)
 	} catch (err) {
 		handleApiError(err)
 	}
@@ -270,19 +372,15 @@ async function fetchMyParticipations() {
 
 // 페이징 챌린지 목록 API 호출
 async function fetchChallenges() {
-	// MyParts 최신화: 서버 참여내역 동기화
 	await fetchMyParticipations()
 	try {
-		// 백엔드에서 { total, items } 형태로 내려줌
 		const { totalCount: totalFromAPi, items } = await getChallenges(
-			currentPage.value, // 현재 페이지
-			pageSize.value, // 페이지 크기기
-			search.value, //  검색 키워드
-			selectedCategory.value //  카테고리 필터
+			currentPage.value,
+			pageSize.value,
+			search.value,
+			selectedCategory.value
 		)
-		totalCount.value = totalFromAPi // 총 챌린지 수
-		// 한 번만 map 해서 requested/approved 결정
-		// challenge 카드에서 approved: 참여 or 생성
+		totalCount.value = totalFromAPi
 		challenges.value = items.map((c) => {
 			const participation = myPartsMap.value[c.challengeId] || {}
 			return {
@@ -307,10 +405,8 @@ async function fetchChallenges() {
 	}
 }
 
-// 페이지가 바뀌면 다시 불러오기
 watch(currentPage, fetchChallenges)
 
-// 카테고리 가져오기
 async function fetchCategories() {
 	try {
 		categories.value = await getCategories()
@@ -319,19 +415,16 @@ async function fetchCategories() {
 	}
 }
 
-// 관심 챌린지 등록 하트 누르기
 async function onToggleFavorite(challenge) {
 	try {
 		const id = challenge.challengeId
 		await toggleFavoriteChallenge(id)
-		// 2) 전체 챌린지를 다시 불러와서 갱신
 		await fetchChallenges()
 	} catch (err) {
 		handleApiError(err)
 	}
 }
 
-// 참여 버튼
 async function onJoin(challengeId) {
 	const userId = authStore.user?.userId
 	if (!userId) {
@@ -339,7 +432,6 @@ async function onJoin(challengeId) {
 		return router.push({ name: 'login' })
 	}
 
-	// 이미 요청/승인 중이면 API 호출 전단에서 막기
 	if (myParts.value.has(challengeId)) {
 		alert('이미 참여 요청 중인 챌린지가 있거나 참여 중인 챌린지가 있습니다.')
 		return
@@ -348,9 +440,7 @@ async function onJoin(challengeId) {
 	isJoining.value = true
 	targetId.value = challengeId
 	try {
-		// 1) 실제 서버에 요청
 		await joinChallenge(challengeId)
-		// 2) 최신 내 참여내역과 챌린지 목록을 통째로 다시 불러와 화면 동기화
 		await fetchMyParticipations()
 		await fetchChallenges()
 		alert('참여 요청이 완료되었습니다!')
@@ -358,12 +448,10 @@ async function onJoin(challengeId) {
 		if (axios.isAxiosError(err)) {
 			const code = err.response?.data?.errorCode
 			if (code === 'PARTICIPATION_LIMIT_EXCEEDED') {
-				// 이미 다른 챌린지에 요청 중일 때
 				alert(
 					'이미 다른 챌린지에 참여 요청/참여 중입니다.\n먼저 기존 요청을 취소하거나 탈퇴해주세요.'
 				)
 			} else if (err.response?.status === 400) {
-				// 그 외 BadRequest
 				alert(err.response.data.message || '참여 요청에 실패했습니다.')
 			} else {
 				handleApiError(err)
@@ -378,10 +466,8 @@ async function onJoin(challengeId) {
 	}
 }
 
-// 참여 요청 취소
 async function onCancel(challengeId) {
 	if (!confirm('참여 요청을 정말 취소하시겠습니까?')) return
-	// await fetchMyParticipations()
 	const participationObj = myPartsMap.value[challengeId]
 	const participationId = participationObj?.id
 	if (!participationId) {
@@ -393,7 +479,7 @@ async function onCancel(challengeId) {
 	try {
 		await cancelParticipation(challengeId, participationId)
 		await fetchMyParticipations()
-		await fetchChallenges() // 다시 목록 갱신
+		await fetchChallenges()
 		alert('요청이 취소되었습니다.')
 	} catch (err) {
 		if (axios.isAxiosError(err)) {
@@ -414,47 +500,38 @@ async function onCancel(challengeId) {
 	}
 }
 
-// 컴포넌트 마운트 시 초기 로드
 onMounted(async () => {
 	await authStore.fetchUser()
 	await fetchMyParticipations()
 	await Promise.all([fetchCategories(), fetchChallenges()])
 })
 
-// 검색 + 카테고리 필터 적용
 const filteredChallenges = computed(() => {
-	return (
-		challenges.value
-			// 1) 검색/카테고리 필터
-			.filter((c) => {
-				const matchesText =
-					c.title.includes(search.value) ||
-					c.description.includes(search.value)
-				const matchesCategory =
-					!selectedCategory.value ||
-					c.categoryId === selectedCategory.value
-				return matchesText && matchesCategory
-			})
-			// 2) 매 렌더링마다 myParts를 보고 requested 재계산
-			// 2) 필터링 후에도 요청/승인 상태 그대로 유지
-			.map((c) => ({
-				...c,
-				// (필요하면 다시 동기화)
-				requested: c.requested,
-				approved: c.approved,
-			}))
-	)
+	return challenges.value
+		.filter((c) => {
+			const matchesText =
+				c.title.includes(search.value) ||
+				c.description.includes(search.value)
+			const matchesCategory =
+				!selectedCategory.value || c.categoryId === selectedCategory.value
+			return matchesText && matchesCategory
+		})
+		.map((c) => ({
+			...c,
+			requested: c.requested,
+			approved: c.approved,
+		}))
 })
 
 function goToFavoriteChallenge() {
 	router.push('/challenges/favorite')
 }
 
-// 전체 페이지 수 계산
 const totalPages = computed(() => Math.ceil(totalCount.value / pageSize.value))
 </script>
 
 <style scoped>
+/* 타이틀 스타일 */
 .title {
 	width: 100%;
 	max-width: 1400px;
@@ -472,31 +549,205 @@ const totalPages = computed(() => Math.ceil(totalCount.value / pageSize.value))
 	text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
 }
 
+/* ✅ 새로운 네비게이션 스타일 */
+.navigation-section {
+	z-index: 10;
+}
+
+.nav-menu-btn {
+	background: rgba(255, 255, 255, 0.95) !important;
+	backdrop-filter: blur(10px);
+	border: 2px solid rgba(255, 255, 255, 0.3) !important;
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+	transition: all 0.3s ease;
+	text-transform: none !important;
+	font-weight: 600;
+}
+
+.nav-menu-btn:hover {
+	background: rgba(255, 255, 255, 1) !important;
+	transform: translateY(-2px);
+	box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+}
+
+.nav-text {
+	color: #333 !important;
+	margin: 0 8px;
+}
+
+.navigation-menu {
+	border-radius: 12px;
+	box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+	padding: 8px 0;
+	min-width: 280px;
+}
+
+.nav-item {
+	padding: 16px 20px;
+	transition: background-color 0.2s ease;
+	border-radius: 8px;
+	margin: 0 8px;
+}
+
+.nav-item:hover {
+	background-color: rgba(0, 0, 0, 0.04);
+}
+
+.nav-item-title {
+	font-weight: 600;
+	font-size: 1rem;
+	margin-bottom: 2px;
+}
+
+.nav-item-subtitle {
+	font-size: 0.85rem;
+	color: rgba(0, 0, 0, 0.6);
+}
+
+/* 챌린지 카드 스타일 */
+.challenge-card {
+	transition: transform 0.3s ease, box-shadow 0.3s ease;
+	overflow: hidden;
+}
+
+.challenge-card:hover {
+	transform: translateY(-8px);
+	box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15) !important;
+}
+
+.card-content {
+	height: 100%;
+	padding: 24px;
+	display: flex;
+	flex-direction: column;
+	color: white;
+	position: relative;
+}
+
+/* 카드 헤더 */
+.card-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin-bottom: 20px;
+}
+
+.heart-btn {
+	background: rgba(255, 255, 255, 0.1) !important;
+	backdrop-filter: blur(10px);
+}
+
+.heart-btn:hover {
+	background: rgba(255, 255, 255, 0.2) !important;
+}
+
+/* 카드 본문 */
+.card-body {
+	flex-grow: 1;
+	margin-bottom: 20px;
+}
+
+.card-title {
+	font-size: 1.4rem;
+	font-weight: 700;
+	margin-bottom: 12px;
+	text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+	line-height: 1.3;
+}
+
+.card-description {
+	font-size: 0.95rem;
+	line-height: 1.5;
+	opacity: 0.9;
+	text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.2);
+}
+
+/* 정보 행 */
+.info-row {
+	display: flex;
+	align-items: center;
+	margin-bottom: 8px;
+}
+
+.info-text {
+	font-size: 0.85rem;
+	opacity: 0.9;
+	text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.2);
+}
+
+/* 액션 버튼들 */
+.action-buttons {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+.action-button {
+	width: 100%;
+	text-transform: none !important;
+	font-weight: 600;
+	border-radius: 12px;
+	transition: all 0.3s ease;
+}
+
+.join-btn {
+	background: rgba(76, 175, 80, 0.9) !important;
+	color: white !important;
+}
+
+.join-btn:hover {
+	background: rgba(76, 175, 80, 1) !important;
+	transform: translateY(-2px);
+}
+
+.cancel-btn {
+	background: rgba(244, 67, 54, 0.9) !important;
+	color: white !important;
+}
+
+.cancel-btn:hover {
+	background: rgba(244, 67, 54, 1) !important;
+	transform: translateY(-2px);
+}
+
+.approved-btn {
+	background: rgba(76, 175, 80, 0.7) !important;
+	color: white !important;
+}
+
+.detail-btn {
+	background: rgba(255, 255, 255, 0.15) !important;
+	color: white !important;
+	border: 1px solid rgba(255, 255, 255, 0.3);
+	backdrop-filter: blur(10px);
+}
+
+.detail-btn:hover {
+	background: rgba(255, 255, 255, 0.25) !important;
+	transform: translateY(-2px);
+}
+
+/* 반응형 */
 @media (max-width: 600px) {
 	.title-text {
 		font-size: 1.25rem;
 	}
-	.favorite-title {
-		padding: 0.5rem 1rem;
+
+	.card-content {
+		padding: 20px;
+	}
+
+	.card-title {
+		font-size: 1.2rem;
+	}
+
+	.nav-menu-btn {
+		font-size: 0.9rem;
+		padding: 8px 16px;
+	}
+
+	.navigation-menu {
+		min-width: 250px;
 	}
 }
-/* 
-.favorite-btn {
-	background: linear-gradient(135deg, #81c784 0%, #4caf50 100%);
-	color: white;
-	font-weight: 600;
-	border-radius: 24px;
-	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-	text-transform: none;
-	padding: 0.6rem 1.6rem;
-	transition: transform 0.2s, box-shadow 0.2s;
-}
-.favorite-btn:hover {
-	transform: translateY(-2px);
-	box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
-}
-.favorite-btn .v-icon {
-	font-size: 1.2rem;
-	margin-right: 0.5rem;
-} */
 </style>
