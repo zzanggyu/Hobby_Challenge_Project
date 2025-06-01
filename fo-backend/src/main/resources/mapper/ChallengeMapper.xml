@@ -192,7 +192,7 @@
 		
 	</select>
 	
-	<!-- 🔥 참여한 챌린지 조회용 ResultMap (상태 포함) -->
+	<!-- 참여한 챌린지 조회용 ResultMap (상태 포함) -->
 	<resultMap id="ChallengeWithStatus" type="com.hobby.challenge.fobackend.entity.Challenge" extends="ChallengeWithCreator">
 	    <result column="challengeStatus" property="challengeStatus"/>
 	</resultMap>
@@ -229,6 +229,35 @@
 	               #{id}
 	           </foreach>
 	  ORDER BY C.CREATED_DATE DESC
+	</select>
+	
+	<!-- 인기 챌린지 조회 (좋아요 많은 순, 동률이면 최신순) -->
+	<select id="findPopularChallenges" resultMap="ChallengeWithCreator">
+	    SELECT C.CHALLENGE_ID AS challengeId
+	         , C.TITLE AS title
+	         , C.DESCRIPTION AS description
+	         , C.CATEGORY_ID AS categoryId
+	         , C.CREATED_BY AS createdBy
+	         , C.START_DATE AS startDate
+	         , C.END_DATE AS endDate
+	         , C.CREATED_DATE AS createdDate
+	         , C.MODIFIED_DATE AS modifiedDate
+	         , CASE WHEN FC.USER_ID IS NOT NULL THEN TRUE ELSE FALSE END AS isFavorite
+	         , U.USER_ID AS userId
+	         , U.NICKNAME AS nickname
+	         , (SELECT COUNT(*) 
+	              FROM FAVORITE_CHALLENGE FC2 
+	             WHERE FC2.CHALLENGE_ID = C.CHALLENGE_ID) AS favoriteCount
+	      FROM CHALLENGE C
+	 LEFT JOIN FAVORITE_CHALLENGE FC 
+	        ON C.CHALLENGE_ID = FC.CHALLENGE_ID 
+	       AND FC.USER_ID = #{userId}
+	INNER JOIN USER U
+	        ON C.CREATED_BY = U.USER_ID
+	     WHERE (C.IS_DELETED = 0 OR C.IS_DELETED IS NULL)
+	       AND C.END_DATE >= CURDATE() <!-- 진행중이거나 예정인 챌린지만 -->
+	  ORDER BY favoriteCount DESC, C.CREATED_DATE DESC <!-- 좋아요 많은 순, 동률이면 최신순 -->
+	     LIMIT #{size}
 	</select>
 	
 	<!-- 챌린지 수정 챌린지 생성자만 가능 -->

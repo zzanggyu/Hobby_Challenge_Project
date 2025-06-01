@@ -35,6 +35,7 @@ public class SecurityConfig {
     		.requestMatchers(HttpMethod.OPTIONS, "/api/**").permitAll()
     		 // 회원가입·로그인 관련 엔드포인트는 모두 허용
             .requestMatchers("/api/auth/**").permitAll() // 로그인 리프레시 로그아웃 모두 허용
+            .requestMatchers("/api/challenges/popular").permitAll()
             .requestMatchers("/api/categories").permitAll()
             .requestMatchers("/api/rankings/**").permitAll()
             

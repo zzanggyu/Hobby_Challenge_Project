@@ -64,12 +64,22 @@ public class ChallengeController {
 	
 
     /** 참여한 챌린지 상세 조회 */
-	@GetMapping("/{id}")
+	@GetMapping("/{id:\\d+}")
 	public ChallengeDetailDTO getDetail(
 	    @PathVariable("id") Integer id,
 	    @AuthenticationPrincipal(expression="userId") Integer userId
 	) {
 	    return challengeService.getChallengeDetail(id, userId);
+	}
+	
+	// 인기 챌린지 조회 메인화면
+	@GetMapping("/popular")
+	public ResponseEntity<List<ChallengeResponseDTO>> getPopularChallenges(
+	        @AuthenticationPrincipal(expression = "userId") Integer userId,
+	        @RequestParam(name = "size", defaultValue = "12") int size) {
+	    
+	    List<ChallengeResponseDTO> popular = challengeService.getPopularChallenges(userId, size);
+	    return ResponseEntity.ok(popular);
 	}
 	
 //	/** 승인된 참여자 목록 조회 */

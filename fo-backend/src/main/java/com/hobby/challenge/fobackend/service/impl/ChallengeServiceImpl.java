@@ -151,6 +151,30 @@ public class ChallengeServiceImpl implements ChallengeService{
         return participationMapper.findApprovedByChallenge(challengeId);
     }
     
+    // 인기 챌린지 관심 순 동률이면 최신순
+    @Override
+    public List<ChallengeResponseDTO> getPopularChallenges(Integer userId, int size) {
+        // userId가 없으면 -1로 처리 (로그인하지 않은 사용자)
+        if (userId == null) userId = -1;
+        
+        List<Challenge> challenges = challengeMapper.findPopularChallenges(userId, size);
+        
+        return challenges.stream()
+            .map(c -> ChallengeResponseDTO.builder()
+                .challengeId(c.getChallengeId())
+                .title(c.getTitle())
+                .description(c.getDescription())
+                .categoryId(c.getCategoryId())
+                .creatorNickname(c.getCreator().getNickname())
+                .startDate(c.getStartDate())
+                .endDate(c.getEndDate())
+                .createdDate(c.getCreatedDate())
+                .isFavorite(c.getIsFavorite())
+                .build()
+            )
+            .toList();
+    }
+    
     // 챌린지 수정 챌린지 생성자(owner)용
     @Override
     @Transactional

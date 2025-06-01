@@ -53,6 +53,12 @@ public interface ChallengeMapper {
     // 챌린지 활성 개수 조회 
     int countByCreator(@Param("userId") Integer userId);
     
+    // 인기 챌린지 조회 (좋아요 순 + 최신순)
+    List<Challenge> findPopularChallenges(
+        @Param("userId") Integer userId,
+        @Param("size") int size
+    );
+    
     // 챌린지 수정 챌린지 생성자용
     int updateChallenge(Challenge challenge);
 	

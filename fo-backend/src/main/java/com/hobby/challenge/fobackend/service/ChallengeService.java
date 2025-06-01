@@ -41,6 +41,9 @@ public interface ChallengeService {
 	// 챌린지 참여 승인된 참여자 목록 조회
 	List<ParticipantDTO> getApprovedParticipants(Integer challengeId);
 	
+	// 인기 챌린지 메인화면 보여주기
+	List<ChallengeResponseDTO> getPopularChallenges(Integer userId, int size);
+	
 	// 챌린지 수정 챌린지 생성자(owner)용 
 	ChallengeResponseDTO updateChallenge(Integer challengeId,
             UpdateChallengeRequestDTO dto,
