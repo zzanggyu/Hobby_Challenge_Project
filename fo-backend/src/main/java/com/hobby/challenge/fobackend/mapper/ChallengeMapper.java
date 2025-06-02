@@ -59,6 +59,12 @@ public interface ChallengeMapper {
         @Param("size") int size
     );
     
+    // 특정 날짜에 시작하는 챌린지들 조회
+    List<Challenge> findChallengesStartingOn(@Param("date") LocalDate date);
+    
+    // 특정 날짜에 종료하는 챌린지들 조회  
+    List<Challenge> findChallengesEndingOn(@Param("date") LocalDate date);
+    
     // 챌린지 수정 챌린지 생성자용
     int updateChallenge(Challenge challenge);
 	

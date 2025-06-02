@@ -23,4 +23,10 @@ public interface NotificationService {
     void createNewCertNotification(Integer challengeId, Integer certId);
     void createNewCommentNotification(Integer certOwnerId, Integer certId);
     void createNewLikeNotification(Integer certOwnerId, Integer certId);
+    
+    // 챌린지 생명주기 알림들
+    void createChallengeStartingSoonNotification(Integer challengeId);
+    void createChallengeStartedNotification(Integer challengeId);  
+    void createChallengeEndingSoonNotification(Integer challengeId);
+    void createChallengeEndedNotification(Integer challengeId);
 }

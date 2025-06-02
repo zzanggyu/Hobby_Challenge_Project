@@ -37,6 +37,10 @@
                     WHEN n.TYPE = 'NEW_CERT' THEN '새로운 인증'
                     WHEN n.TYPE = 'NEW_COMMENT' THEN '새로운 댓글'
                     WHEN n.TYPE = 'NEW_LIKE' THEN '좋아요'
+                    WHEN n.TYPE = 'CHALLENGE_STARTING_SOON' THEN '챌린지 시작 예정'
+                    WHEN n.TYPE = 'CHALLENGE_STARTED' THEN '챌린지 시작됨'
+                    WHEN n.TYPE = 'CHALLENGE_ENDING_SOON' THEN '챌린지 종료 예정'
+                    WHEN n.TYPE = 'CHALLENGE_ENDED' THEN '챌린지 종료됨'
                     ELSE '알림'
                 END) AS title
                 
@@ -54,6 +58,14 @@
                         '인증에 새로운 댓글이 작성되었습니다.'
                     WHEN n.TYPE = 'NEW_LIKE' THEN 
                         '누군가 당신의 인증에 좋아요를 눌렀습니다.'
+                    WHEN n.TYPE = 'CHALLENGE_STARTING_SOON' THEN 
+                        CONCAT('"', c.TITLE, '" 챌린지가 내일 시작됩니다! 준비하세요')
+                    WHEN n.TYPE = 'CHALLENGE_STARTED' THEN 
+                        CONCAT('"', c.TITLE, '" 챌린지가 시작되었습니다! 첫 인증을 등록해보세요')
+                    WHEN n.TYPE = 'CHALLENGE_ENDING_SOON' THEN 
+                        CONCAT('"', c.TITLE, '" 챌린지가 내일 후 종료됩니다. 마지막 스퍼트!')
+                    WHEN n.TYPE = 'CHALLENGE_ENDED' THEN 
+                        CONCAT('"', c.TITLE, '" 챌린지가 종료되었습니다. 수고하셨습니다!')
                     ELSE '새로운 알림이 있습니다.'
                 END) AS message
                 

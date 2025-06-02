@@ -260,6 +260,42 @@
 	     LIMIT #{size}
 	</select>
 	
+	<!-- 특정 날짜에 시작하는 챌린지들 조회 -->
+    <select id="findChallengesStartingOn" resultMap="ChallengeWithCreator">
+        SELECT C.CHALLENGE_ID AS challengeId
+             , C.TITLE AS title
+             , C.DESCRIPTION AS description
+             , C.START_DATE AS startDate
+             , C.END_DATE AS endDate
+             , C.CATEGORY_ID AS categoryId
+             , C.CREATED_BY AS createdBy
+             , C.CREATED_DATE AS createdDate
+             , U.USER_ID AS userId
+             , U.NICKNAME AS nickname
+          FROM CHALLENGE C
+    INNER JOIN USER U ON C.CREATED_BY = U.USER_ID
+         WHERE C.START_DATE = #{date}
+           AND (C.IS_DELETED = 0 OR C.IS_DELETED IS NULL)
+    </select>
+    
+    <!-- 특정 날짜에 종료하는 챌린지들 조회 -->
+    <select id="findChallengesEndingOn" resultMap="ChallengeWithCreator">
+        SELECT C.CHALLENGE_ID AS challengeId
+             , C.TITLE AS title
+             , C.DESCRIPTION AS description
+             , C.START_DATE AS startDate
+             , C.END_DATE AS endDate
+             , C.CATEGORY_ID AS categoryId
+             , C.CREATED_BY AS createdBy
+             , C.CREATED_DATE AS createdDate
+             , U.USER_ID AS userId
+             , U.NICKNAME AS nickname
+          FROM CHALLENGE C
+    INNER JOIN USER U ON C.CREATED_BY = U.USER_ID
+         WHERE C.END_DATE = #{date}
+           AND (C.IS_DELETED = 0 OR C.IS_DELETED IS NULL)
+    </select>
+	
 	<!-- 챌린지 수정 챌린지 생성자만 가능 -->
 	<update id="updateChallenge"
         	parameterType="com.hobby.challenge.fobackend.entity.Challenge">

@@ -56,6 +56,13 @@ public enum ErrorCode {
     PARTICIPATION_CANCEL_FORBIDDEN ("404061", "권한이 없거나 이미 취소된 요청입니다."),
     PARTICIPATION_LIMIT_EXCEEDED("404062","이미 다른 챌린지에 참여 요청 또는 참여 중입니다.\n먼저 기존 요청을 취소하거나 챌린지에서 탈퇴해주세요."),
     REQUEST_PARTICIPANTS_FORBIDDEN("400063","챌린지 생성자만 요청 목록을 볼 수 있습니다."),
+    
+    /// 챌린지 생명주기
+    CHALLENGE_STARTING_SOON("200071", "챌린지가 곧 시작됩니다."),
+    CHALLENGE_STARTED("200072", "챌린지가 시작되었습니다."),
+    CHALLENGE_ENDING_SOON("200073", "챌린지가 곧 종료됩니다."),
+    CHALLENGE_ENDED("200074", "챌린지가 종료되었습니다."),
+	
     // 00: 기타/공통/서버취소 		        
 
     INTERNAL_SERVER_ERROR("500001", "서버 오류가 발생했습니다.");
