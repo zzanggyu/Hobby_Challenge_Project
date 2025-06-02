@@ -1,8 +1,17 @@
 import api from '@/api'
 
-// 챌린지별 인증 내역 조회
-export const getCertifications = (challengeId) =>
-	api.get(`/challenges/${challengeId}/certifications`).then((res) => res.data)
+// 챌린지별 인증 내역 조회 (페이징 적용)
+export const getCertifications = (
+	challengeId,
+	page = 1,
+	size = 20,
+	onlyMine = false
+) =>
+	api
+		.get(`/challenges/${challengeId}/certifications`, {
+			params: { page, size, onlyMine },
+		})
+		.then((res) => res.data)
 
 // 인증 등록 - FormData로 직접 전송
 export function submitCertification(challengeId, formData) {
@@ -13,7 +22,7 @@ export function submitCertification(challengeId, formData) {
 	})
 }
 
-// 인증 수정도 FormData로
+// 인증 수정
 export function updateCertification(challengeId, certificationId, formData) {
 	return api
 		.put(

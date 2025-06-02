@@ -68,6 +68,7 @@
 import { ref, computed, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { submitCertification } from '@/services/certService'
+import { useAuthStore } from '@/stores/auth'
 
 const route = useRoute()
 const challengeId = Number(route.params.id)
@@ -76,6 +77,7 @@ const comment = ref('')
 const file = ref(null)
 const busy = ref(false)
 const imagePreview = ref(null)
+const auth = useAuthStore()
 
 // 유효성 검사 규칙
 const rules = {

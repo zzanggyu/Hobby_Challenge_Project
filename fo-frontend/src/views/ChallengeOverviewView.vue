@@ -5,7 +5,18 @@
 			<div class="header-content">
 				<div>
 					<h1 class="header-title">{{ detail.title }}</h1>
+					<div class="header-description mb-3">
+						<p class="description-text">{{ detail.description }}</p>
+					</div>
 					<div class="header-subtitle">
+						<v-chip
+							size="small"
+							color="white"
+							text-color="primary"
+							class="mr-2"
+						>
+							Owner: {{ detail.creatorNickname }}
+						</v-chip>
 						기간: {{ formatDate(detail.startDate) }} ~
 						{{ formatDate(detail.endDate) }}
 					</div>

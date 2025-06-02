@@ -46,34 +46,78 @@
 			<v-divider class="my-4" />
 
 			<!-- 3) 댓글 리스트 -->
-			<div v-for="c in comments" :key="c.commentId" class="mb-2">
-				<strong>{{ c.nickname }}:</strong>
-				<template v-if="editingCommentId === c.commentId">
-					<v-text-field v-model="editedContent" dense />
-					<v-btn small color="primary" @click="saveEditedComment"
-						>저장</v-btn
-					>
-				</template>
-				<template v-else>
-					<span>{{ c.content }}</span>
-					<template v-if="c.nickname === auth.user.nickname">
-						<v-btn icon small @click="startEditComment(c)">
-							<v-icon>mdi-pencil</v-icon>
-						</v-btn>
-						<v-btn icon small @click="removeComment(c.commentId)">
-							<v-icon>mdi-delete</v-icon>
+			<div
+				v-for="c in comments"
+				:key="c.commentId"
+				class="mb-2 d-flex align-center justify-space-between"
+			>
+				<!-- 왼쪽: 닉네임/본문 -->
+				<div>
+					<strong class="mr-2">{{ c.nickname }}:</strong>
+					<template v-if="editingCommentId === c.commentId">
+						<v-textarea
+							v-model="editedContent"
+							dense
+							rows="4"
+							auto-grow
+							max-rows="5"
+							:counter="100"
+							maxlength="100"
+							style="min-width: 500px"
+						/>
+						<v-btn
+							small
+							color="primary"
+							class="ml-1"
+							@click="saveEditedComment"
+						>
+							저장
 						</v-btn>
 					</template>
-				</template>
+					<template v-else>
+						<span>{{ c.content }}</span>
+					</template>
+				</div>
+
+				<!-- 오른쪽: 수정/삭제 아이콘 (본인 댓글일 때만) -->
+				<div
+					v-if="c.nickname === auth.user.nickname"
+					class="d-flex align-center"
+				>
+					<v-btn icon small class="ml-1" @click="startEditComment(c)">
+						<v-icon>mdi-pencil</v-icon>
+					</v-btn>
+					<v-btn
+						icon
+						small
+						class="ml-1"
+						@click="removeComment(c.commentId)"
+					>
+						<v-icon>mdi-delete</v-icon>
+					</v-btn>
+				</div>
 			</div>
 
 			<!-- 4) 댓글 입력 -->
-			<v-text-field
+			<v-textarea
 				v-model="newComment"
 				label="댓글 남기기"
-				clearable
+				placeholder="따뜻한 응원 메시지를 남겨보세요!"
+				variant="outlined"
+				rows="4"
+				auto-grow
+				max-rows="5"
+				:counter="100"
+				maxlength="100"
+				:rules="[(v) => !v || v.length <= 100 || '100자 이내로 입력하세요']"
 				dense
-			/>
+			>
+				<template v-slot:append-inner>
+					<span class="text-caption" :class="commentLengthColor">
+						{{ newComment.length }}/100
+					</span>
+				</template>
+			</v-textarea>
 			<v-btn small color="primary" @click="postComment">등록</v-btn>
 		</v-card-text>
 	</v-card>

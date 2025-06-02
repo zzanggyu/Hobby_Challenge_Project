@@ -1,27 +1,38 @@
-<!-- ChallengeCertificationList.vue 레이아웃 개선 -->
 <template>
 	<v-container>
-		<!-- 정렬 옵션 추가 -->
+		<!-- 헤더와 컨트롤 영역 -->
 		<v-row class="mb-4">
 			<v-col cols="12" class="d-flex justify-space-between align-center">
 				<h3 class="text-h6">
 					{{ onlyMine ? '내 인증 내역' : '전체 인증 내역' }}
 				</h3>
-				<v-select
-					v-model="sortBy"
-					:items="sortOptions"
-					item-title="text"
-					item-value="value"
-					label="정렬"
-					dense
-					hide-details
-					style="max-width: 200px"
-				/>
+
+				<!-- 컨트롤 영역 -->
+				<div class="d-flex align-center gap-3">
+					<!-- 정렬 옵션 -->
+					<v-select
+						v-model="sortBy"
+						:items="sortOptions"
+						item-title="text"
+						item-value="value"
+						label="정렬"
+						density="compact"
+						hide-details
+						style="min-width: 150px"
+					/>
+
+					<!-- 페이지 크기 선택 -->
+				</div>
 			</v-col>
 		</v-row>
 
+		<!-- 로딩 상태 -->
+		<v-row v-if="loading" justify="center" class="my-8">
+			<v-progress-circular indeterminate color="primary" size="64" />
+		</v-row>
+
 		<!-- 날짜별 그룹화된 인증 목록 -->
-		<div v-if="groupedLogs.length">
+		<div v-else-if="groupedLogs.length">
 			<div v-for="group in groupedLogs" :key="group.date" class="mb-6">
 				<!-- 날짜 헤더 -->
 				<div class="date-header mb-3">
@@ -101,26 +112,6 @@
 												{{ log.commentCount || 0 }}
 											</v-chip>
 										</div>
-
-										<!-- 본인 인증일 때만 수정/삭제 버튼 -->
-										<div v-if="log.userId === auth.user.userId">
-											<v-btn
-												icon
-												x-small
-												@click.stop="editCert(log)"
-											>
-												<v-icon small>mdi-pencil</v-icon>
-											</v-btn>
-											<v-btn
-												icon
-												x-small
-												@click.stop="
-													deleteCert(log.certificationId)
-												"
-											>
-												<v-icon small>mdi-delete</v-icon>
-											</v-btn>
-										</div>
 									</div>
 								</v-card-text>
 							</v-card>
@@ -146,6 +137,18 @@
 			</v-col>
 		</v-row>
 
+		<!-- 페이지네이션 -->
+		<v-row v-if="totalPages > 0" justify="center" class="mt-6">
+			<v-pagination
+				v-model="currentPage"
+				:length="totalPages"
+				:total-visible="7"
+				color="black"
+				rounded="circle"
+				show-first-last-page
+			/>
+		</v-row>
+
 		<!-- 인증 상세 모달 -->
 		<v-dialog v-model="dialog" max-width="600">
 			<CertificationDetailDialog
@@ -162,7 +165,6 @@
 <script setup>
 import { ref, onMounted, watch, computed } from 'vue'
 import { getCertifications, deleteCertification } from '@/services/certService'
-import { formatDate as _formatDate } from '@/utils/date'
 import { useAuthStore } from '@/stores/auth'
 import CertificationDetailDialog from './CertificationDetailDialog.vue'
 import { format, parseISO, isToday, isYesterday } from 'date-fns'
@@ -174,11 +176,21 @@ const props = defineProps({
 	onlyMine: { type: Boolean, default: false },
 })
 
+// 상태 관리
 const logs = ref([])
-const sortBy = ref('latest')
+const loading = ref(false)
 const dialog = ref(false)
 const selectedCertId = ref(null)
 const auth = useAuthStore()
+
+// 정렬과 페이징 상태
+const sortBy = ref('latest')
+const currentPage = ref(1)
+const pageSize = ref(20)
+const totalCount = ref(0)
+
+// 계산된 속성
+const totalPages = computed(() => Math.ceil(totalCount.value / pageSize.value))
 
 // 정렬 옵션
 const sortOptions = [
@@ -186,12 +198,12 @@ const sortOptions = [
 	{ text: '좋아요순', value: 'likes' },
 	{ text: '댓글순', value: 'comments' },
 ]
-// 날짜별로 그룹화된 로그
+
+// 🔹 날짜별로 그룹화된 로그 (페이징된 데이터에 대해서만)
 const groupedLogs = computed(() => {
-	// 먼저 정렬
+	// 정렬 적용 (서버에서 받은 데이터를 클라이언트에서 추가 정렬)
 	let sorted = [...logs.value]
 
-	// 정렬 적용
 	switch (sortBy.value) {
 		case 'likes':
 			sorted.sort((a, b) => (b.likeCount || 0) - (a.likeCount || 0))
@@ -208,9 +220,7 @@ const groupedLogs = computed(() => {
 	// 날짜별로 그룹화
 	const groups = {}
 	sorted.forEach((log) => {
-		// certDate가 없으면 createdDate에서 날짜만 추출
 		const date = log.certDate || log.createdDate.split('T')[0]
-
 		if (!groups[date]) {
 			groups[date] = []
 		}
@@ -219,24 +229,18 @@ const groupedLogs = computed(() => {
 
 	// 배열 형태로 변환하고 날짜 역순 정렬
 	return Object.entries(groups)
-		.sort((a, b) => b[0].localeCompare(a[0])) // 최신 날짜가 위로
+		.sort((a, b) => b[0].localeCompare(a[0]))
 		.map(([date, items]) => ({ date, items }))
 })
 
-// 날짜 헤더 포맷
+// 🔹 날짜 포맷팅 함수들
 function formatDateHeader(dateStr) {
 	const date = parseISO(dateStr)
-
-	if (isToday(date)) {
-		return '오늘'
-	} else if (isYesterday(date)) {
-		return '어제'
-	} else {
-		return format(date, 'M월 d일 (EEEE)', { locale: ko })
-	}
+	if (isToday(date)) return '오늘'
+	if (isYesterday(date)) return '어제'
+	return format(date, 'M월 d일 (EEEE)', { locale: ko })
 }
 
-// 시간만 표시
 function formatTime(datetime) {
 	return format(parseISO(datetime), 'a h:mm', { locale: ko })
 }
@@ -246,48 +250,71 @@ function openDialog(certId) {
 	dialog.value = true
 }
 
-onMounted(fetchLogs)
-watch(() => [props.challengeId, props.refreshKey, props.onlyMine], fetchLogs, {
-	immediate: true,
+// 🔹 페이징된 데이터 로드 함수
+async function fetchLogs() {
+	loading.value = true
+	try {
+		// ✅ 페이징 API 호출로 변경
+		const result = await getCertifications(
+			props.challengeId,
+			currentPage.value,
+			pageSize.value,
+			props.onlyMine
+		)
+
+		// PageResponseDTO 구조에 따라 데이터 추출
+		logs.value = result.items || []
+		totalCount.value = result.totalCount || 0
+
+		console.log(
+			`페이지 ${currentPage.value}: ${logs.value.length}개 로드, 총 ${totalCount.value}개`
+		)
+	} catch (error) {
+		console.error('인증 목록 로드 실패:', error)
+		logs.value = []
+		totalCount.value = 0
+	} finally {
+		loading.value = false
+	}
+}
+
+onMounted(() => {
+	fetchLogs()
 })
 
-async function fetchLogs() {
-	let data = await getCertifications(props.challengeId)
-	if (props.onlyMine) {
-		data = data.filter((c) => c.userId === auth.user.userId)
-	}
-	logs.value = data
-}
+// props 변경 시 페이지 초기화하고 데이터 재로드
+watch(
+	() => [props.challengeId, props.refreshKey, props.onlyMine],
+	() => {
+		currentPage.value = 1 // 페이지 초기화
+		fetchLogs()
+	},
+	{ immediate: true }
+)
 
-// 인증 삭제 후 처리
+// 페이지 변경 시 데이터 재로드
+watch(currentPage, () => {
+	fetchLogs()
+})
+
+// 페이지 크기 변경 시 첫 페이지로 돌아가고 데이터 재로드
+watch(pageSize, () => {
+	currentPage.value = 1
+	fetchLogs()
+})
+
+// 정렬 변경 시에는 현재 페이지 데이터만 재정렬 (서버 요청 X)
+// 만약 서버에서 정렬을 처리하려면 fetchLogs() 호출
+
+// 🔹 이벤트 핸들러들
 function onDeleted(certId) {
-	logs.value = logs.value.filter((log) => log.certificationId !== certId)
-	fetchLogs() // 목록을 직접 갱신
+	// 삭제 후 현재 페이지를 다시 로드
+	fetchLogs()
 	dialog.value = false
-}
-
-// 인증 수정 (구현 예정)
-function editCert(cert) {
-	// TODO: 수정 모달 열기
-	console.log('Edit cert:', cert)
-}
-
-// 인증 삭제
-async function deleteCert(certId) {
-	if (!confirm('정말 이 인증을 삭제하시겠습니까?')) return
-
-	try {
-		await deleteCertification(props.challengeId, certId)
-		await fetchLogs()
-	} catch (error) {
-		console.error('인증 삭제 실패:', error)
-		alert('인증 삭제에 실패했습니다.')
-	}
 }
 </script>
 
 <style scoped>
-/* 기존 스타일 + 추가 */
 .date-header {
 	display: flex;
 	align-items: center;
@@ -317,5 +344,10 @@ async function deleteCert(certId) {
 	-webkit-line-clamp: 2;
 	-webkit-box-orient: vertical;
 	min-height: 3rem;
+}
+
+/* 컨트롤 영역 간격 */
+.gap-3 {
+	gap: 12px;
 }
 </style>

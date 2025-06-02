@@ -21,7 +21,7 @@
 									userInfo.username
 								}}</v-list-item-subtitle>
 							</v-list-item>
-
+							<v-divider class="my-4" />
 							<!-- 닉네임 (변경 가능) -->
 							<v-list-item>
 								<template v-slot:prepend>
@@ -67,7 +67,7 @@
 									</div>
 								</template>
 							</v-list-item>
-
+							<v-divider class="my-4" />
 							<!-- 아이디 (변경 불가) -->
 							<v-list-item>
 								<template v-slot:prepend>
@@ -78,7 +78,7 @@
 									userInfo.loginId
 								}}</v-list-item-subtitle>
 							</v-list-item>
-
+							<v-divider class="my-4" />
 							<!-- 이메일 (표시만) -->
 							<v-list-item>
 								<template v-slot:prepend>
@@ -89,7 +89,7 @@
 									userInfo.email
 								}}</v-list-item-subtitle>
 							</v-list-item>
-
+							<v-divider class="my-4" />
 							<!-- 레벨 및 포인트 -->
 							<v-list-item>
 								<template v-slot:prepend>

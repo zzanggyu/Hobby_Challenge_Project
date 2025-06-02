@@ -1,6 +1,6 @@
 <template>
 	<v-container>
-		<!-- ① 타이틀 영역 - 개선된 네비게이션 -->
+		<!-- 타이틀 영역 - 개선된 네비게이션 -->
 		<v-row class="mb-4" align="center">
 			<v-col cols="12" class="d-flex align-center justify-space-between">
 				<div class="title d-flex align-center">
@@ -10,7 +10,7 @@
 					<span class="title-text">챌린지 목록</span>
 				</div>
 
-				<!-- ✅ 새로운 네비게이션 메뉴 -->
+				<!-- 네비게이션 메뉴 -->
 				<div class="navigation-section">
 					<v-menu offset-y>
 						<template v-slot:activator="{ props }">
@@ -72,7 +72,9 @@
 					rounded="lg"
 					variant="outlined"
 					clearable
-					@keyup.enter="fetchChallenges"
+					@keyup.enter="searchNow"
+					:loading="isSearching"
+					placeholder="검색어를 입력하세요..."
 				/>
 			</v-col>
 			<v-col cols="12" md="4">
@@ -86,170 +88,247 @@
 					rounded="lg"
 					variant="outlined"
 					clearable
+					placeholder="전체 카테고리"
 				/>
+			</v-col>
+			<v-col cols="12" md="2">
+				<!-- 검색 초기화 버튼 추가 -->
+				<v-btn
+					color="secondary"
+					variant="outlined"
+					block
+					@click="resetSearch"
+					:disabled="!search && !selectedCategory"
+				>
+					<v-icon left>mdi-refresh</v-icon>
+					초기화
+				</v-btn>
 			</v-col>
 		</v-row>
 
-		<!-- 챌린지 카드 리스트 -->
-		<v-row align="stretch">
+		<!-- 검색 결과 안내 -->
+		<v-row v-if="search || selectedCategory" class="mb-4">
+			<v-col cols="12">
+				<v-alert type="info" variant="tonal" class="mb-0">
+					<div class="d-flex align-center">
+						<v-icon class="mr-2">mdi-information</v-icon>
+						<span>
+							<strong>검색 결과:</strong>
+							{{ totalCount }}개의 챌린지를 찾았습니다
+							<template v-if="search">
+								(검색어: "{{ search }}")
+							</template>
+							<template v-if="selectedCategory">
+								(카테고리: {{ categoryName(selectedCategory) }})
+							</template>
+						</span>
+					</div>
+				</v-alert>
+			</v-col>
+		</v-row>
+
+		<!-- 로딩 상태 표시 -->
+		<v-row v-if="isLoading" justify="center" class="my-12">
+			<v-progress-circular indeterminate color="primary" size="64" />
+			<div class="ml-4 text-h6">챌린지를 불러오는 중...</div>
+		</v-row>
+
+		<!-- 챌린지 카드 리스트 - Vuetify 스타일 적용 -->
+		<v-row v-else-if="challenges.length > 0">
 			<v-col
-				v-for="c in filteredChallenges"
+				v-for="c in challenges"
 				:key="c.challengeId"
 				cols="12"
 				md="6"
 				lg="4"
-				class="d-flex"
 			>
 				<v-card
-					class="challenge-card"
-					elevation="6"
-					rounded="xl"
-					width="100%"
-					height="420"
+					elevation="2"
+					class="challenge-card d-flex flex-column"
+					height="380"
 				>
-					<!-- 카드 배경과 전체 내용 - 단일 색상 -->
-					<div class="card-content" style="background: #7e5bef">
-						<!-- 상단: 카테고리와 하트 -->
-						<div class="card-header">
+					<!-- 카드 헤더 -->
+					<v-card-title
+						class="d-flex justify-space-between align-center py-3"
+					>
+						<div class="d-flex align-center">
 							<v-chip
 								size="small"
-								color="white"
-								text-color="primary"
-								class="font-weight-bold elevation-2"
-								style="border-radius: 12px"
+								color="primary"
+								variant="outlined"
+								class="mr-2"
 							>
 								{{ categoryName(c.categoryId) }}
 							</v-chip>
 
-							<v-btn
-								icon
-								size="small"
-								class="heart-btn"
-								@click="onToggleFavorite(c)"
+							<!--  요청중 상태 표시 칩 -->
+							<v-chip
+								v-if="c.requested"
+								size="x-small"
+								color="orange"
+								variant="flat"
+								class="ml-1"
 							>
-								<v-icon
-									:color="
-										c.isFavorite ? 'red' : 'rgba(255,255,255,0.7)'
-									"
-									size="24"
-								>
-									{{
-										c.isFavorite ? 'mdi-heart' : 'mdi-heart-outline'
-									}}
-								</v-icon>
-							</v-btn>
+								요청중
+							</v-chip>
+
+							<!-- 참여중 상태 표시 칩 -->
+							<v-chip
+								v-if="c.approved"
+								size="x-small"
+								color="success"
+								variant="flat"
+								class="ml-1"
+							>
+								참여중
+							</v-chip>
 						</div>
 
-						<!-- 중간: 제목과 설명 -->
-						<div class="card-body">
-							<h3 class="card-title">{{ c.title }}</h3>
-							<p class="card-description">
-								{{ truncateDescription(c.description) }}
-							</p>
+						<v-btn icon size="small" @click.stop="onToggleFavorite(c)">
+							<v-icon :color="c.isFavorite ? 'red' : 'grey'">
+								{{ c.isFavorite ? 'mdi-heart' : 'mdi-heart-outline' }}
+							</v-icon>
+						</v-btn>
+					</v-card-title>
+
+					<!-- 카드 내용 -->
+					<v-card-text class="flex-grow-1 pb-2">
+						<h3 class="text-h6 mb-3 font-weight-bold">
+							{{ c.title }}
+						</h3>
+						<p
+							class="text-body-2 text-grey-darken-1 mb-4 card-description"
+						>
+							{{ truncateDescription(c.description) }}
+						</p>
+					</v-card-text>
+
+					<!-- 정보 섹션 -->
+					<div class="px-4 pb-2">
+						<!-- 기간 정보 -->
+						<div class="d-flex align-center mb-2">
+							<v-icon size="16" class="mr-2" color="primary">
+								mdi-calendar-range
+							</v-icon>
+							<span class="text-caption">
+								{{ formatDate(c.startDate) }} ~
+								{{ formatDate(c.endDate) }}
+							</span>
 						</div>
 
-						<!-- 하단: 정보와 버튼들 -->
-						<div class="card-footer">
-							<!-- 기간 정보 -->
-							<div class="info-row mb-2">
-								<v-icon
-									size="16"
-									class="mr-2"
-									color="rgba(255,255,255,0.8)"
-								>
-									mdi-calendar-range
-								</v-icon>
-								<span class="info-text">
-									{{ formatDate(c.startDate) }} ~
-									{{ formatDate(c.endDate) }}
-								</span>
-							</div>
-
-							<!-- 생성자 정보 -->
-							<div class="info-row mb-3">
-								<v-icon
-									size="16"
-									class="mr-2"
-									color="rgba(255,255,255,0.8)"
-								>
-									mdi-account
-								</v-icon>
-								<span class="info-text">
-									by {{ c.creatorNickname }}
-								</span>
-							</div>
-
-							<!-- 액션 버튼들 -->
-							<div class="action-buttons">
-								<!-- 참여 상태에 따른 버튼 -->
-								<template v-if="!c.requested && !c.approved">
-									<v-btn
-										class="action-button join-btn"
-										size="small"
-										:loading="isJoining && targetId === c.challengeId"
-										:disabled="
-											isJoining || (myParts.value?.size || 0) > 0
-										"
-										@click="onJoin(c.challengeId)"
-									>
-										<v-icon left size="16">mdi-account-plus</v-icon>
-										{{
-											(myParts.value?.size || 0) > 0
-												? '다른 챌린지 참여 중'
-												: '참여하기'
-										}}
-									</v-btn>
-								</template>
-
-								<template v-else-if="c.requested">
-									<v-btn
-										class="action-button cancel-btn"
-										size="small"
-										:loading="isJoining && targetId === c.challengeId"
-										:disabled="isJoining"
-										@click="onCancel(c.challengeId)"
-									>
-										<v-icon left size="16">mdi-close</v-icon>
-										요청 취소
-									</v-btn>
-								</template>
-
-								<template v-else-if="c.approved">
-									<v-btn
-										class="action-button approved-btn"
-										size="small"
-										disabled
-									>
-										<v-icon left size="16">mdi-check</v-icon>
-										승인됨
-									</v-btn>
-								</template>
-
-								<!-- 상세보기 버튼 -->
-								<v-btn
-									class="action-button detail-btn"
-									size="small"
-									@click="goToDetail(c.challengeId)"
-								>
-									<v-icon left size="16">mdi-arrow-right</v-icon>
-									상세보기
-								</v-btn>
-							</div>
+						<!-- 생성자 정보 -->
+						<div class="d-flex align-center mb-3">
+							<v-icon size="16" class="mr-2" color="primary">
+								mdi-account
+							</v-icon>
+							<span class="text-caption">
+								{{ c.creatorNickname }}
+							</span>
 						</div>
 					</div>
+
+					<!-- 카드 액션 -->
+					<v-card-actions class="pt-0 px-4 pb-4">
+						<!-- 참여 상태 버튼 -->
+						<template v-if="!c.requested && !c.approved">
+							<v-btn
+								color="primary"
+								variant="tonal"
+								size="small"
+								:loading="isJoining && targetId === c.challengeId"
+								:disabled="isJoining || (myParts.value?.size || 0) > 0"
+								@click.stop="onJoin(c.challengeId)"
+							>
+								<v-icon left size="16">mdi-account-plus</v-icon>
+								{{
+									(myParts.value?.size || 0) > 0
+										? '다른 챌린지 참여 중'
+										: '참여하기'
+								}}
+							</v-btn>
+						</template>
+
+						<template v-else-if="c.requested">
+							<v-btn
+								color="error"
+								variant="tonal"
+								size="small"
+								:loading="isJoining && targetId === c.challengeId"
+								@click.stop="onCancel(c.challengeId)"
+							>
+								<v-icon left size="16">mdi-close</v-icon>
+								요청 취소
+							</v-btn>
+						</template>
+
+						<template v-else-if="c.approved">
+							<v-btn
+								color="success"
+								variant="tonal"
+								size="small"
+								disabled
+								@click.stop
+							>
+								<v-icon left size="16">mdi-check</v-icon>
+								승인됨
+							</v-btn>
+						</template>
+
+						<v-spacer />
+
+						<v-btn
+							variant="text"
+							size="small"
+							@click.stop="goToDetail(c.challengeId)"
+						>
+							상세보기
+							<v-icon right size="16">mdi-arrow-right</v-icon>
+						</v-btn>
+					</v-card-actions>
 				</v-card>
 			</v-col>
 		</v-row>
 
+		<!-- 검색 결과 없음 -->
+		<v-row v-else justify="center" class="my-12">
+			<v-col cols="12" md="6" class="text-center">
+				<v-icon size="80" color="grey-lighten-2" class="mb-4">
+					mdi-magnify
+				</v-icon>
+				<h2 class="text-h5 mb-4">
+					{{
+						search || selectedCategory
+							? '검색 결과가 없습니다'
+							: '챌린지가 없습니다'
+					}}
+				</h2>
+				<p class="text-body-1 text-grey mb-6">
+					{{
+						search || selectedCategory
+							? '다른 검색어나 카테고리로 시도해보세요'
+							: '첫 번째 챌린지를 만들어보세요!'
+					}}
+				</p>
+				<v-btn
+					v-if="search || selectedCategory"
+					color="primary"
+					@click="resetSearch"
+				>
+					<v-icon left>mdi-refresh</v-icon>
+					검색 초기화
+				</v-btn>
+			</v-col>
+		</v-row>
+
 		<!-- 페이지네이션 -->
-		<v-row justify="center" class="my-8">
+		<v-row v-if="challenges.length > 0" justify="center" class="my-8">
 			<v-pagination
 				v-model="currentPage"
 				:length="totalPages"
 				total-visible="10"
 				show-first-last-page
 				class="my-4"
-				color="primary"
+				color="black"
 				rounded="circle"
 			/>
 		</v-row>
@@ -257,7 +336,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed, watch } from 'vue'
+import { ref, onMounted, watch, computed } from 'vue'
 import {
 	getChallenges,
 	toggleFavoriteChallenge,
@@ -276,6 +355,10 @@ import { handleApiError } from '@/utils/apiError'
 const authStore = useAuthStore()
 const router = useRouter()
 
+// 로딩 상태 추가
+const isLoading = ref(false)
+const isSearching = ref(false)
+
 // 참여 상태
 const isJoining = ref(false)
 const targetId = ref(null)
@@ -284,6 +367,9 @@ const targetId = ref(null)
 const currentPage = ref(1)
 const pageSize = ref(30)
 const totalCount = ref(0)
+
+// 총 페이지 수 계산
+const totalPages = computed(() => Math.ceil(totalCount.value / pageSize.value))
 
 // 챌린지 목록을 저장할 반응형 변수
 const challenges = ref([])
@@ -296,6 +382,24 @@ const selectedCategory = ref(null)
 // 내 참여내역을 id → participationId 매핑해서 저장
 const myParts = ref(new Set())
 const myPartsMap = ref({})
+
+// 검색어/카테고리 변경시 자동 검색 (디바운스 적용)
+let searchTimeout = null
+watch([search, selectedCategory], () => {
+	// 기존 타이머 취소
+	if (searchTimeout) clearTimeout(searchTimeout)
+
+	// 새 타이머 설정 (500ms 후 검색)
+	searchTimeout = setTimeout(() => {
+		currentPage.value = 1 // 검색시 첫 페이지로 리셋
+		fetchChallenges()
+	}, 500)
+})
+
+// 페이지 변경시에만 검색 (검색어는 유지)
+watch(currentPage, () => {
+	fetchChallenges()
+})
 
 // 설명 글자 수 제한
 function truncateDescription(description) {
@@ -318,6 +422,20 @@ function formatDate(date) {
 function categoryName(id) {
 	const cat = categories.value.find((x) => x.categoryId === id)
 	return cat ? cat.categoryName : '기타'
+}
+
+// 즉시 검색 (Enter 키용)
+function searchNow() {
+	currentPage.value = 1
+	fetchChallenges()
+}
+
+// 검색 초기화
+function resetSearch() {
+	search.value = ''
+	selectedCategory.value = null
+	currentPage.value = 1
+	// watch에 의해 자동으로 fetchChallenges() 호출됨
 }
 
 // 상세 페이지로 이동
@@ -370,17 +488,33 @@ async function fetchMyParticipations() {
 	}
 }
 
-// 페이징 챌린지 목록 API 호출
+// ✅ 서버사이드 검색이 적용된 챌린지 목록 API 호출
 async function fetchChallenges() {
+	// 검색 상태 표시
+	isLoading.value = true
+	if (search.value) isSearching.value = true
+
 	await fetchMyParticipations()
+
 	try {
-		const { totalCount: totalFromAPi, items } = await getChallenges(
+		// ✅ 검색어와 카테고리를 서버에 전달
+		console.log('🔍 서버 검색 요청:', {
+			page: currentPage.value,
+			size: pageSize.value,
+			search: search.value,
+			categoryId: selectedCategory.value,
+		})
+
+		const { totalCount: totalFromApi, items } = await getChallenges(
 			currentPage.value,
 			pageSize.value,
-			search.value,
-			selectedCategory.value
+			search.value, // ✅ 서버에서 검색 처리
+			selectedCategory.value // ✅ 서버에서 필터링 처리
 		)
-		totalCount.value = totalFromAPi
+
+		totalCount.value = totalFromApi
+
+		// ✅ 서버에서 이미 필터링된 데이터를 그대로 사용
 		challenges.value = items.map((c) => {
 			const participation = myPartsMap.value[c.challengeId] || {}
 			return {
@@ -392,6 +526,12 @@ async function fetchChallenges() {
 					participation.role === 'OWNER',
 			}
 		})
+
+		console.log('✅ 검색 결과:', {
+			totalCount: totalFromApi,
+			itemsCount: items.length,
+			searchTerm: search.value,
+		})
 	} catch (err) {
 		if (axios.isAxiosError(err) && [401, 403].includes(err.response.status)) {
 			alert('로그인해야 이용할 수 있습니다.')
@@ -402,10 +542,11 @@ async function fetchChallenges() {
 		} else {
 			handleApiError(err)
 		}
+	} finally {
+		isLoading.value = false
+		isSearching.value = false
 	}
 }
-
-watch(currentPage, fetchChallenges)
 
 async function fetchCategories() {
 	try {
@@ -500,34 +641,15 @@ async function onCancel(challengeId) {
 	}
 }
 
+function goToFavoriteChallenge() {
+	router.push('/challenges/favorite')
+}
+
 onMounted(async () => {
 	await authStore.fetchUser()
 	await fetchMyParticipations()
 	await Promise.all([fetchCategories(), fetchChallenges()])
 })
-
-const filteredChallenges = computed(() => {
-	return challenges.value
-		.filter((c) => {
-			const matchesText =
-				c.title.includes(search.value) ||
-				c.description.includes(search.value)
-			const matchesCategory =
-				!selectedCategory.value || c.categoryId === selectedCategory.value
-			return matchesText && matchesCategory
-		})
-		.map((c) => ({
-			...c,
-			requested: c.requested,
-			approved: c.approved,
-		}))
-})
-
-function goToFavoriteChallenge() {
-	router.push('/challenges/favorite')
-}
-
-const totalPages = computed(() => Math.ceil(totalCount.value / pageSize.value))
 </script>
 
 <style scoped>
