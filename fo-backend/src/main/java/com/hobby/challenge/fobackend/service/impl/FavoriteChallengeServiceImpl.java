@@ -11,7 +11,9 @@ import com.hobby.challenge.fobackend.dto.FavoriteChallengeDTO;
 import com.hobby.challenge.fobackend.dto.ParticipationResponseDTO;
 import com.hobby.challenge.fobackend.entity.Challenge;
 import com.hobby.challenge.fobackend.entity.FavoriteChallenge;
+import com.hobby.challenge.fobackend.mapper.ChallengeMapper;
 import com.hobby.challenge.fobackend.mapper.FavoriteChallengeMapper;
+import com.hobby.challenge.fobackend.mapper.ParticipationMapper;
 import com.hobby.challenge.fobackend.service.FavoriteChallengeService;
 
 import lombok.RequiredArgsConstructor;
@@ -22,6 +24,8 @@ import lombok.RequiredArgsConstructor;
 public class FavoriteChallengeServiceImpl implements FavoriteChallengeService{
 	
 	private final FavoriteChallengeMapper favMapper;
+	private final ParticipationMapper participationMapper;
+	private final ChallengeMapper challengeMapper;
 	
 	// 관심 챌린지 목록 가져오기
     @Override

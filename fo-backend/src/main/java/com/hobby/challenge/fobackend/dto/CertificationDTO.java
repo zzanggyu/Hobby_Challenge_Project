@@ -24,6 +24,6 @@ public class CertificationDTO {
 	  @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
 	  private LocalDate certDate; // 인증 날짜 (시간 제외)
 	  private Integer likeCount; // 좋아요 수
-
+	  private Integer commentCount;
 	  private Integer level; // 인증 목록에 보여 주기 위함
 }

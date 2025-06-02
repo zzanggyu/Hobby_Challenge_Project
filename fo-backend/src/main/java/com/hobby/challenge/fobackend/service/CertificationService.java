@@ -1,15 +1,20 @@
 package com.hobby.challenge.fobackend.service;
 
-import java.util.List;
-
 import org.springframework.web.multipart.MultipartFile;
 
 import com.hobby.challenge.fobackend.dto.CertificationDTO;
+import com.hobby.challenge.fobackend.dto.PageResponseDTO;
 
 public interface CertificationService {
-	// 주어진 챌린지의 모든 인증 내역 조회
-    List<CertificationDTO> getCertifications(Integer userId, Integer challengeId);
-    
+	// 주어진 챌린지의 모든 인증 내역 조회 페이징
+    PageResponseDTO<CertificationDTO> getCertifications(
+            Integer userId, 
+            Integer challengeId, 
+            int size, 
+            int offset, 
+            boolean onlyMine
+        );
+        
     // 인증 상세 조회
     CertificationDTO getCertificationDetail(Integer userId, Integer certificationId);
     

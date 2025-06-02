@@ -14,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.hobby.challenge.fobackend.dto.CertificationDTO;
+import com.hobby.challenge.fobackend.dto.PageResponseDTO;
 import com.hobby.challenge.fobackend.dto.ParticipationResponseDTO;
 import com.hobby.challenge.fobackend.entity.Certification;
 import com.hobby.challenge.fobackend.entity.Challenge;
@@ -124,13 +125,29 @@ public class CertificationServiceImpl implements CertificationService {
 	
 	// 인증내역 가져오기
 	@Override
-	public List<CertificationDTO> getCertifications(Integer userId, Integer challengeId) {
+	public PageResponseDTO<CertificationDTO> getCertifications(
+	        Integer userId, 
+	        Integer challengeId, 
+	        int size, 
+	        int offset, 
+	        boolean onlyMine) {
+	    
 	    // 챌린지가 존재하고 삭제되지 않았는지만 확인
 	    Challenge challenge = challengeMapper.selectById(challengeId, null);
 	    if (challenge == null || Boolean.TRUE.equals(challenge.getIsDeleted())) {
 	        throw new CustomException(ErrorCode.CHALLENGE_NOT_FOUND, "존재하지 않거나 삭제된 챌린지입니다.");
 	    }
-	    return certificationMapper.findByChallenge(challengeId);
+	    
+	    // 페이징된 인증 목록 조회
+	    List<CertificationDTO> items = certificationMapper.findByChallengeWithPaging(
+	        challengeId, userId, size, offset, onlyMine
+	    );
+	    
+	    // 전체 개수 조회 (페이징 계산용)
+	    int totalCount = certificationMapper.countByChallenge(challengeId, userId, onlyMine);
+	    
+	    // PageResponseDTO로 반환
+	    return new PageResponseDTO<>(totalCount, items);
 	}
 	
     // 파일 검증 헬퍼 메서드

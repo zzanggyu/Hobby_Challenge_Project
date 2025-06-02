@@ -35,34 +35,51 @@
 	    <result column="IMAGE_URL" property="imageUrl" />
 	    <result column="CREATED_DATE" property="createdDate" />
 	    <result column="LIKE_COUNT" property="likeCount" />
-	    <result column="level" property="level" />
+	    <result column="LEVEL" property="level" />
+	    <result column="COMMENT_COUNT" property="commentCount" />
 	  </resultMap>
 
-	  <!-- 챌린지별 인증 내역 조회 -->
-	  <select id="findByChallenge" 
-	  		  parameterType="int" 
-	  		  resultMap="CertMap">
-	  		  
-		    SELECT C.CERTIFICATION_ID AS CERTIFICATION_ID
-		         , C.CREATED_BY AS CREATED_BY	         
-		         , C.COMMENT AS COMMENT
-		         , C.IMAGE_URL AS IMAGE_URL
-		         , C.CREATED_DATE AS CREATED_DATE
-		         , DATE(C.CREATED_DATE) AS certDate
-		         , C.CREATED_BY AS userId
-		         , C.LIKE_COUNT AS LIKE_COUNT
-		         , U.NICKNAME AS NICKNAME
-		         , U.LEVEL AS LEVEL
-				 , (SELECT COUNT(*) FROM CERT_COMMENT CC  <!-- 댓글 수 계산 -->
-				     WHERE CC.CERTIFICATION_ID = C.CERTIFICATION_ID) as commentCount
-		      FROM CERTIFICATION C
-		INNER JOIN PARTICIPATION P
-		        ON C.PARTICIPATION_ID = P.PARTICIPATION_ID
-		INNER JOIN USER U 
-		        ON C.CREATED_BY = U.USER_ID
-		     WHERE P.CHALLENGE_ID = #{challengeId}
-          ORDER BY C.CREATED_DATE DESC
-	  </select>
+    <!-- 페이징된 챌린지별 인증 내역 조회 -->
+    <select id="findByChallengeWithPaging" 
+            resultMap="CertMap">
+        SELECT C.CERTIFICATION_ID AS CERTIFICATION_ID
+             , C.CREATED_BY AS CREATED_BY                 
+             , C.COMMENT AS COMMENT
+             , C.IMAGE_URL AS IMAGE_URL
+             , C.CREATED_DATE AS CREATED_DATE
+             , DATE(C.CREATED_DATE) AS certDate
+             , C.CREATED_BY AS userId
+             , C.LIKE_COUNT AS LIKE_COUNT
+             , U.NICKNAME AS NICKNAME
+             , U.LEVEL AS LEVEL
+             , (SELECT COUNT(*) FROM CERT_COMMENT CC  <!-- 댓글 수 계산 -->
+                 WHERE CC.CERTIFICATION_ID = C.CERTIFICATION_ID) AS COMMENT_COUNT
+          FROM CERTIFICATION C
+    INNER JOIN PARTICIPATION P
+            ON C.PARTICIPATION_ID = P.PARTICIPATION_ID
+    INNER JOIN USER U 
+            ON C.CREATED_BY = U.USER_ID
+         WHERE P.CHALLENGE_ID = #{challengeId}
+           <!-- onlyMine이 true면 본인 인증만 조회 -->
+           <if test="onlyMine == true and userId != null">
+               AND C.CREATED_BY = #{userId}
+           </if>
+      ORDER BY C.CREATED_DATE DESC
+         LIMIT #{size} OFFSET #{offset}
+    </select>
+    
+    <!-- 인증 전체 개수 조회 (페이징 계산용) -->
+    <select id="countByChallenge" resultType="int">
+        SELECT COUNT(*)
+          FROM CERTIFICATION C
+    INNER JOIN PARTICIPATION P
+            ON C.PARTICIPATION_ID = P.PARTICIPATION_ID
+         WHERE P.CHALLENGE_ID = #{challengeId}
+           <!-- onlyMine이 true면 본인 인증만 카운트 -->
+           <if test="onlyMine == true and userId != null">
+               AND C.CREATED_BY = #{userId}
+           </if>
+    </select>
 	  
 	  <!-- 인증 단건 조회 -->
 	  <select id="selectById" 
@@ -77,6 +94,8 @@
 		         , C.LIKE_COUNT AS LIKE_COUNT
 		         , U.NICKNAME AS NICKNAME
 		         , U.LEVEL AS LEVEL
+		         , (SELECT COUNT(*) FROM CERT_COMMENT CC <!-- 댓글 수 -->
+            		 WHERE CC.CERTIFICATION_ID = C.CERTIFICATION_ID) as COMMENT_COUNT
 		      FROM CERTIFICATION C
 		      JOIN PARTICIPATION P
 		        ON C.PARTICIPATION_ID = P.PARTICIPATION_ID
@@ -101,11 +120,6 @@
 	  </update>
 	  
 
-	  
-
-	  
-
-	
  	  <!-- 인증 삭제 (본인 인증일 떄) -->	
 	  <delete id="deleteById" 
 	  		  parameterType="map">

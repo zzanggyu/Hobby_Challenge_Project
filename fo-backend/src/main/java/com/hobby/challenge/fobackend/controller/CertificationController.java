@@ -23,6 +23,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.hobby.challenge.fobackend.dto.CertificationDTO;
+import com.hobby.challenge.fobackend.dto.PageResponseDTO;
 import com.hobby.challenge.fobackend.exception.CustomException;
 import com.hobby.challenge.fobackend.exception.ErrorCode;
 import com.hobby.challenge.fobackend.service.CertificationService;
@@ -82,13 +83,25 @@ public class CertificationController {
     
 
 
-    // 인증 목록 조회 
+
+    // 인증 목록 조회 - 페이징 추가
     @GetMapping
-    public ResponseEntity<List<CertificationDTO>> getCertifications(
+    public ResponseEntity<PageResponseDTO<CertificationDTO>> getCertifications(
         @PathVariable("challengeId") Integer challengeId,
-        @AuthenticationPrincipal(expression="userId", errorOnInvalidType = false) Integer userId){
-        List<CertificationDTO> list = certificationService.getCertifications(userId, challengeId);
-        return ResponseEntity.ok(list);
+        @RequestParam(name = "page", defaultValue = "1") int page,
+        @RequestParam(name = "size", defaultValue = "20") int size,
+        @RequestParam(name = "onlyMine", defaultValue = "false") boolean onlyMine,
+        @AuthenticationPrincipal(expression="userId", errorOnInvalidType = false) Integer userId
+    ) {
+        // 페이징 처리: offset 계산
+        int offset = (page - 1) * size;
+        
+        // 서비스 호출 (페이징 파라미터 추가)
+        PageResponseDTO<CertificationDTO> result = certificationService.getCertifications(
+            userId, challengeId, size, offset, onlyMine
+        );
+        
+        return ResponseEntity.ok(result);
     }
     
     // 인증 단건 조회

@@ -11,14 +11,29 @@ import com.hobby.challenge.fobackend.entity.Certification;
 
 @Mapper
 public interface CertificationMapper {
-  // 인증 조회 
-  List<CertificationDTO> findByChallenge(@Param("challengeId") Integer challengeId);
+  // 인증 등록
+  void insertCertification(Certification certification);
+	
+  // 페이징된 인증 조회 (기존 findByChallenge 대체)
+  List<CertificationDTO> findByChallengeWithPaging(
+      @Param("challengeId") Integer challengeId,
+      @Param("userId") Integer userId,
+      @Param("size") int size,
+      @Param("offset") int offset,
+      @Param("onlyMine") boolean onlyMine
+  );
+  
+  // 인증 전체 개수 조회 (페이징 계산용)
+  int countByChallenge(
+      @Param("challengeId") Integer challengeId,
+      @Param("userId") Integer userId,
+      @Param("onlyMine") boolean onlyMine
+  );
   
   // 단건 인증 조회
   CertificationDTO selectById(@Param("certificationId") Integer certificationId);
   
-  // 인증 등록
-  void insertCertification(Certification certification);
+
   
   // 인증 수정
   void updateCertification(@Param("certificationId") Integer certificationId,
