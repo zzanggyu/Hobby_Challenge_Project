@@ -119,6 +119,10 @@ function getNotificationIcon(type) {
 		NEW_COMMENT: 'mdi-comment',
 		NEW_LIKE: 'mdi-heart',
 		SYSTEM_NOTICE: 'mdi-bell',
+		CHALLENGE_STARTING_SOON: 'mdi-clock-start', // 시작 예정
+		CHALLENGE_STARTED: 'mdi-play-circle', // 시작됨
+		CHALLENGE_ENDING_SOON: 'mdi-clock-end', // 종료 예정
+		CHALLENGE_ENDED: 'mdi-flag-checkered', // 종료됨
 	}
 	return icons[type] || 'mdi-bell'
 }
@@ -133,6 +137,11 @@ function getNotificationColor(type) {
 		NEW_COMMENT: 'orange',
 		NEW_LIKE: 'pink',
 		SYSTEM_NOTICE: 'grey',
+		// 챌린지 생명주기 색상들
+		CHALLENGE_STARTING_SOON: 'amber', // 노란색 (주의)
+		CHALLENGE_STARTED: 'green', // 초록색 (시작)
+		CHALLENGE_ENDING_SOON: 'deep-orange', // 주황색 (경고)
+		CHALLENGE_ENDED: 'indigo', // 남색 (완료)
 	}
 	return colors[type] || 'grey'
 }

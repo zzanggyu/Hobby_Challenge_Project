@@ -4,7 +4,13 @@
 		<v-row>
 			<v-col cols="12">
 				<div class="d-flex justify-space-between align-center mb-4">
-					<h2 class="text-h4">📢 전체 알림</h2>
+					<div class="d-flex align-center">
+						<v-icon size="32" color="orange" class="mr-3">
+							mdi-bell-ring
+						</v-icon>
+						<h2 class="text-h4">전체 알림</h2>
+					</div>
+
 					<v-btn
 						v-if="notifications.length > 0 && unreadCount > 0"
 						text
@@ -42,7 +48,7 @@
 				</v-card>
 
 				<!-- 알림 리스트 -->
-				<v-list v-else three-line>
+				<v-list v-else three-line width="800" class="mx-auto">
 					<template
 						v-for="(notification, index) in notifications"
 						:key="notification.id"
@@ -151,6 +157,10 @@ function getNotificationIcon(type) {
 		NEW_COMMENT: 'mdi-comment',
 		NEW_LIKE: 'mdi-heart',
 		SYSTEM_NOTICE: 'mdi-bell',
+		CHALLENGE_STARTING_SOON: 'mdi-clock-start',
+		CHALLENGE_STARTED: 'mdi-play-circle',
+		CHALLENGE_ENDING_SOON: 'mdi-clock-end',
+		CHALLENGE_ENDED: 'mdi-flag-checkered',
 	}
 	return icons[type] || 'mdi-bell'
 }
@@ -165,6 +175,10 @@ function getNotificationColor(type) {
 		NEW_COMMENT: 'orange',
 		NEW_LIKE: 'pink',
 		SYSTEM_NOTICE: 'grey',
+		CHALLENGE_STARTING_SOON: 'amber',
+		CHALLENGE_STARTED: 'green',
+		CHALLENGE_ENDING_SOON: 'deep-orange',
+		CHALLENGE_ENDED: 'indigo',
 	}
 	return colors[type] || 'grey'
 }

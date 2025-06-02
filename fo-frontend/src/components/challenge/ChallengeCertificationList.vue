@@ -199,7 +199,7 @@ const sortOptions = [
 	{ text: '댓글순', value: 'comments' },
 ]
 
-// 🔹 날짜별로 그룹화된 로그 (페이징된 데이터에 대해서만)
+// 날짜별로 그룹화된 로그 (페이징된 데이터에 대해서만)
 const groupedLogs = computed(() => {
 	// 정렬 적용 (서버에서 받은 데이터를 클라이언트에서 추가 정렬)
 	let sorted = [...logs.value]
@@ -233,7 +233,7 @@ const groupedLogs = computed(() => {
 		.map(([date, items]) => ({ date, items }))
 })
 
-// 🔹 날짜 포맷팅 함수들
+// 날짜 포맷팅 함수들
 function formatDateHeader(dateStr) {
 	const date = parseISO(dateStr)
 	if (isToday(date)) return '오늘'
@@ -250,7 +250,7 @@ function openDialog(certId) {
 	dialog.value = true
 }
 
-// 🔹 페이징된 데이터 로드 함수
+// 페이징된 데이터 로드 함수
 async function fetchLogs() {
 	loading.value = true
 	try {
@@ -306,7 +306,7 @@ watch(pageSize, () => {
 // 정렬 변경 시에는 현재 페이지 데이터만 재정렬 (서버 요청 X)
 // 만약 서버에서 정렬을 처리하려면 fetchLogs() 호출
 
-// 🔹 이벤트 핸들러들
+// 이벤트 핸들러들
 function onDeleted(certId) {
 	// 삭제 후 현재 페이지를 다시 로드
 	fetchLogs()
