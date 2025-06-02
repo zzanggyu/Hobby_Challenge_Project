@@ -17,10 +17,10 @@
 					class="py-2"
 				>
 					<!-- 아이콘 아바타 -->
-					<template #prepend>
-						<!-- <v-avatar size="40" color="grey lighten-3"> -->
-						<v-icon size="24" color="grey">mdi-account</v-icon>
-						<!-- </v-avatar> -->
+					<template v-slot:prepend>
+						<v-avatar size="40" color="primary">
+							<v-icon color="white">mdi-account</v-icon>
+						</v-avatar>
 					</template>
 
 					<!-- 제목 & 부제목 (기존 v-list-item-content 없이) -->

@@ -59,3 +59,18 @@ button:hover {
 #card-1 {
 	scroll-margin-top: 90px;
 }
+
+/* src/style.css - 스크롤 애니메이션 완전 차단 */
+html,
+body {
+	scroll-behavior: auto !important;
+}
+
+* {
+	scroll-behavior: auto !important;
+}
+
+/* Vuetify가 적용하는 smooth scroll도 차단 */
+.v-application {
+	scroll-behavior: auto !important;
+}

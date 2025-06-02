@@ -4,11 +4,12 @@
 			class="d-flex align-center justify-space-between text-white"
 			fluid
 		>
-			<div>&copy; 2025 Hobbyllenge</div>
+			<div>&copy; 2025 Hobby Challenge</div>
 
 			<div class="d-flex gap-4">
-				<a href="mailto:help@hobbychallenge.com" class="text-white">
-					help@hobbychallenge.com
+				문의 메일:
+				<a href="mailto:hyungyu.kim@ta9.co.kr" class="text-white">
+					hyungyu.kim@ta9.co.kr
 				</a>
 				<!-- SNS 아이콘 예시 -->
 				<!-- <v-icon size="20">mdi-instagram</v-icon>

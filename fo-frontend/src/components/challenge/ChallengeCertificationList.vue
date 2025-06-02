@@ -36,7 +36,7 @@
 			<div v-for="group in groupedLogs" :key="group.date" class="mb-6">
 				<!-- 날짜 헤더 -->
 				<div class="date-header mb-3">
-					<v-chip color="primary" label>
+					<v-chip color="black" label>
 						<v-icon left small>mdi-calendar</v-icon>
 						{{ formatDateHeader(group.date) }}
 					</v-chip>
@@ -58,33 +58,43 @@
 							<v-card
 								v-bind="props"
 								:elevation="isHovering ? 8 : 2"
-								rounded="xl"
+								rounded="lg"
+								height="450"
 								class="cert-card"
 								@click="openDialog(log.certificationId)"
 							>
 								<!-- 이미지 영역 -->
-								<v-img
-									v-if="log.imageUrl"
-									:src="log.imageUrl"
-									height="250"
-									cover
-									class="align-end"
-								>
-									<v-card-title class="white--text">
-										<div class="cert-overlay">
-											<v-avatar size="32" class="mr-2">
-												<v-img
-													v-if="log.userImageUrl"
-													:src="log.userImageUrl"
-												/>
-												<v-icon v-else color="white"
-													>mdi-account</v-icon
+								<div class="image-container">
+									<v-img
+										v-if="log.imageUrl"
+										:src="log.imageUrl"
+										:aspect-ratio="4 / 3"
+										height="300"
+										cover
+										class="cert-image"
+									>
+										<!-- 오버레이는 제거하거나 최소화 -->
+										<div class="cert-overlay-minimal">
+											<v-chip
+												size="x-small"
+												color="rgba(0,0,0,0.6)"
+												class="ma-2"
+											>
+												<v-icon size="12" class="mr-1"
+													>mdi-camera</v-icon
 												>
-											</v-avatar>
-											<span>{{ log.nickname }}</span>
+												인증
+											</v-chip>
 										</div>
-									</v-card-title>
-								</v-img>
+									</v-img>
+
+									<!-- 이미지가 없는 경우 -->
+									<div v-else class="no-image-placeholder">
+										<v-icon size="48" color="grey"
+											>mdi-image-off</v-icon
+										>
+									</div>
+								</div>
 
 								<!-- 카드 내용 -->
 								<v-card-text>
@@ -112,6 +122,11 @@
 												{{ log.commentCount || 0 }}
 											</v-chip>
 										</div>
+
+										<span
+											><v-icon>mdi-account</v-icon>
+											{{ log.nickname }}</span
+										>
 									</div>
 								</v-card-text>
 							</v-card>
@@ -344,6 +359,18 @@ function onDeleted(certId) {
 	-webkit-line-clamp: 2;
 	-webkit-box-orient: vertical;
 	min-height: 3rem;
+}
+.image-container {
+	position: relative;
+	width: 100%;
+	height: 300px; /* 고정 높이 */
+	overflow: hidden;
+}
+
+.cert-image {
+	width: 100%;
+	height: 100%;
+	object-fit: cover; /* 비율 유지하면서 꽉 채움 */
 }
 
 /* 컨트롤 영역 간격 */

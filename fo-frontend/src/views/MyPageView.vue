@@ -95,13 +95,13 @@
 								<template v-slot:prepend>
 									<v-icon>mdi-trophy</v-icon>
 								</template>
-								<v-list-item-title>레벨 및 포인트</v-list-item-title>
+								<v-list-item-title>레벨 및 경험치</v-list-item-title>
 								<v-list-item-subtitle>
 									<v-chip small color="primary" class="mr-2">
 										Lv.{{ userInfo.level }}
 									</v-chip>
 									<v-chip small color="secondary">
-										{{ userInfo.points }}P
+										{{ userInfo.points }} EXP
 									</v-chip>
 								</v-list-item-subtitle>
 							</v-list-item>

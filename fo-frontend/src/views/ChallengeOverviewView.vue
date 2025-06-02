@@ -63,8 +63,25 @@
 				v-if="tab === '0' && canWrite"
 				@submitted="onSubmitted"
 			/>
-			<v-alert type="info" v-if="!joined">
-				챌린지에 참여해 요청이 승인되면 인증 등록 탭이 활성화됩니다.
+			<v-alert
+				v-if="tab === '0' && !canWrite"
+				type="info"
+				variant="tonal"
+				class="ma-4"
+			>
+				<div class="d-flex align-center">
+					<v-icon color="info" class="mr-3">mdi-information</v-icon>
+					<div>
+						<div class="font-weight-bold mb-2">
+							인증 등록 권한이 필요합니다
+						</div>
+						<div class="text-body-2">
+							• 챌린지에 참여 요청 후 승인을 받으세요<br />
+							• 챌린지 기간 내에만 인증 등록이 가능합니다<br />
+							• 하루에 한 번만 인증을 등록할 수 있습니다
+						</div>
+					</div>
+				</div>
 			</v-alert>
 			<!-- 1: 전체 인증내역 보기 -->
 			<ChallengeCertificationList

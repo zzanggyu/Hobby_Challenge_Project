@@ -146,6 +146,19 @@ const routes = [
 const router = createRouter({
 	history: createWebHistory(), // import.meta.env.BASE_URL 써도 OK
 	routes,
+
+	scrollBehavior(to, from, savedPosition) {
+		if (savedPosition) {
+			return new Promise((resolve) => {
+				setTimeout(() => {
+					// 즉시 스크롤 (애니메이션 없음)
+					window.scrollTo(savedPosition.left, savedPosition.top)
+					resolve(savedPosition)
+				}, 100)
+			})
+		}
+		return { top: 0 }
+	},
 })
 
 // 전역 네비게이션 가이드드

@@ -32,9 +32,9 @@
 								class="nav-item"
 								@click="goToFavoriteChallenge"
 							>
-								<v-list-item-prepend>
+								<template v-slot:prepend>
 									<v-icon color="pink">mdi-heart</v-icon>
-								</v-list-item-prepend>
+								</template>
 								<v-list-item-title class="nav-item-title">
 									관심 챌린지
 								</v-list-item-title>
@@ -46,9 +46,9 @@
 							<v-divider class="my-1"></v-divider>
 
 							<v-list-item class="nav-item" @click="goMyChallenge">
-								<v-list-item-prepend>
+								<template v-slot:prepend>
 									<v-icon color="orange">mdi-trophy</v-icon>
-								</v-list-item-prepend>
+								</template>
 								<v-list-item-title class="nav-item-title">
 									참여 중인 챌린지
 								</v-list-item-title>
@@ -184,7 +184,11 @@
 							</v-chip>
 						</div>
 
-						<v-btn icon size="small" @click.stop="onToggleFavorite(c)">
+						<v-btn
+							icon
+							size="small"
+							@click.stop.prevent="onToggleFavorite(c)"
+						>
 							<v-icon :color="c.isFavorite ? 'red' : 'grey'">
 								{{ c.isFavorite ? 'mdi-heart' : 'mdi-heart-outline' }}
 							</v-icon>
@@ -488,7 +492,7 @@ async function fetchMyParticipations() {
 	}
 }
 
-// ✅ 서버사이드 검색이 적용된 챌린지 목록 API 호출
+//  서버사이드 검색이 적용된 챌린지 목록 API 호출
 async function fetchChallenges() {
 	// 검색 상태 표시
 	isLoading.value = true
@@ -497,7 +501,7 @@ async function fetchChallenges() {
 	await fetchMyParticipations()
 
 	try {
-		// ✅ 검색어와 카테고리를 서버에 전달
+		// 검색어와 카테고리를 서버에 전달
 		console.log('🔍 서버 검색 요청:', {
 			page: currentPage.value,
 			size: pageSize.value,
@@ -508,13 +512,13 @@ async function fetchChallenges() {
 		const { totalCount: totalFromApi, items } = await getChallenges(
 			currentPage.value,
 			pageSize.value,
-			search.value, // ✅ 서버에서 검색 처리
-			selectedCategory.value // ✅ 서버에서 필터링 처리
+			search.value, //  서버에서 검색 처리
+			selectedCategory.value //  서버에서 필터링 처리
 		)
 
 		totalCount.value = totalFromApi
 
-		// ✅ 서버에서 이미 필터링된 데이터를 그대로 사용
+		//  서버에서 이미 필터링된 데이터를 그대로 사용
 		challenges.value = items.map((c) => {
 			const participation = myPartsMap.value[c.challengeId] || {}
 			return {
@@ -527,7 +531,7 @@ async function fetchChallenges() {
 			}
 		})
 
-		console.log('✅ 검색 결과:', {
+		console.log(' 검색 결과:', {
 			totalCount: totalFromApi,
 			itemsCount: items.length,
 			searchTerm: search.value,
@@ -556,12 +560,23 @@ async function fetchCategories() {
 	}
 }
 
+// 챌린지 좋아요 토글
 async function onToggleFavorite(challenge) {
+	const originalState = challenge.isFavorite // 원래 상태 저장
+
 	try {
-		const id = challenge.challengeId
-		await toggleFavoriteChallenge(id)
-		await fetchChallenges()
+		//  즉시 UI 업데이트 (사용자 경험 향상)
+		challenge.isFavorite = !challenge.isFavorite
+		alert('관심챌린지로 등록되었습니다.')
+		//  서버 요청
+		await toggleFavoriteChallenge(challenge.challengeId)
+
+		//  성공 시 토스트 메시지 (선택사항)
+		// showToast(challenge.isFavorite ? '관심 챌린지에 추가되었습니다' : '관심 챌린지에서 제거되었습니다')
 	} catch (err) {
+		// 실패 시 원래 상태로 복구
+		challenge.isFavorite = originalState
+		console.error('관심 챌린지 토글 실패:', err)
 		handleApiError(err)
 	}
 }

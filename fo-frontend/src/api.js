@@ -3,7 +3,7 @@ import router from './router'
 import { logout } from '@/services/authService'
 
 const api = axios.create({
-	baseURL: 'http://localhost:8080/api', // 백엔드 기본 URL
+	baseURL: 'http://localhost:8081/api', // 백엔드 기본 URL
 	withCredentials: true, // 쿠키 기반 인증 쓸 때
 })
 

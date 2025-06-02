@@ -1,36 +1,72 @@
 <template>
 	<!-- 로고 + 이름 -->
-	<v-app-bar app color="white" height="78" elevation="4">
+	<v-app-bar app color="white" height="80" elevation="4">
 		<v-toolbar-title>
-			<v-btn
-				variant="text"
-				height="78"
-				class="d-flex align-center"
-				@click="goHome"
-			>
-				<img src="@/assets/logo.png" alt="로고" height="78" class="mr-3" />
-				<span class="hobby-title">함께하는 취미 챌린지!!</span>
-			</v-btn>
+			<!-- 🔥 요소들을 분리해서 배치 -->
+			<div class="d-flex align-center">
+				<!-- 1. 로고만 있는 버튼 -->
+				<v-btn
+					variant="text"
+					height="80"
+					width="80"
+					class="pa-0 logo-btn"
+					@click="goHome"
+				>
+					<img src="@/assets/logo.png" alt="로고" height="70" />
+				</v-btn>
+
+				<!-- 2. 환영 메시지 (버튼 밖으로 분리) -->
+				<div
+					v-if="auth.isAuthenticated"
+					class="welcome-message-simple ml-3 mr-4"
+				>
+					<span class="welcome-text-simple">
+						{{ auth.user?.nickname }}님 환영합니다!
+					</span>
+				</div>
+
+				<!-- 3. 타이틀 텍스트 (버튼 밖으로 분리) -->
+				<!-- <span
+					class="hobby-title"
+					:class="{ 'ml-3': !auth.isAuthenticated }"
+				>
+					함께하는 취미 챌린지!!
+				</span> -->
+			</div>
 		</v-toolbar-title>
 
 		<v-spacer></v-spacer>
-		<!-- 메뉴 버튼튼 -->
-		<!-- <v-btn text @click="goHome">홈</v-btn> -->
-
-		<!-- 챌린지 생성 페이지로 이동 -->
-		<v-btn text @click="goChallengeCreate">챌린지 생성</v-btn>
-		<!-- 챌린지 목록으로 이동 -->
-		<v-btn text @click="goChallengeList">챌린지 목록</v-btn>
-		<!-- <v-spacer /> -->
-		<!-- <v-btn text :to="{ name: 'my-challenges' }">내 챌린지</v-btn> -->
-		<v-btn text @click="goMyPage">내 정보</v-btn>
-		<!-- <v-btn text @click="goNotifications">알림</v-btn> -->
-		<notification-bell class="mr-2" />
-		<v-btn v-if="!auth.isAuthenticated" text to="/login"> 로그인 </v-btn>
-		<v-btn v-else text @click="onLogout"> 로그아웃 </v-btn>
-		<v-btn v-if="!auth.isAuthenticated" text @click="goToSignup"
-			>회원가입</v-btn
-		>
+		<div class="menu-bar">
+			<v-btn text @click="goChallengeCreate" class="font-weight-bold">
+				챌린지 생성
+			</v-btn>
+			<v-divider vertical class="mx-2" />
+			<v-btn text @click="goChallengeList" class="font-weight-bold"
+				>챌린지 목록</v-btn
+			>
+			<v-btn text @click="goMyPage" class="font-weight-bold">
+				내 정보
+			</v-btn>
+			<notification-bell class="mr-2" />
+			<v-divider vertical class="mx-2" />
+			<v-btn
+				v-if="!auth.isAuthenticated"
+				text
+				to="/login"
+				class="font-weight-bold"
+				>로그인</v-btn
+			>
+			<v-btn v-else text @click="onLogout" class="font-weight-bold"
+				>로그아웃</v-btn
+			>
+			<v-btn
+				v-if="!auth.isAuthenticated"
+				text
+				@click="goToSignup"
+				class="font-weight-bold"
+				>회원가입</v-btn
+			>
+		</div>
 	</v-app-bar>
 </template>
 
@@ -94,5 +130,17 @@ function goToSignup() {
 	font-family: 'Nanum Pen Script', cursive;
 	font-size: 30px;
 	color: #000000;
+}
+.welcome-message-simple {
+	padding: 6px 12px;
+	background-color: #f3e5f5;
+	border-radius: 16px;
+	border: 1px solid #e1bee7;
+}
+
+.welcome-text-simple {
+	font-size: 14px;
+	font-weight: 500;
+	color: #7b1fa2;
 }
 </style>

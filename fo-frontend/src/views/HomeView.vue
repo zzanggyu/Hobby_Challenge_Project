@@ -6,10 +6,10 @@
 			@refresh-needed="refreshData"
 		/>
 		<br />
-		<hr />
+		<v-divider></v-divider>
 		<AboutSection />
-		<hr />
-		<!-- <RankingSection /> -->
+		<v-divider></v-divider>
+		<RankingSection />
 	</div>
 </template>
 
@@ -17,7 +17,7 @@
 import { ref, onMounted } from 'vue'
 import ChallengeCarousel from '@/components/sections/ChallengeCarousel.vue'
 import AboutSection from '@/components/sections/AboutSection.vue'
-// import RankingSection from '@/components/sections/RankingSection.vue'
+import RankingSection from '@/components/sections/RankingSection.vue'
 import { getPopularChallenges } from '@/services/challengeService'
 import { getCategories } from '../services/categoryService'
 
