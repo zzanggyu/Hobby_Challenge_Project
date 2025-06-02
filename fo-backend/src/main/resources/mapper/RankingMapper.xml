@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.hobby.challenge.fobackend.mapper.RankingMapper">
+    
+    <!-- 사용자별 인증 수 랭킹 조회 -->
+    <select id="findUsersByCertificationCount" 
+            resultType="com.hobby.challenge.fobackend.dto.UserRankingDTO">
+        SELECT u.USER_ID as userId
+             , u.NICKNAME as nickname
+             , u.IMAGE_URL as imageUrl
+             , u.LEVEL as level
+             , u.POINTS as points
+             , COUNT(c.CERTIFICATION_ID) as certificationCount
+        FROM USER u
+        INNER JOIN CERTIFICATION c ON u.USER_ID = c.CREATED_BY
+        
+        WHERE u.STATUS = 'ACTIVE'  -- 활성 사용자만
+        
+        GROUP BY u.USER_ID, u.NICKNAME, u.IMAGE_URL, u.LEVEL, u.POINTS
+        HAVING COUNT(c.CERTIFICATION_ID) > 0  -- 인증이 1개 이상인 사용자만
+        ORDER BY COUNT(c.CERTIFICATION_ID) DESC, u.CREATED_DATE ASC  -- 인증 수 DESC, 가입일 ASC
+        LIMIT #{limit}
+    </select>
+</mapper>

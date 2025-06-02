@@ -26,4 +26,5 @@ public class CertificationDTO {
 	  private Integer likeCount; // 좋아요 수
 	  private Integer commentCount;
 	  private Integer level; // 인증 목록에 보여 주기 위함
+	  private Boolean likedByMe; // 좋아요 여부
 }

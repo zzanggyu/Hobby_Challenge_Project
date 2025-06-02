@@ -174,6 +174,12 @@ public class CertificationServiceImpl implements CertificationService {
     public CertificationDTO getCertificationDetail(Integer userId, Integer certificationId) {
         CertificationDTO dto = certificationMapper.selectById(certificationId);
         if (dto==null) throw new CustomException(ErrorCode.NOT_FOUND_CERTIFICATION, "인증을 찾을 수 없습니다.");
+        
+        // 좋아요 여부 추가 
+        if (userId != null) {
+            boolean isLiked = certLikeMapper.isLiked(certificationId, userId) > 0;
+            dto.setLikedByMe(isLiked);  // DTO에 좋아요 여부 설정
+        }
         // 접근 권한 추가 검증 가능
         return dto;
     }

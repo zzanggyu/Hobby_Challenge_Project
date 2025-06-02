@@ -29,7 +29,7 @@
              , n.CHALLENGE_ID
              , n.CERT_ID
              
-             <!-- 동적 제목 생성 -->
+             <!-- 알림 제목 생성 -->
              , (CASE 
                     WHEN n.TYPE = 'CHALLENGE_REQUEST' THEN '새로운 참여 요청'
                     WHEN n.TYPE = 'CHALLENGE_REQUEST_APPROVED' THEN '참여 승인'
@@ -44,7 +44,7 @@
                     ELSE '알림'
                 END) AS title
                 
-             <!-- 동적 메시지 생성 (완전한 버전) -->
+             <!-- 알림 메시지 생성 -->
              , (CASE 
                     WHEN n.TYPE = 'CHALLENGE_REQUEST' THEN 
                         CONCAT(pu.NICKNAME, '님이 "', c.TITLE, '" 챌린지 참여를 요청했습니다.')

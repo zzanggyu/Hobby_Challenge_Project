@@ -9,6 +9,7 @@ import com.hobby.challenge.fobackend.dto.NotificationResponseDTO;
 import com.hobby.challenge.fobackend.dto.ParticipantDTO;
 import com.hobby.challenge.fobackend.entity.Notification;
 import com.hobby.challenge.fobackend.mapper.NotificationMapper;
+import com.hobby.challenge.fobackend.mapper.ParticipationMapper;
 import com.hobby.challenge.fobackend.service.NotificationService;
 
 import lombok.RequiredArgsConstructor;
@@ -17,6 +18,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class NotificationServiceImpl implements NotificationService {
     private final NotificationMapper notificationMapper;
+    private final ParticipationMapper participationMapper;
 
     @Override
     public List<NotificationResponseDTO> getNotifications(Integer userId, int page, int size) {
