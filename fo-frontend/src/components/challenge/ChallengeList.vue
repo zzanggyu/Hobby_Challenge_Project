@@ -68,31 +68,54 @@
 				<v-text-field
 					v-model="search"
 					label="챌린지 제목 검색"
-					prepend-inner-icon="mdi-magnify"
 					rounded="lg"
 					variant="outlined"
 					clearable
 					@keyup.enter="searchNow"
 					:loading="isSearching"
 					placeholder="검색어를 입력하세요..."
-				/>
+					class="search-field"
+				>
+					<!-- 검색 아이콘은 앞쪽에 -->
+					<template v-slot:prepend-inner>
+						<v-icon color="grey" size="20">mdi-magnify</v-icon>
+					</template>
+
+					<!-- 검색 버튼은 뒤쪽에 -->
+					<template v-slot:append-inner>
+						<v-divider vertical class="mx-2" />
+						<v-btn
+							variant="text"
+							size="small"
+							color="primary"
+							@click="searchNow"
+							:loading="isSearching"
+							:disabled="!search"
+							class="search-btn px-3"
+						>
+							검색
+						</v-btn>
+					</template>
+				</v-text-field>
 			</v-col>
-			<v-col cols="12" md="4">
+			<v-col cols="12" md="3">
 				<v-select
 					v-model="selectedCategory"
 					:items="categories"
 					item-title="categoryName"
 					item-value="categoryId"
-					label="카테고리 필터"
+					label="카테고리"
 					prepend-inner-icon="mdi-filter"
 					rounded="lg"
 					variant="outlined"
 					clearable
-					placeholder="전체 카테고리"
+					placeholder="전체"
+					density="compact"
+					hide-details
 				/>
 			</v-col>
 			<v-col cols="12" md="2">
-				<!-- 검색 초기화 버튼 추가 -->
+				<!-- 검색 초기화 버튼만 남김 -->
 				<v-btn
 					color="secondary"
 					variant="outlined"
@@ -111,7 +134,6 @@
 			<v-col cols="12">
 				<v-alert type="info" variant="tonal" class="mb-0">
 					<div class="d-flex align-center">
-						<v-icon class="mr-2">mdi-information</v-icon>
 						<span>
 							<strong>검색 결과:</strong>
 							{{ totalCount }}개의 챌린지를 찾았습니다
@@ -222,7 +244,7 @@
 
 						<!-- 생성자 정보 -->
 						<div class="d-flex align-center mb-3">
-							<v-icon size="16" class="mr-2" color="primary">
+							<v-icon size="20" class="mr-2" color="primary">
 								mdi-account
 							</v-icon>
 							<span class="text-caption">
@@ -236,7 +258,7 @@
 						<!-- 참여 상태 버튼 -->
 						<template v-if="!c.requested && !c.approved">
 							<v-btn
-								color="primary"
+								color="secondary"
 								variant="tonal"
 								size="small"
 								:loading="isJoining && targetId === c.challengeId"
@@ -267,10 +289,9 @@
 
 						<template v-else-if="c.approved">
 							<v-btn
-								color="success"
+								color="blue"
 								variant="tonal"
 								size="small"
-								disabled
 								@click.stop
 							>
 								<v-icon left size="16">mdi-check</v-icon>
@@ -397,7 +418,13 @@ watch([search, selectedCategory], () => {
 	searchTimeout = setTimeout(() => {
 		currentPage.value = 1 // 검색시 첫 페이지로 리셋
 		fetchChallenges()
-	}, 500)
+	}, 1000)
+})
+
+// 카테고리 변경시에만 자동 검색 (검색어는 수동)
+watch(selectedCategory, () => {
+	currentPage.value = 1 // 카테고리 변경시 첫 페이지로 리셋
+	fetchChallenges()
 })
 
 // 페이지 변경시에만 검색 (검색어는 유지)
@@ -562,22 +589,29 @@ async function fetchCategories() {
 
 // 챌린지 좋아요 토글
 async function onToggleFavorite(challenge) {
-	const originalState = challenge.isFavorite // 원래 상태 저장
+	const originalState = challenge.isFavorite
 
 	try {
-		//  즉시 UI 업데이트 (사용자 경험 향상)
 		challenge.isFavorite = !challenge.isFavorite
-		alert('관심챌린지로 등록되었습니다.')
-		//  서버 요청
 		await toggleFavoriteChallenge(challenge.challengeId)
 
-		//  성공 시 토스트 메시지 (선택사항)
-		// showToast(challenge.isFavorite ? '관심 챌린지에 추가되었습니다' : '관심 챌린지에서 제거되었습니다')
+		// 관심 등록 성공시에만 메시지 표시
+		if (challenge.isFavorite) {
+			alert('관심챌린지로 등록되었습니다.')
+		}
 	} catch (err) {
 		// 실패 시 원래 상태로 복구
 		challenge.isFavorite = originalState
-		console.error('관심 챌린지 토글 실패:', err)
-		handleApiError(err)
+
+		// 10개 제한 에러 처리
+		if (err.response?.data?.errorCode === 'FAVORITE_LIMIT_EXCEEDED') {
+			alert(
+				'관심 챌린지는 최대 10개까지만 등록할 수 있습니다.\n기존 관심 챌린지를 삭제 후 다시 시도해주세요.'
+			)
+		} else {
+			console.error('관심 챌린지 토글 실패:', err)
+			handleApiError(err)
+		}
 	}
 }
 

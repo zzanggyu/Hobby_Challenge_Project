@@ -12,7 +12,7 @@
 					class="pa-0 logo-btn"
 					@click="goHome"
 				>
-					<img src="@/assets/logo.png" alt="로고" height="70" />
+					<img src="@/assets/logo.png" alt="로고" height="85" width="90" />
 				</v-btn>
 
 				<!-- 2. 환영 메시지 (버튼 밖으로 분리) -->
@@ -44,9 +44,11 @@
 			<v-btn text @click="goChallengeList" class="font-weight-bold"
 				>챌린지 목록</v-btn
 			>
+			<v-divider vertical class="mx-2" />
 			<v-btn text @click="goMyPage" class="font-weight-bold">
 				내 정보
 			</v-btn>
+			<v-divider vertical class="mx-2" />
 			<notification-bell class="mr-2" />
 			<v-divider vertical class="mx-2" />
 			<v-btn
@@ -59,6 +61,7 @@
 			<v-btn v-else text @click="onLogout" class="font-weight-bold"
 				>로그아웃</v-btn
 			>
+			<v-divider vertical class="mx-2" />
 			<v-btn
 				v-if="!auth.isAuthenticated"
 				text
@@ -66,6 +69,7 @@
 				class="font-weight-bold"
 				>회원가입</v-btn
 			>
+			<v-divider vertical class="mx-2" />
 		</div>
 	</v-app-bar>
 </template>

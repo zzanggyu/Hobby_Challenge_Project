@@ -1,6 +1,7 @@
+<!-- fo-frontend/src/components/challenge/FavoriteChallenge.vue -->
 <template>
 	<v-container>
-		<!-- 헤더 -->
+		<!-- 헤더 개선 -->
 		<v-row class="mb-6" align="center">
 			<v-col cols="12" class="d-flex align-center justify-space-between">
 				<div class="d-flex align-center">
@@ -10,7 +11,9 @@
 					<div>
 						<h1 class="text-h4 font-weight-bold mb-1">내 챌린지</h1>
 						<p class="text-body-2 text-grey ma-0">
-							관심 챌린지와 참여 요청중인 챌린지
+							관심 챌린지 ({{ favoriteOnlyCount }}/10), 참여중 ({{
+								participatingCount
+							}}), 요청중 ({{ requestingCount }})
 						</p>
 					</div>
 				</div>
@@ -28,46 +31,57 @@
 			</v-col>
 		</v-row>
 
-		<!-- 챌린지 현황 요약 카드 -->
-		<!-- 챌린지 현황 요약 카드 -->
+		<!--  현황 요약 카드 개선 -->
 		<v-row class="mb-4">
-			<v-col cols="12" md="6">
+			<v-col cols="12" md="4">
 				<v-card color="pink-lighten-5" elevation="1">
 					<v-card-text class="text-center">
 						<v-icon size="32" color="pink" class="mb-2">mdi-heart</v-icon>
 						<div class="text-h6 font-weight-bold">
-							{{ favoriteCount }}
+							{{ favoriteOnlyCount }}/10
 						</div>
 						<div class="text-caption">관심 챌린지</div>
 					</v-card-text>
 				</v-card>
 			</v-col>
-			<v-col cols="12" md="6">
+			<v-col cols="12" md="4">
+				<v-card color="green-lighten-5" elevation="1">
+					<v-card-text class="text-center">
+						<v-icon size="32" color="green" class="mb-2"
+							>mdi-check-circle</v-icon
+						>
+						<div class="text-h6 font-weight-bold">
+							{{ participatingCount }}
+						</div>
+						<div class="text-caption">참여중</div>
+					</v-card-text>
+				</v-card>
+			</v-col>
+			<v-col cols="12" md="4">
 				<v-card color="orange-lighten-5" elevation="1">
 					<v-card-text class="text-center">
 						<v-icon size="32" color="orange" class="mb-2"
 							>mdi-clock-outline</v-icon
 						>
 						<div class="text-h6 font-weight-bold">
-							{{ requestedCount }}
+							{{ requestingCount }}
 						</div>
-						<div class="text-caption">요청 중</div>
+						<div class="text-caption">요청중</div>
 					</v-card-text>
 				</v-card>
 			</v-col>
 		</v-row>
 
-		<!-- 로딩 -->
+		<!-- 로딩/빈 상태는 기존과 동일 -->
 		<v-row v-if="isLoadingFavorites" justify="center" class="my-12">
 			<v-progress-circular indeterminate color="primary" size="64" />
 		</v-row>
 
-		<!-- 빈 상태 -->
 		<v-row v-else-if="favorites.length === 0" justify="center" class="my-12">
 			<v-col cols="12" md="6" class="text-center">
-				<v-icon size="80" color="grey-lighten-2" class="mb-4">
-					mdi-heart-outline
-				</v-icon>
+				<v-icon size="80" color="grey-lighten-2" class="mb-4"
+					>mdi-heart-outline</v-icon
+				>
 				<h2 class="text-h5 mb-4">아직 관심 챌린지가 없어요</h2>
 				<p class="text-body-1 text-grey mb-6">
 					마음에 드는 챌린지에 하트를 눌러 저장하거나<br />
@@ -80,7 +94,7 @@
 			</v-col>
 		</v-row>
 
-		<!-- 챌린지 카드 -->
+		<!-- 챌린지 카드 - 상태별 구분  -->
 		<v-row v-else>
 			<v-col
 				v-for="fav in favorites"
@@ -95,7 +109,7 @@
 					class="d-flex flex-column challenge-card"
 					height="380"
 				>
-					<!-- 카드 헤더 -->
+					<!-- 카드 헤더 개선 -->
 					<v-card-title
 						class="d-flex justify-space-between align-center pb-2"
 					>
@@ -109,21 +123,44 @@
 								{{ categoryName(fav.challenge.categoryId) }}
 							</v-chip>
 
-							<!-- 챌린지 타입 표시 (관심 vs 요청중) -->
+							<!-- 상태별 칩 표시  -->
 							<v-chip
-								v-if="isRequestedOnly(fav)"
+								v-if="fav.participating"
+								size="x-small"
+								color="success"
+								variant="flat"
+								class="ml-1"
+							>
+								<v-icon left size="12">mdi-check-circle</v-icon>
+								참여중
+							</v-chip>
+
+							<v-chip
+								v-else-if="fav.requesting"
 								size="x-small"
 								color="orange"
 								variant="flat"
 								class="ml-1"
 							>
+								<v-icon left size="12">mdi-clock-outline</v-icon>
 								요청중
+							</v-chip>
+
+							<v-chip
+								v-else
+								size="x-small"
+								color="pink"
+								variant="flat"
+								class="ml-1"
+							>
+								<v-icon left size="12">mdi-heart</v-icon>
+								관심
 							</v-chip>
 						</div>
 
-						<!--  하트 버튼 (관심 챌린지만 해당) -->
+						<!-- 하트 버튼 (관심 챌린지만 해당) -->
 						<v-btn
-							v-if="!isRequestedOnly(fav)"
+							v-if="!fav.participating && !fav.requesting"
 							icon
 							size="small"
 							@click.stop="onToggleFavorite(fav.challenge.challengeId)"
@@ -132,7 +169,7 @@
 						</v-btn>
 					</v-card-title>
 
-					<!-- 카드 내용 -->
+					<!-- 카드 내용은 기존과 동일 -->
 					<v-card-text class="flex-grow-1 pt-1">
 						<h3 class="text-h6 mb-3">{{ fav.challenge.title }}</h3>
 						<p class="text-body-2 text-grey-darken-1 mb-4">
@@ -140,9 +177,8 @@
 						</p>
 					</v-card-text>
 
-					<!-- 정보 -->
+					<!-- 정보 섹션 -->
 					<div class="px-4 pb-2">
-						<!-- 기간 정보 -->
 						<div class="d-flex align-center mb-2">
 							<v-icon size="16" class="mr-2">mdi-calendar-range</v-icon>
 							<span class="text-caption">
@@ -150,33 +186,39 @@
 								{{ formatDate(fav.challenge.endDate) }}
 							</span>
 						</div>
-						<!-- 생성자 정보 -->
 						<div class="d-flex align-center mb-2">
 							<v-icon size="16" class="mr-2">mdi-account</v-icon>
-							<span class="text-caption">
-								{{ fav.challenge.creatorNickname }}
-							</span>
+							<span class="text-caption">{{
+								fav.challenge.creatorNickname
+							}}</span>
 						</div>
-						<!-- 등록/요청 날짜 -->
 						<div class="d-flex align-center mb-3">
+							<!-- 상태별 아이콘 표시 -->
 							<v-icon size="16" class="mr-2">
 								{{
-									isRequestedOnly(fav)
+									fav.participating
+										? 'mdi-check-circle'
+										: fav.requesting
 										? 'mdi-clock-outline'
 										: 'mdi-heart-outline'
 								}}
 							</v-icon>
 							<span class="text-caption">
-								{{ isRequestedOnly(fav) ? '요청일' : '관심 등록일' }}:
+								{{
+									fav.participating
+										? '참여일'
+										: fav.requesting
+										? '요청일'
+										: '관심 등록일'
+								}}:
 								{{ formatDate(fav.createdDate) }}
 							</span>
 						</div>
 					</div>
 
-					<!-- 카드 액션 -->
+					<!-- 카드 액션 - 기존과 동일하지만 상태별 버튼 로직 개선 -->
 					<v-card-actions class="pt-0">
-						<!-- 참여 상태 버튼 -->
-						<template v-if="fav.approved">
+						<template v-if="fav.participating">
 							<v-btn
 								color="success"
 								variant="tonal"
@@ -189,7 +231,7 @@
 							</v-btn>
 						</template>
 
-						<template v-else-if="fav.requested">
+						<template v-else-if="fav.requesting">
 							<v-btn
 								color="warning"
 								variant="tonal"
@@ -233,19 +275,6 @@
 				</v-card>
 			</v-col>
 		</v-row>
-
-		<!-- 새로고침 버튼 -->
-		<v-row justify="center" class="mt-6">
-			<v-btn
-				variant="outlined"
-				color="primary"
-				:loading="isLoadingFavorites"
-				@click="fetchFavorites"
-			>
-				<v-icon left>mdi-refresh</v-icon>
-				새로고침
-			</v-btn>
-		</v-row>
 	</v-container>
 </template>
 
@@ -253,7 +282,7 @@
 import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import {
-	getFavoriteChallenges, // 🔥 백엔드에서 getFavoritesAndRequestedChallenges 사용
+	getFavoriteChallenges,
 	toggleFavoriteChallenge,
 } from '@/services/challengeService'
 import {
@@ -276,26 +305,22 @@ const isLoadingFavorites = ref(false)
 const isJoining = ref(false)
 const targetId = ref(null)
 
-// 📊 현황 요약 계산
-const favoriteCount = computed(() => {
-	return favorites.value.filter((fav) => !isRequestedOnly(fav)).length
+// 상태별 개수 계산 개선
+const favoriteOnlyCount = computed(() => {
+	return favorites.value.filter(
+		(fav) => !fav.participating && !fav.requesting // 순수 관심 챌린지만
+	).length
 })
 
-const requestedCount = computed(() => {
-	return favorites.value.filter((fav) => fav.requested && !fav.approved).length
+const participatingCount = computed(() => {
+	return favorites.value.filter((fav) => fav.participating).length
 })
 
-const approvedCount = computed(() => {
-	return favorites.value.filter((fav) => fav.approved).length
+const requestingCount = computed(() => {
+	return favorites.value.filter((fav) => fav.requesting).length
 })
 
-// 🔍 요청중인 챌린지인지 판별하는 함수
-function isRequestedOnly(fav) {
-	// 관심 챌린지가 아니면서 요청중인 경우 (= 순수 요청중인 챌린지)
-	return fav.requested && !fav.challenge.isFavorite
-}
-
-// 설명 글자 수 제한
+// 기존 함수들은 그대로 유지...
 function truncateDescription(description) {
 	if (!description) return ''
 	return description.length > 150
@@ -303,7 +328,6 @@ function truncateDescription(description) {
 		: description
 }
 
-// 날짜 포맷터
 function formatDate(date) {
 	if (!date) return '-'
 	return new Date(date).toLocaleDateString('ko-KR', {
@@ -313,21 +337,15 @@ function formatDate(date) {
 	})
 }
 
-// 카테고리명 반환
 function categoryName(id) {
 	const cat = categories.value.find((x) => x.categoryId === id)
 	return cat ? cat.categoryName : '기타'
 }
 
-// 상세 페이지로 이동
 function goToDetail(challengeId) {
-	router.push({
-		name: 'challenge-overview',
-		params: { id: challengeId },
-	})
+	router.push({ name: 'challenge-overview', params: { id: challengeId } })
 }
 
-// 챌린지 목록으로 이동
 function goToList() {
 	router.push({ name: 'challenge-list' })
 }
@@ -344,10 +362,7 @@ async function fetchMyParticipations() {
 		const map = {}
 		list.forEach((p) => {
 			if (p.status !== 'REJECTED') {
-				map[p.challengeId] = {
-					id: p.participationId,
-					status: p.status,
-				}
+				map[p.challengeId] = { id: p.participationId, status: p.status }
 			}
 		})
 		myPartsMap.value = map
@@ -356,29 +371,25 @@ async function fetchMyParticipations() {
 	}
 }
 
-// 🔥 관심 챌린지 + 요청중인 챌린지 목록 가져오기 (통합)
+//  관심 챌린지 + 참여중 챌린지 목록 가져오기 - 백엔드에서 상태 정보 포함
 async function fetchFavorites() {
 	isLoadingFavorites.value = true
 	try {
 		await fetchMyParticipations()
 
-		// ✅ 백엔드의 새로운 통합 API 사용
-		const data = await getFavoriteChallenges() // 실제로는 getFavoritesAndRequestedChallenges를 호출
+		// 백엔드의 새로운 통합 API 사용 (상태 정보 포함)
+		const data = await getFavoriteChallenges()
 
 		favorites.value = data.map((item) => {
 			const cid = item.challenge.challengeId
 			const part = myPartsMap.value[cid] || {}
 			return {
 				...item,
-				requested: part.status === 'REQUESTED',
-				approved: part.status === 'APPROVED',
+				//  백엔드에서 설정한 상태 정보를 우선 사용
+				participating: item.participating || part.status === 'APPROVED',
+				requesting: item.requesting || part.status === 'REQUESTED',
 			}
 		})
-
-		console.log('📋 로딩된 챌린지 목록:', favorites.value.length)
-		console.log('❤️ 관심 챌린지:', favoriteCount.value)
-		console.log('⏳ 요청중:', requestedCount.value)
-		console.log('✅ 참여중:', approvedCount.value)
 	} catch (err) {
 		console.error('관심 챌린지 로딩 실패:', err)
 		handleApiError(err)
@@ -387,13 +398,18 @@ async function fetchFavorites() {
 	}
 }
 
-// 관심 챌린지 토글(취소) - 관심 챌린지만 해당
+//  관심 챌린지 토글 - 10개 제한
 async function onToggleFavorite(challengeId) {
 	try {
 		await toggleFavoriteChallenge(challengeId)
-		await fetchFavorites() // 새로고침하여 최신 상태 반영
+		await fetchFavorites()
 	} catch (err) {
-		handleApiError(err)
+		// 10개 제한 에러 처리
+		if (err.response?.data?.errorCode === 'FAVORITE_LIMIT_EXCEEDED') {
+			alert('관심 챌린지는 최대 10개까지만 등록할 수 있습니다.')
+		} else {
+			handleApiError(err)
+		}
 	}
 }
 
@@ -410,7 +426,7 @@ async function onJoin(challengeId) {
 	try {
 		await joinChallenge(challengeId)
 		alert('참여 요청이 완료되었습니다!')
-		await fetchFavorites() // 새로고침하여 요청 상태 반영
+		await fetchFavorites()
 	} catch (err) {
 		handleApiError(err)
 	} finally {
@@ -433,7 +449,7 @@ async function onCancel(challengeId) {
 	targetId.value = challengeId
 	try {
 		await cancelParticipation(challengeId, participationId)
-		await fetchFavorites() // 새로고침하여 최신 상태 반영
+		await fetchFavorites()
 		alert('참여 요청이 취소되었습니다.')
 	} catch (e) {
 		handleApiError(e)
@@ -460,9 +476,9 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-/* Vuetify 기본 스타일만 사용하므로 추가 CSS 최소화 */
+/* 기존 스타일 + 추가 */
 .challenge-card {
-	cursor: default; /* 일반 커서 강제 적용 */
+	cursor: default;
 	transition: transform 0.2s ease, box-shadow 0.3s ease;
 }
 
@@ -471,18 +487,12 @@ onMounted(async () => {
 	box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12) !important;
 }
 
-/* 요약 카드 호버 효과 */
-.v-card:hover {
-	transform: translateY(-2px);
-	transition: transform 0.2s ease;
+/* 상태별 칩 애니메이션 */
+.v-chip {
+	transition: all 0.3s ease;
 }
 
-/* 텍스트 말줄임 처리 개선 */
-.text-h6 {
-	display: -webkit-box;
-
-	-webkit-box-orient: vertical;
-	overflow: hidden;
-	line-height: 1.3;
+.v-chip:hover {
+	transform: scale(1.05);
 }
 </style>
