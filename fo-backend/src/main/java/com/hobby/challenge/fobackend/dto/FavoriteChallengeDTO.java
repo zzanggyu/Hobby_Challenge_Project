@@ -17,4 +17,8 @@ public class FavoriteChallengeDTO {
     private LocalDateTime createdDate;   // FC.CREATED_DATE
 	private ChallengeResponseDTO challenge;
 	
+	
+    // 참여 상태 표시용 필드 추가
+    private Boolean participating;  // 참여중 여부 (APPROVED)
+    private Boolean requesting;     // 요청중 여부 (REQUESTED)
 }

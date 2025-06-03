@@ -62,6 +62,8 @@ public enum ErrorCode {
     CHALLENGE_STARTED("200072", "챌린지가 시작되었습니다."),
     CHALLENGE_ENDING_SOON("200073", "챌린지가 곧 종료됩니다."),
     CHALLENGE_ENDED("200074", "챌린지가 종료되었습니다."),
+    
+    FAVORITE_LIMIT_EXCEEDED("400081", "관심 챌린지는 최대 10개까지만 등록할 수 있습니다."),
 	
     // 00: 기타/공통/서버취소 		        
 
