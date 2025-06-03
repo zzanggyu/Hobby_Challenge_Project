@@ -1,24 +1,31 @@
-<!-- fo-frontend/src/components/challenge/FavoriteChallenge.vue -->
 <template>
 	<v-container>
-		<!-- 헤더 개선 -->
-		<v-row class="mb-6" align="center">
-			<v-col cols="12" class="d-flex align-center justify-space-between">
-				<div class="d-flex align-center">
-					<v-avatar size="48" color="pink-lighten-4" class="mr-4">
-						<v-icon color="pink" size="28">mdi-heart</v-icon>
-					</v-avatar>
-					<div>
-						<h1 class="text-h4 font-weight-bold mb-1">내 챌린지</h1>
-						<p class="text-body-2 text-grey ma-0">
+		<!-- 헤더 -->
+		<v-sheet
+			color="pink-lighten-5"
+			class="pa-6 mb-6"
+			rounded="xl"
+			elevation="2"
+		>
+			<v-row align="center">
+				<v-col cols="12" class="d-flex align-center justify-space-between">
+					<div class="d-flex align-center">
+						<v-avatar size="48" color="pink-lighten-4" class="mr-4">
+							<v-icon color="pink" size="28">mdi-heart</v-icon>
+						</v-avatar>
+						<div>
+							<div color="red">
+								<h1 class="text-h4 font-weight-bold mb-1">내 챌린지</h1>
+							</div>
+							<!-- <p class="text-body-2 text-grey ma-0">
 							관심 챌린지 ({{ favoriteOnlyCount }}/10), 참여중 ({{
 								participatingCount
 							}}), 요청중 ({{ requestingCount }})
-						</p>
+						</p> -->
+						</div>
 					</div>
-				</div>
 
-				<v-btn
+					<!-- <v-btn
 					color="primary"
 					variant="outlined"
 					size="large"
@@ -27,9 +34,10 @@
 				>
 					<v-icon left>mdi-format-list-bulleted</v-icon>
 					전체 챌린지
-				</v-btn>
-			</v-col>
-		</v-row>
+				</v-btn> -->
+				</v-col>
+			</v-row>
+		</v-sheet>
 
 		<!--  현황 요약 카드 개선 -->
 		<v-row class="mb-4">

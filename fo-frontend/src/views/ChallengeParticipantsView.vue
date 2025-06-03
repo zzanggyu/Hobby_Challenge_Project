@@ -4,13 +4,28 @@
 			<v-card-title class="text-h6">참여자 명단</v-card-title>
 			<v-divider />
 
-			<v-list density="comfortable" lines="two">
-				<!-- 참여자가 없을 때 -->
-				<v-alert type="info" border="start" v-if="!participants.length">
-					아직 참여자가 없습니다.
-				</v-alert>
+			<!-- 로딩 중 -->
+			<div v-if="loading" class="text-center py-8">
+				<v-progress-circular indeterminate color="primary" size="40" />
+				<p class="mt-2 text-body-2">참여자 목록을 불러오는 중...</p>
+			</div>
 
-				<!-- 참여자 목록 -->
+			<!--  로딩 완료 후 참여자가 없을 때 -->
+			<v-alert
+				v-else-if="!loading && !participants.length"
+				type="info"
+				border="start"
+				class="ma-4"
+			>
+				아직 참여자가 없습니다.
+			</v-alert>
+
+			<!-- 로딩 완료 후 참여자가 있을 때 -->
+			<v-list
+				v-else-if="!loading && participants.length"
+				density="comfortable"
+				lines="two"
+			>
 				<v-list-item
 					v-for="p in participants"
 					:key="p.participationId"
@@ -74,8 +89,9 @@ import {
 const route = useRoute()
 const id = Number(route.params.id)
 const participants = ref([])
+const loading = ref(false) // 로딩 상태
 const snackbar = ref(false)
-const loading = ref(false)
+
 const auth = useAuthStore()
 
 // participants에 OWNER가 누구인지도 있다고 가정
@@ -83,8 +99,19 @@ const myUserId = auth.user.userId
 const myParticipant = computed(() =>
 	participants.value.find((p) => p.userId === myUserId)
 )
+
+//  로딩 상태 관리를 포함한 load 함수
 async function load() {
-	participants.value = await getApprovedParticipants(id)
+	loading.value = true // 로딩 시작
+	try {
+		participants.value = await getApprovedParticipants(id)
+	} catch (error) {
+		console.error('참여자 목록 로드 실패:', error)
+		// 에러 발생 시에도 빈 배열로 초기화
+		participants.value = []
+	} finally {
+		loading.value = false // 로딩 완료
+	}
 }
 const myRole = computed(() => myParticipant.value?.role || 'MEMBER')
 

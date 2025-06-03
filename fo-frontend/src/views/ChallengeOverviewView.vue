@@ -42,7 +42,7 @@
 			class="mb-4"
 			@update:modelValue="onTabChange"
 		>
-			<v-tab v-if="canWrite" value="0">인증등록</v-tab>
+			<v-tab value="0">인증등록</v-tab>
 			<v-tab value="1">전체 인증내역</v-tab>
 			<v-tab value="2">참여자</v-tab>
 			<v-tab v-if="isOwner" value="3">요청</v-tab>
@@ -70,7 +70,7 @@
 				class="ma-4"
 			>
 				<div class="d-flex align-center">
-					<v-icon color="info" class="mr-3">mdi-information</v-icon>
+					<!-- <v-icon color="info" class="mr-3">mdi-information</v-icon> -->
 					<div>
 						<div class="font-weight-bold mb-2">
 							인증 등록 권한이 필요합니다

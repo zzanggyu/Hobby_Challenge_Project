@@ -14,7 +14,7 @@
 					v-model="credentials.loginId"
 					:rules="rules.loginid"
 					label="아이디"
-					placeholder="영문·숫자 조합, 8~20자"
+					placeholder="영문·숫자 조합, 6~20자"
 					prepend-inner-icon="mdi-account"
 					maxlength="20"
 					counter
@@ -97,8 +97,8 @@ const rules = {
 	loginid: [
 		(v) => !!v || '아이디를 입력하세요.',
 		(v) =>
-			/^[A-Za-z0-9]{8,20}$/.test(v) ||
-			'아이디는 영문·숫자 조합, 8~20자여야 합니다.',
+			/^[A-Za-z0-9]{6,20}$/.test(v) ||
+			'아이디는 영문·숫자 조합, 6~20자여야 합니다.',
 	],
 	password: [
 		(v) => !!v || '비밀번호를 입력하세요.',

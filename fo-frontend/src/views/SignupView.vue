@@ -1,4 +1,3 @@
-<!-- src/views/SignupView.vue -->
 <template>
 	<v-container fluid fill-height align="center">
 		<v-card width="600" elevation="6" class="pa-8">
@@ -10,7 +9,7 @@
 					v-model="credentials.loginid"
 					:rules="rules.loginid"
 					label="아이디"
-					placeholder="영문·숫자 8~20자"
+					placeholder="영문·숫자 6~20자"
 					prepend-inner-icon="mdi-account"
 					required
 				/>
@@ -125,9 +124,10 @@
 				<v-text-field
 					v-model="credentials.nickname"
 					:rules="rules.nickname"
-					label="닉네임(선택)"
+					label="닉네임"
 					placeholder="예) 감자돌이"
 					prepend-inner-icon="mdi-pencil"
+					required
 				/>
 
 				<!-- 생년월일 -->
@@ -234,8 +234,8 @@ const rules = {
 	loginid: [
 		(v) => !!v || '아이디를 입력하세요.',
 		(v) =>
-			/^[A-Za-z0-9]{8,20}$/.test(v) ||
-			'아이디는 영문·숫자 8~20자여야 합니다.',
+			/^[A-Za-z0-9]{6,20}$/.test(v) ||
+			'아이디는 영문·숫자 6~20자여야 합니다.',
 	],
 	email: [
 		(v) => !!v || '이메일을 입력하세요.',
@@ -261,12 +261,16 @@ const rules = {
 		(v) => !!v || '이름을 입력하세요.',
 		(v) => v.length <= 5 || '이름은 5자 이내여야 합니다.',
 	],
-	// 닉네임 (선택)
+	// 닉네임 (필수)
 	nickname: [
+		(v) => !!v || '닉네임을 입력하세요.',
 		(v) =>
 			v === '' ||
 			(v.length >= 2 && v.length <= 10) ||
-			'별명은 2~10자여야 합니다.',
+			'닉네임은 2~10자여야 합니다.',
+		(v) =>
+			/^[가-힣a-zA-Z0-9_]+$/.test(v) ||
+			'한글, 영문, 숫자, 언더바만 사용 가능합니다.',
 	],
 	// 3) 생년월일 – 필수, YYYY-MM-DD 형식
 	birthdate: [
@@ -371,6 +375,11 @@ async function onSubmit() {
 		setTimeout(() => router.push('/login'), 1000)
 	} catch (e) {
 		const msg = e.response?.data?.message || '회원가입에 실패했습니다.'
+
+		if (msg.includes('닉네임')) {
+			error.value = msg
+			return
+		}
 		// 이미 가입된 이메일/아이디인 경우
 		if (msg.includes('아이디') || msg.includes('이메일')) {
 			if (confirm(`${msg}\n로그인 페이지로 이동할까요?`)) {
@@ -387,10 +396,4 @@ async function onSubmit() {
 }
 </script>
 
-<style scoped>
-/* ::v-deep 로 Vuetify 내부 마크업까지 도달하게 하기 */
-/* ::v-deep .v-text-field.required .v-field__label::after {
-	content: ' *';
-	color: red;
-} */
-</style>
+<style scoped></style>

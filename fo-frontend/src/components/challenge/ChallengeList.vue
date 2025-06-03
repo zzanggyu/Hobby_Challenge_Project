@@ -11,7 +11,7 @@
 				</div>
 
 				<!-- 네비게이션 메뉴 -->
-				<div class="navigation-section">
+				<!-- <div class="navigation-section">
 					<v-menu offset-y>
 						<template v-slot:activator="{ props }">
 							<v-btn
@@ -58,7 +58,7 @@
 							</v-list-item>
 						</v-list>
 					</v-menu>
-				</div>
+				</div> -->
 			</v-col>
 		</v-row>
 
@@ -90,7 +90,6 @@
 							color="primary"
 							@click="searchNow"
 							:loading="isSearching"
-							:disabled="!search"
 							class="search-btn px-3"
 						>
 							검색
@@ -130,7 +129,7 @@
 		</v-row>
 
 		<!-- 검색 결과 안내 -->
-		<v-row v-if="search || selectedCategory" class="mb-4">
+		<v-row v-if="isSearched || selectedCategory" class="mb-4">
 			<v-col cols="12">
 				<v-alert type="info" variant="tonal" class="mb-0">
 					<div class="d-flex align-center">
@@ -148,7 +147,6 @@
 				</v-alert>
 			</v-col>
 		</v-row>
-
 		<!-- 로딩 상태 표시 -->
 		<v-row v-if="isLoading" justify="center" class="my-12">
 			<v-progress-circular indeterminate color="primary" size="64" />
@@ -408,22 +406,13 @@ const selectedCategory = ref(null)
 const myParts = ref(new Set())
 const myPartsMap = ref({})
 
-// 검색어/카테고리 변경시 자동 검색 (디바운스 적용)
-let searchTimeout = null
-watch([search, selectedCategory], () => {
-	// 기존 타이머 취소
-	if (searchTimeout) clearTimeout(searchTimeout)
-
-	// 새 타이머 설정 (500ms 후 검색)
-	searchTimeout = setTimeout(() => {
-		currentPage.value = 1 // 검색시 첫 페이지로 리셋
-		fetchChallenges()
-	}, 1000)
-})
+// 검색 수행 여부 상태태
+const isSearched = ref(false)
 
 // 카테고리 변경시에만 자동 검색 (검색어는 수동)
 watch(selectedCategory, () => {
-	currentPage.value = 1 // 카테고리 변경시 첫 페이지로 리셋
+	isSearched.value = true
+	currentPage.value = 1
 	fetchChallenges()
 })
 
@@ -449,24 +438,26 @@ function formatDate(date) {
 	})
 }
 
-// 카테고리 ID → 이름 매핑
+// 카테고리 ID  이름 매핑
 function categoryName(id) {
 	const cat = categories.value.find((x) => x.categoryId === id)
 	return cat ? cat.categoryName : '기타'
 }
 
-// 즉시 검색 (Enter 키용)
+// 수동 검색 (Enter 키/ 검색 버튼)
 function searchNow() {
+	isSearched.value = true
+	isSearching.value = true
 	currentPage.value = 1
 	fetchChallenges()
 }
-
 // 검색 초기화
 function resetSearch() {
 	search.value = ''
 	selectedCategory.value = null
 	currentPage.value = 1
-	// watch에 의해 자동으로 fetchChallenges() 호출됨
+	isSearched.value = false
+	fetchChallenges()
 }
 
 // 상세 페이지로 이동
@@ -521,64 +512,29 @@ async function fetchMyParticipations() {
 
 //  서버사이드 검색이 적용된 챌린지 목록 API 호출
 async function fetchChallenges() {
-	// 검색 상태 표시
 	isLoading.value = true
-	if (search.value) isSearching.value = true
-
-	await fetchMyParticipations()
 
 	try {
-		// 검색어와 카테고리를 서버에 전달
-		console.log('🔍 서버 검색 요청:', {
-			page: currentPage.value,
-			size: pageSize.value,
-			search: search.value,
-			categoryId: selectedCategory.value,
-		})
-
 		const { totalCount: totalFromApi, items } = await getChallenges(
 			currentPage.value,
 			pageSize.value,
-			search.value, //  서버에서 검색 처리
-			selectedCategory.value //  서버에서 필터링 처리
+			search.value?.trim() || undefined, // undefined로 전달하여 서버에서 null 처리
+			selectedCategory.value
 		)
 
 		totalCount.value = totalFromApi
-
-		//  서버에서 이미 필터링된 데이터를 그대로 사용
 		challenges.value = items.map((c) => {
-			const participation = myPartsMap.value[c.challengeId] || {}
-			return {
-				...c,
-				isFavorite: c.isFavorite,
-				requested: participation.status === 'REQUESTED',
-				approved:
-					participation.status === 'APPROVED' ||
-					participation.role === 'OWNER',
-			}
-		})
-
-		console.log(' 검색 결과:', {
-			totalCount: totalFromApi,
-			itemsCount: items.length,
-			searchTerm: search.value,
+			return { ...c }
 		})
 	} catch (err) {
-		if (axios.isAxiosError(err) && [401, 403].includes(err.response.status)) {
-			alert('로그인해야 이용할 수 있습니다.')
-			router.push({
-				name: 'login',
-				query: { redirect: router.currentRoute.value.fullPath },
-			})
-		} else {
-			handleApiError(err)
-		}
+		handleApiError(err)
 	} finally {
 		isLoading.value = false
 		isSearching.value = false
 	}
 }
 
+// 카테고리 로드
 async function fetchCategories() {
 	try {
 		categories.value = await getCategories()
@@ -615,6 +571,7 @@ async function onToggleFavorite(challenge) {
 	}
 }
 
+// 챌린지 참여하기
 async function onJoin(challengeId) {
 	const userId = authStore.user?.userId
 	if (!userId) {
@@ -656,6 +613,7 @@ async function onJoin(challengeId) {
 	}
 }
 
+// 참여 요청 취소
 async function onCancel(challengeId) {
 	if (!confirm('참여 요청을 정말 취소하시겠습니까?')) return
 	const participationObj = myPartsMap.value[challengeId]
@@ -690,6 +648,7 @@ async function onCancel(challengeId) {
 	}
 }
 
+// 관심 챌린지로
 function goToFavoriteChallenge() {
 	router.push('/challenges/favorite')
 }

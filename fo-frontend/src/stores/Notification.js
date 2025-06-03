@@ -1,4 +1,3 @@
-// src/stores/notification.js (기존 파일 교체)
 import { defineStore } from 'pinia'
 import {
 	getNotifications,
