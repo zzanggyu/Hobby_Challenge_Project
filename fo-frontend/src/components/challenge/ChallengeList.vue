@@ -293,7 +293,7 @@
 								@click.stop
 							>
 								<v-icon left size="16">mdi-check</v-icon>
-								승인됨
+								참여 중
 							</v-btn>
 						</template>
 
@@ -515,16 +515,27 @@ async function fetchChallenges() {
 	isLoading.value = true
 
 	try {
+		// 1. 챌린지 목록 가져오기
 		const { totalCount: totalFromApi, items } = await getChallenges(
 			currentPage.value,
 			pageSize.value,
-			search.value?.trim() || undefined, // undefined로 전달하여 서버에서 null 처리
+			search.value?.trim() || undefined,
 			selectedCategory.value
 		)
 
 		totalCount.value = totalFromApi
+
+		// 2. 각 챌린지에 참여 상태 추가
 		challenges.value = items.map((c) => {
-			return { ...c }
+			const participation = myPartsMap.value[c.challengeId]
+			return {
+				...c,
+				// 참여 상태 명시적으로 설정
+				requested: participation?.status === 'REQUESTED',
+				approved:
+					participation?.status === 'APPROVED' ||
+					participation?.role === 'OWNER',
+			}
 		})
 	} catch (err) {
 		handleApiError(err)
@@ -579,34 +590,27 @@ async function onJoin(challengeId) {
 		return router.push({ name: 'login' })
 	}
 
-	if (myParts.value.has(challengeId)) {
-		alert('이미 참여 요청 중인 챌린지가 있거나 참여 중인 챌린지가 있습니다.')
-		return
-	}
-
 	isJoining.value = true
 	targetId.value = challengeId
+
 	try {
-		await joinChallenge(challengeId)
+		const result = await joinChallenge(challengeId)
+
+		// 1. 참여 내역 업데이트
 		await fetchMyParticipations()
-		await fetchChallenges()
+
+		// 2. 해당 챌린지만 상태 업데이트 (전체 다시 가져오지 않음)
+		const challengeIndex = challenges.value.findIndex(
+			(c) => c.challengeId === challengeId
+		)
+		if (challengeIndex !== -1) {
+			challenges.value[challengeIndex].requested = true
+			challenges.value[challengeIndex].approved = false
+		}
+
 		alert('참여 요청이 완료되었습니다!')
 	} catch (err) {
-		if (axios.isAxiosError(err)) {
-			const code = err.response?.data?.errorCode
-			if (code === 'PARTICIPATION_LIMIT_EXCEEDED') {
-				alert(
-					'이미 다른 챌린지에 참여 요청/참여 중입니다.\n먼저 기존 요청을 취소하거나 탈퇴해주세요.'
-				)
-			} else if (err.response?.status === 400) {
-				alert(err.response.data.message || '참여 요청에 실패했습니다.')
-			} else {
-				handleApiError(err)
-			}
-		} else {
-			console.error(err)
-			alert('알 수 없는 오류가 발생했습니다.')
-		}
+		// 에러 처리...
 	} finally {
 		isJoining.value = false
 		targetId.value = null
@@ -616,31 +620,35 @@ async function onJoin(challengeId) {
 // 참여 요청 취소
 async function onCancel(challengeId) {
 	if (!confirm('참여 요청을 정말 취소하시겠습니까?')) return
+
 	const participationObj = myPartsMap.value[challengeId]
 	const participationId = participationObj?.id
+
 	if (!participationId) {
 		alert('취소할 요청을 찾을 수 없습니다.')
 		return
 	}
+
 	isJoining.value = true
 	targetId.value = challengeId
+
 	try {
 		await cancelParticipation(challengeId, participationId)
+
+		// 1. 참여 내역에서 제거
 		await fetchMyParticipations()
-		await fetchChallenges()
+
+		// 2. 해당 챌린지 상태만 업데이트
+		const challengeIndex = challenges.value.findIndex(
+			(c) => c.challengeId === challengeId
+		)
+		if (challengeIndex !== -1) {
+			challenges.value[challengeIndex].requested = false
+			challenges.value[challengeIndex].approved = false
+		}
+
 		alert('요청이 취소되었습니다.')
 	} catch (err) {
-		if (axios.isAxiosError(err)) {
-			const code = err.response?.status
-			if (code === 404) {
-				alert('요청을 찾을 수 없습니다.')
-				return
-			}
-			if (code === 403) {
-				alert('취소 권한이 없습니다.')
-				return
-			}
-		}
 		handleApiError(err)
 	} finally {
 		isJoining.value = false

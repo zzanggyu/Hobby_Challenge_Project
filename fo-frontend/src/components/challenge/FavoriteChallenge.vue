@@ -228,10 +228,9 @@
 					<v-card-actions class="pt-0">
 						<template v-if="fav.participating">
 							<v-btn
-								color="success"
+								color="blue"
 								variant="tonal"
 								size="small"
-								disabled
 								@click.stop
 							>
 								<v-icon left size="16">mdi-check</v-icon>

@@ -3,7 +3,7 @@
 		<ChallengeCarousel
 			:challenges="popularChallenges"
 			:categories="categories"
-			@refresh-needed="refreshData"
+			@favorite-updated="handleFavoriteUpdate"
 		/>
 		<br />
 		<v-divider></v-divider>
@@ -22,8 +22,27 @@ import { getPopularChallenges } from '@/services/challengeService'
 import { getCategories } from '../services/categoryService'
 
 const popularChallenges = ref([])
-const categories = ref([]) // ✅ 카테고리 상태 선언
+const categories = ref([]) // 카테고리 상태 선언
 const loading = ref(false)
+
+// 관심 챌린지 상태 업데이트 핸들러 (새로 추가)
+const handleFavoriteUpdate = ({ challengeId, isFavorite }) => {
+	console.log('부모에서 받은 하트 업데이트:', challengeId, isFavorite)
+
+	// 해당 챌린지의 isFavorite 상태만 업데이트
+	const challenge = popularChallenges.value.find(
+		(c) => c.challengeId === challengeId
+	)
+	if (challenge) {
+		challenge.isFavorite = isFavorite
+		console.log(
+			'부모 데이터 업데이트 완료:',
+			challenge.title,
+			'- isFavorite:',
+			isFavorite
+		)
+	}
+}
 
 // 데이터 새로고침 함수 추가
 async function refreshData() {
@@ -37,7 +56,7 @@ async function refreshData() {
 onMounted(async () => {
 	loading.value = true
 	try {
-		// ✅ 인기 챌린지 + 카테고리 동시 요청 (병렬로 요청해도 됨)
+		// 인기 챌린지 + 카테고리
 		;[popularChallenges.value, categories.value] = await Promise.all([
 			getPopularChallenges(10),
 			getCategories(),
