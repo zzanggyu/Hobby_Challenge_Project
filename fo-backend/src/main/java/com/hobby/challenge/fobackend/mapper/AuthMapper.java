@@ -17,6 +17,9 @@ public interface AuthMapper {
 	// 이메일 중복 체크
 	User findByEmail(@Param("email") String email);
 	
+    // 닉네임 중복 체크 
+    User findByNickname(@Param("nickname") String nickname);
+	
 	// 회원 등록 회원가입
 	// INSERT INTO USER (LOGIN_ID, USERNAME, PASSWORD, EMAIL, NICKNAME, ROLE)
 	// VALUES (#{loginId}, #{username}, #{password}, #{email}, #{nickname}, #{role})

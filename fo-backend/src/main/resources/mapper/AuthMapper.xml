@@ -53,6 +53,23 @@
 			FROM USER <!-- 사용자 테이블 -->
 			WHERE EMAIL = #{email}
 	</select>
+	
+	<!-- 닉네임 중복 체크 -->
+	<select id="findByNickname" resultType="com.hobby.challenge.fobackend.entity.User">
+	    SELECT USER_ID AS userId
+	         , LOGIN_ID AS loginId
+	         , USERNAME AS username
+	         , PASSWORD AS password
+	         , EMAIL AS email
+	         , NICKNAME AS nickname
+	         , BIRTH_DATE AS birthDate
+	         , ROLE AS role
+	         , POINTS AS points
+	         , LEVEL AS level
+	         , CREATED_DATE AS createdDate
+	      FROM USER
+	     WHERE NICKNAME = #{nickname}
+	</select>
 
 	<!-- 회원 등록 -->
 	<insert id="insertUser" 

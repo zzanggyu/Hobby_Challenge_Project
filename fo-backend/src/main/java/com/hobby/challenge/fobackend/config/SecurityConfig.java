@@ -31,7 +31,7 @@ public class SecurityConfig {
           	session.sessionCreationPolicy(SessionCreationPolicy.STATELESS) // 세션 사용 안함 무상태(stateless)정책 설정 JWT로 인증 처리
           )
           .authorizeHttpRequests(auth -> auth // URL별 접근 권한 설정
-        		  .requestMatchers("/**").permitAll()
+//        		  .requestMatchers("/**").permitAll()
         	 //  OPTIONS 프리플라이트 요청은 인증 없이 통과시킴
     		.requestMatchers(HttpMethod.OPTIONS, "/api/**").permitAll()
     		 // 회원가입·로그인 관련 엔드포인트는 모두 허용
@@ -47,9 +47,9 @@ public class SecurityConfig {
             // 나머지 엔드포인트도 필요에 따라
             // 그 외 모든 요청은 JWT 인증을 받은 사용자만 접근 가능
             .anyRequest().authenticated()
-            );
+            )
           // JWT 인증 필터(요청 헤더의 JWT 검증 유효하면 SecurityContext에 인증 정보 세팅)
-//          .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class); 
+          .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class); 
         
           // formLogin, httpBasic 등 원하는 인증 방식을 추가
 //          .httpBasic(); // 디버깅용으로 켜둬도 됨

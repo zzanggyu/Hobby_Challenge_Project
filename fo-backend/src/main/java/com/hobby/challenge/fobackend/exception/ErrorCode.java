@@ -17,6 +17,7 @@ public enum ErrorCode {
     INVALID_VERIFICATION_CODE ("400017", "인증코드가 틀렸습니다."),
     DUPLICATE_NICKNAME ("400018", "이미 사용 중인 닉네임입니다."),
     INVALID_PASSWORD ("400019", "비밀번호가 일치하지 않습니다."),
+    
     // 리프레시 토큰 관련
     INVALID_REFRESH_TOKEN ("400015", "리프레시 토큰이 만료되었거나 유효하지 않습니다. 다시 로그인해주세요."),
     REFRESH_TOKEN_MISSING ("400016", "리프레시 토큰이 제공되지 않았습니다."),
@@ -48,6 +49,7 @@ public enum ErrorCode {
     FILE_TOO_LARGE("400049", "파일 크기는 최대 5MB까지 가능합니다."),
     INVALID_FILE_TYPE("400040", "지원하지 않는 이미지 형식입니다. JPG/PNG/GIF만 업로드하세요."),
     
+    
     // 05: CertComment
     COMMENT_UPDATE_FORBIDDEN ("404051", "본인의 댓글만 수정할 수 있습니다."),
     COMMENT_DELETE_FORBIDDEN ("404051", "본인의 댓글만 삭제할 수 있습니다."),
@@ -64,6 +66,11 @@ public enum ErrorCode {
     CHALLENGE_ENDED("200074", "챌린지가 종료되었습니다."),
     
     FAVORITE_LIMIT_EXCEEDED("400081", "관심 챌린지는 최대 10개까지만 등록할 수 있습니다."),
+    
+    // 파일 관련 에러 코드 추가
+    INVALID_FILE_NAME("400090", "유효하지 않은 파일명입니다."),
+    IMAGE_TOO_LARGE("400091", "이미지 해상도가 너무 큽니다."),
+    FILE_READ_ERROR("400092", "파일을 읽는 중 오류가 발생했습니다."),
 	
     // 00: 기타/공통/서버취소 		        
 

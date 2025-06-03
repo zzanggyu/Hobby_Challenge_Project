@@ -85,8 +85,8 @@ public class AuthController {
 	// 리프레시 토큰
 	@PostMapping("/refresh")
     public ResponseEntity<Void> refresh(HttpServletRequest req, HttpServletResponse res) {
-	    Cookie[] cookies = req.getCookies(); // ✅ 추가
-	    if (cookies == null || cookies.length == 0) { // ✅ 추가
+	    Cookie[] cookies = req.getCookies(); 
+	    if (cookies == null || cookies.length == 0) { 
 	        throw new CustomException(ErrorCode.REFRESH_TOKEN_MISSING);
 	    }
 	    String refreshToken = Arrays.stream(cookies)

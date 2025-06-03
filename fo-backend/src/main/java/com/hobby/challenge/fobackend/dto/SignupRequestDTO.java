@@ -17,9 +17,9 @@ import lombok.NoArgsConstructor;
 public class SignupRequestDTO {
   
 
-    // 아이디: 영문·숫자 8~20자
+    // 아이디: 영문·숫자 6~20자
     @NotBlank(message = "아이디를 입력하세요.")
-    @Size(min = 8, max = 20, message = "아이디는 8~20자여야 합니다.")
+    @Size(min = 6, max = 20, message = "아이디는 6~20자여야 합니다.")
     @Pattern(
       regexp = "^[A-Za-z0-9]+$",
       message = "아이디는 영문(대소문자)과 숫자만 사용할 수 있습니다."
@@ -47,6 +47,8 @@ public class SignupRequestDTO {
     private String username;
 
     // 닉네임(선택): 2~10자 (입력 안 하면 username 그대로 저장 로직 필요)
+    @NotBlank(message = "닉네임을 입력하세요.")
+    @Size(min = 2, max = 10, message = "닉네임은 2~10자여야 합니다.")
     @Pattern(
       regexp = "^$|.{2,10}$",
       message = "별명은 2~10자여야 합니다. 입력하지 않으면 이름이 닉네임으로 저장됩니다."

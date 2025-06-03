@@ -14,7 +14,7 @@ import lombok.NoArgsConstructor;
 @Builder
 public class LoginRequestDTO {
     @NotBlank(message = "아이디를 입력하세요.")
-    @Size(min = 8, max = 20, message = "아이디는 8~20자여야 합니다.")
+    @Size(min = 6, max = 20, message = "아이디는6~20자여야 합니다.")
     @Pattern(
       regexp = "^[A-Za-z0-9]+$",
       message = "아이디는 영문(대소문자)과 숫자만 사용할 수 있습니다."

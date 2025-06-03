@@ -66,11 +66,10 @@ public class AuthServiceImpl implements AuthService{
 		if (authMapper.findByEmail(dto.getEmail()) != null) {
 		    throw new CustomException(ErrorCode.DUPLICATE_EMAIL);
 		}
-        //  닉네임 기본값 처리
-        String nickname = dto.getNickname();
-        if (nickname == null || nickname.isBlank()) {
-            nickname = dto.getUsername();
-        }
+		
+	    if (authMapper.findByNickname(dto.getNickname()) != null) {
+	        throw new CustomException(ErrorCode.DUPLICATE_NICKNAME);
+	    }
         
         // 1) DTO의 birthDate(String) → LocalDate로 파싱
         LocalDate birth = LocalDate.parse(dto.getBirthDate(), DateTimeFormatter.ofPattern("yyyy.MM.dd"));
@@ -84,7 +83,7 @@ public class AuthServiceImpl implements AuthService{
 				.password(passwordEncoder.encode(dto.getPassword()))
 				.email(dto.getEmail())
 				.username(dto.getUsername())
-				.nickname(nickname) // 닉네임 설정했을 때 
+				.nickname(dto.getNickname()) // 닉네임 설정했을 때 
 				.birthDate(birth)   
 				.build();
 		

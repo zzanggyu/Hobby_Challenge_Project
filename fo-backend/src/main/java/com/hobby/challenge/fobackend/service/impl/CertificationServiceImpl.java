@@ -1,11 +1,15 @@
 package com.hobby.challenge.fobackend.service.impl;
 
+import java.awt.image.BufferedImage;
 import java.io.IOException;
+import java.io.InputStream;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Set;
+
+import javax.imageio.ImageIO;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DuplicateKeyException;
@@ -53,10 +57,7 @@ public class CertificationServiceImpl implements CertificationService {
     );
     private static final long MAX_FILE_SIZE = 5 * 1024 * 1024; // 10MB
 	
-//	private final S3StorageService s3StorageService;
-	// 허용할 확장자/타입
-//	private static final List<String> ALLOWED_TYPES = List.of("image/jpeg", "image/png", "image/gif");
-//	private static final long MAX_SIZE = 5 * 1024 * 1024; // 5MB 파일 크기 제한
+
 	
 	// 인증 등록하기
 	@Override
@@ -67,10 +68,10 @@ public class CertificationServiceImpl implements CertificationService {
             MultipartFile image,
             String comment) {
         
-        // 1) 파일 검증
+        //  파일 검증
         validateImageFile(image);
         
-        // 2) 참여 승인 확인
+        //  참여 승인 확인
         ParticipationResponseDTO participation =
                 participationMapper.selectByUserAndChallenge(userId, challengeId);
         if (participation == null || !"APPROVED".equals(participation.getStatus())) {
@@ -80,7 +81,7 @@ public class CertificationServiceImpl implements CertificationService {
             );
         }
         
-        // 3) 챌린지 기간 검증
+        //  챌린지 기간 검증
         Challenge c = challengeMapper.selectById(challengeId, null);
         LocalDate today = LocalDate.now();
         if (today.isBefore(c.getStartDate()) || today.isAfter(c.getEndDate())) {
@@ -90,7 +91,7 @@ public class CertificationServiceImpl implements CertificationService {
             );
         }
         
-        // 4) S3에 이미지 업로드
+        //  S3에 이미지 업로드
         String imageUrl;
         try {
             imageUrl = s3StorageService.upload(image, "certifications/" + challengeId);
@@ -98,7 +99,7 @@ public class CertificationServiceImpl implements CertificationService {
             throw new CustomException(ErrorCode.FILE_UPLOAD_FAILED, "이미지 업로드에 실패했습니다.");
         }
         
-        // 5) DB에 저장
+        //  DB에 저장
         Certification cert = Certification.builder()
                 .participationId(participation.getParticipationId())
                 .imageUrl(imageUrl)
@@ -150,24 +151,49 @@ public class CertificationServiceImpl implements CertificationService {
 	    return new PageResponseDTO<>(totalCount, items);
 	}
 	
-    // 파일 검증 헬퍼 메서드
-    private void validateImageFile(MultipartFile file) {
-        if (file == null || file.isEmpty()) {
-            throw new CustomException(ErrorCode.FILE_REQUIRED, "이미지 파일은 필수입니다.");
-        }
-        
-        if (file.getSize() > MAX_FILE_SIZE) {
-            throw new CustomException(ErrorCode.FILE_TOO_LARGE, "파일 크기는 최대 10MB까지 가능합니다.");
-        }
-        
-        String contentType = file.getContentType();
-        if (contentType == null || !ALLOWED_TYPES.contains(contentType.toLowerCase())) {
-            throw new CustomException(
-                ErrorCode.INVALID_FILE_TYPE, 
-                "지원하지 않는 이미지 형식입니다. JPG, PNG, GIF, WEBP만 업로드하세요."
-            );
-        }
-    }
+    // 파일 검증 
+	private void validateImageFile(MultipartFile file) {
+	    // 1. 기본 파일 존재 여부 검사 (가장 먼저!)
+	    if (file == null || file.isEmpty()) {
+	        throw new CustomException(ErrorCode.FILE_REQUIRED, "이미지 파일은 필수입니다.");
+	    }
+
+	    // 2. 파일 크기 검증
+	    if (file.getSize() > MAX_FILE_SIZE) {
+	        throw new CustomException(ErrorCode.FILE_TOO_LARGE, "파일 크기는 최대 5MB까지 가능합니다.");
+	    }
+
+	    // 3. MIME 타입 기본 검증
+	    String contentType = file.getContentType();
+	    if (contentType == null || !ALLOWED_TYPES.contains(contentType.toLowerCase())) {
+	        throw new CustomException(
+	            ErrorCode.INVALID_FILE_TYPE,
+	            "지원하지 않는 이미지 형식입니다. JPG, PNG, GIF만 업로드하세요."
+	        );
+	    }
+
+	    // 4. 파일명 검증 (경로 순회 공격 방지)
+	    String filename = file.getOriginalFilename();
+	    if (filename != null && (filename.contains("..") || filename.contains("/") || filename.contains("\\"))) {
+	        throw new CustomException(ErrorCode.INVALID_FILE_NAME, "유효하지 않은 파일명입니다.");
+	    }
+
+	    // 5. 실제 파일 내용 검증 (MIME 타입 스푸핑 방지)
+	    try (InputStream inputStream = file.getInputStream()) {
+	        BufferedImage image = ImageIO.read(inputStream);
+	        if (image == null) {
+	            throw new CustomException(ErrorCode.INVALID_FILE_TYPE, "유효하지 않은 이미지 파일입니다.");
+	        }
+	        
+	        // 6. 이미지 크기 제한
+	        if (image.getWidth() > 4000 || image.getHeight() > 4000) {
+	            throw new CustomException(ErrorCode.IMAGE_TOO_LARGE, "이미지 해상도가 너무 큽니다. (최대 4000x4000)");
+	        }
+	        
+	    } catch (IOException e) {
+	        throw new CustomException(ErrorCode.FILE_READ_ERROR, "파일을 읽는 중 오류가 발생했습니다.");
+	    }
+	}
 	
 	// 인증 상세 가져오기
     @Override
