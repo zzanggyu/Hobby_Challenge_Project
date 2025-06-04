@@ -3,7 +3,6 @@ package com.hobby.challenge.fobackend.controller;
 
 
 
-import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 
@@ -24,8 +23,10 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.hobby.challenge.fobackend.dto.CertificationDTO;
 import com.hobby.challenge.fobackend.dto.PageResponseDTO;
+import com.hobby.challenge.fobackend.dto.ParticipationResponseDTO;
 import com.hobby.challenge.fobackend.exception.CustomException;
 import com.hobby.challenge.fobackend.exception.ErrorCode;
+import com.hobby.challenge.fobackend.mapper.ParticipationMapper;
 import com.hobby.challenge.fobackend.service.CertificationService;
 
 import lombok.RequiredArgsConstructor;
@@ -35,6 +36,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class CertificationController {
 	private final CertificationService certificationService;
+	private final ParticipationMapper participationMapper;
 //	private final S3StorageService s3StorageService;
 //    private final S3Presigner presigner;     // S3Config에서 빈으로 등록한 Presigner
 //    private final String s3BucketName;       // S3Config에서 빈으로 등록한 버킷 이름
@@ -58,6 +60,7 @@ public class CertificationController {
         );
         return ResponseEntity.status(HttpStatus.CREATED).body(dto);
     }
+    
     // 인증 좋아요 토글
     @PostMapping("/{certificationId}/like")
     public ResponseEntity<?> toggleLike(
@@ -110,9 +113,34 @@ public class CertificationController {
         @PathVariable("challengeId") Integer challengeId,
         @PathVariable("certificationId") Integer certificationId,
         @AuthenticationPrincipal(expression="userId", errorOnInvalidType = false) Integer userId) {
+    	
+        // 🆕 참여 권한 체크
+        if (!hasViewPermission(userId, challengeId, certificationId)) {
+            throw new CustomException(ErrorCode.CERTIFICATION_ACCESS_DENIED, 
+                "챌린지에 참여한 후 인증 상세를 볼 수 있습니다.");
+        }
+
         CertificationDTO cert = certificationService.getCertificationDetail(userId, certificationId);
         return ResponseEntity.ok(cert);
     }
+    
+
+	 //  상세보기 권한 체크 헬퍼 메서드
+	 private boolean hasViewPermission(Integer userId, Integer challengeId, Integer certificationId) {
+	     if (userId == null) return false;
+	     
+	     // 1. 본인이 작성한 인증인 경우 항상 허용
+	     CertificationDTO cert = certificationService.getCertificationDetail(userId, certificationId);
+	     if (cert.getUserId().equals(userId)) {
+	         return true;
+	     }
+	     
+	     // 2. 챌린지에 승인된 참여자인 경우 허용
+	     ParticipationResponseDTO participation = 
+	         participationMapper.selectByUserAndChallenge(userId, challengeId);
+	     
+	     return participation != null && "APPROVED".equals(participation.getStatus());
+	 }
 
 
 

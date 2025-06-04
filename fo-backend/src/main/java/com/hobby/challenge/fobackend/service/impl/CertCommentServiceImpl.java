@@ -37,7 +37,8 @@ public class CertCommentServiceImpl implements CertCommentService {
         if (!cert.getUserId().equals(userId)) {
             notificationService.createNewCommentNotification(
                 cert.getUserId(), 
-                certificationId
+                certificationId,
+                userId // 댓글 작성자
             );
         }
 		

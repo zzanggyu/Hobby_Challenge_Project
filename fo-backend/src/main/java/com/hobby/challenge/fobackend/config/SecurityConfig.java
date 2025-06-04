@@ -43,6 +43,7 @@ public class SecurityConfig {
             // 로그인 되어야 하는 
             .requestMatchers(HttpMethod.GET, "/api/challenges").authenticated()
             .requestMatchers(HttpMethod.POST, "/api/challenges/**").authenticated()
+            .requestMatchers(HttpMethod.DELETE, "/api/challenges/**").authenticated()
             
             // 나머지 엔드포인트도 필요에 따라
             // 그 외 모든 요청은 JWT 인증을 받은 사용자만 접근 가능

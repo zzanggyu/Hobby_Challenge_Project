@@ -28,15 +28,16 @@
              , n.CREATED_DATE
              , n.CHALLENGE_ID
              , n.CERT_ID
+             , actor.NICKNAME AS actorNickname
              
              <!-- 알림 제목 생성 -->
              , (CASE 
-                    WHEN n.TYPE = 'CHALLENGE_REQUEST' THEN '새로운 참여 요청'
+                    WHEN n.TYPE = 'CHALLENGE_REQUEST' THEN CONCAT(actor.NICKNAME, '님이 참여를 요청했습니다')
                     WHEN n.TYPE = 'CHALLENGE_REQUEST_APPROVED' THEN '참여 승인'
                     WHEN n.TYPE = 'CHALLENGE_REQUEST_REJECTED' THEN '참여 거절'
                     WHEN n.TYPE = 'NEW_CERT' THEN '새로운 인증'
-                    WHEN n.TYPE = 'NEW_COMMENT' THEN '새로운 댓글'
-                    WHEN n.TYPE = 'NEW_LIKE' THEN '좋아요'
+                    WHEN n.TYPE = 'NEW_COMMENT' THEN CONCAT(actor.NICKNAME, '님이 댓글을 남겼습니다')
+                    WHEN n.TYPE = 'NEW_LIKE' THEN CONCAT(actor.NICKNAME, '님이 좋아요를 눌렀습니다')
                     WHEN n.TYPE = 'CHALLENGE_STARTING_SOON' THEN '챌린지 시작 예정'
                     WHEN n.TYPE = 'CHALLENGE_STARTED' THEN '챌린지 시작됨'
                     WHEN n.TYPE = 'CHALLENGE_ENDING_SOON' THEN '챌린지 종료 예정'
@@ -55,9 +56,9 @@
                     WHEN n.TYPE = 'NEW_CERT' THEN 
                         CONCAT(cu.NICKNAME, '님이 "', c.TITLE, '" 챌린지에 새로운 인증을 등록했습니다.')
                     WHEN n.TYPE = 'NEW_COMMENT' THEN 
-                        '인증에 새로운 댓글이 작성되었습니다.'
+                        '당신의 인증에 새로운 댓글이 달렸습니다.'
                     WHEN n.TYPE = 'NEW_LIKE' THEN 
-                        '누군가 당신의 인증에 좋아요를 눌렀습니다.'
+                        '당신의 인증에 좋아요를 눌렀습니다.'
                     WHEN n.TYPE = 'CHALLENGE_STARTING_SOON' THEN 
                         CONCAT('"', c.TITLE, '" 챌린지가 내일 시작됩니다! 준비하세요')
                     WHEN n.TYPE = 'CHALLENGE_STARTED' THEN 
@@ -89,16 +90,25 @@
              
           FROM NOTIFICATION n
           
-        <!-- 챌린지 정보 조인 -->
-     LEFT JOIN CHALLENGE c ON n.CHALLENGE_ID = c.CHALLENGE_ID
+         <!-- 발송자 정보 조인 -->
+     LEFT JOIN USER actor 
+            ON n.ACTOR_USER_ID = actor.USER_ID
+          
+     <!-- 챌린지 정보 조인 -->
+     LEFT JOIN CHALLENGE c 
+             ON n.CHALLENGE_ID = c.CHALLENGE_ID
         
-        <!-- 참여자 정보 조인 (참여 요청 알림의 경우) -->
-     LEFT JOIN PARTICIPATION p ON n.PARTICIPATION_ID = p.PARTICIPATION_ID
-     LEFT JOIN USER pu ON p.USER_ID = pu.USER_ID
+     <!-- 참여자 정보 조인 (참여 요청 알림의 경우) -->
+     LEFT JOIN PARTICIPATION p 
+            ON n.PARTICIPATION_ID = p.PARTICIPATION_ID
+     LEFT JOIN USER pu 
+            ON p.USER_ID = pu.USER_ID
         
         <!-- 인증 작성자 정보 조인 (인증 관련 알림의 경우) -->
-     LEFT JOIN CERTIFICATION cert ON n.CERT_ID = cert.CERTIFICATION_ID
-     LEFT JOIN USER cu ON cert.CREATED_BY = cu.USER_ID
+     LEFT JOIN CERTIFICATION cert 
+            ON n.CERT_ID = cert.CERTIFICATION_ID
+     LEFT JOIN USER cu  
+            ON cert.CREATED_BY = cu.USER_ID
         
          WHERE n.USER_ID = #{userId}
       ORDER BY n.CREATED_DATE DESC

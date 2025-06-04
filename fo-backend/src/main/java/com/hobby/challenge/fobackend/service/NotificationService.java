@@ -17,12 +17,12 @@ public interface NotificationService {
     void markAllAsRead(Integer userId);
     
     // 새 알림 생성 메서드들
-    void createChallengeRequestNotification(Integer challengeOwnerId, Integer participationId);
+    void createChallengeRequestNotification(Integer challengeOwnerId, Integer participationId, Integer requesterUserId);
     void createParticipationApprovedNotification(Integer participantUserId, Integer challengeId);
     void createParticipationRejectedNotification(Integer participantUserId, Integer challengeId);
     void createNewCertNotification(Integer challengeId, Integer certId);
-    void createNewCommentNotification(Integer certOwnerId, Integer certId);
-    void createNewLikeNotification(Integer certOwnerId, Integer certId);
+    void createNewCommentNotification(Integer certOwnerId, Integer certId, Integer commenterUserId);
+    void createNewLikeNotification(Integer certOwnerId, Integer certId, Integer likerUserId);
     
     // 챌린지 생명주기 알림들
     void createChallengeStartingSoonNotification(Integer challengeId);

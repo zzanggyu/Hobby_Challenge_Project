@@ -63,7 +63,8 @@ public class ParticipationServiceImpl implements ParticipationService {
         Challenge challenge = challengeMapper.selectById(challengeId, null);
         notificationService.createChallengeRequestNotification(
             challenge.getCreatedBy(), 
-            dto.getParticipationId()
+            dto.getParticipationId(),
+            userId //  요청한 사람
         );
         
         return dto;

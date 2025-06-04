@@ -235,7 +235,8 @@ public class CertificationServiceImpl implements CertificationService {
             if (!cert.getUserId().equals(userId)) {
                 notificationService.createNewLikeNotification(
                     cert.getUserId(), 
-                    certificationId
+                    certificationId,
+                    userId // 좋아요 누른 사람
                 );
             }
             

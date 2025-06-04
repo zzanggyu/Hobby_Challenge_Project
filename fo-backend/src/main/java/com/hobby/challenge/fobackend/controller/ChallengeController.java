@@ -75,9 +75,9 @@ public class ChallengeController {
 	// 인기 챌린지 조회 메인화면
 	@GetMapping("/popular")
 	public ResponseEntity<List<ChallengeResponseDTO>> getPopularChallenges(
-	        @AuthenticationPrincipal(expression = "userId", errorOnInvalidType = false) Integer userId,
+//	        @AuthenticationPrincipal(expression = "userId", errorOnInvalidType = false) Integer userId,
 	        @RequestParam(name = "size", defaultValue = "12") int size) {
-//	    Integer userId = null;
+	    Integer userId = null;
 	    // 로그인하지 않은 사용자는 userId가 null일 수 있음
 	    List<ChallengeResponseDTO> popular = challengeService.getPopularChallenges(userId, size);
 	    return ResponseEntity.ok(popular);

@@ -46,9 +46,10 @@ public class NotificationServiceImpl implements NotificationService {
     // 챌린지 참여 요청 알림 (챌린지 생성자에게)
     @Override
     @Transactional
-    public void createChallengeRequestNotification(Integer challengeOwnerId, Integer participationId) {
+    public void createChallengeRequestNotification(Integer challengeOwnerId, Integer participationId, Integer requesterUserId) {
         Notification notification = Notification.builder()
             .userId(challengeOwnerId)
+            .actorUserId(requesterUserId)  // 🆕 요청한 사람
             .participationId(participationId)
             .type("CHALLENGE_REQUEST")
             .isRead(false)
@@ -93,10 +94,11 @@ public class NotificationServiceImpl implements NotificationService {
 
     // 새 댓글 알림 (인증 작성자에게)
     @Override
-    @Transactional
-    public void createNewCommentNotification(Integer certOwnerId, Integer certId) {
+    @Transactional  
+    public void createNewCommentNotification(Integer certOwnerId, Integer certId, Integer commenterUserId) {
         Notification notification = Notification.builder()
             .userId(certOwnerId)
+            .actorUserId(commenterUserId)  // 🆕 댓글 작성자
             .certId(certId)
             .type("NEW_COMMENT")
             .isRead(false)
@@ -107,9 +109,10 @@ public class NotificationServiceImpl implements NotificationService {
     // 좋아요 알림 (인증 작성자에게)
     @Override
     @Transactional
-    public void createNewLikeNotification(Integer certOwnerId, Integer certId) {
+    public void createNewLikeNotification(Integer certOwnerId, Integer certId, Integer likerUserId) {
         Notification notification = Notification.builder()
             .userId(certOwnerId)
+            .actorUserId(likerUserId) // 좋아요 누른 사람
             .certId(certId)
             .type("NEW_LIKE")
             .isRead(false)
