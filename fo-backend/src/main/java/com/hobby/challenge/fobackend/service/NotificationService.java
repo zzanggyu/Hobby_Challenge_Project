@@ -17,7 +17,7 @@ public interface NotificationService {
     void markAllAsRead(Integer userId);
     
     // 새 알림 생성 메서드들
-    void createChallengeRequestNotification(Integer challengeOwnerId, Integer participationId, Integer requesterUserId);
+    void createChallengeRequestNotification(Integer challengeOwnerId,Integer challengeId, Integer participationId, Integer requesterUserId);
     void createParticipationApprovedNotification(Integer participantUserId, Integer challengeId);
     void createParticipationRejectedNotification(Integer participantUserId, Integer challengeId);
     void createNewCertNotification(Integer challengeId, Integer certId);

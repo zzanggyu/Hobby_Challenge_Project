@@ -46,14 +46,16 @@ public class NotificationServiceImpl implements NotificationService {
     // 챌린지 참여 요청 알림 (챌린지 생성자에게)
     @Override
     @Transactional
-    public void createChallengeRequestNotification(Integer challengeOwnerId, Integer participationId, Integer requesterUserId) {
+    public void createChallengeRequestNotification(Integer challengeOwnerId,Integer challengeId, Integer participationId, Integer requesterUserId) {
         Notification notification = Notification.builder()
             .userId(challengeOwnerId)
-            .actorUserId(requesterUserId)  // 🆕 요청한 사람
+            .actorUserId(requesterUserId)  //  요청한 사람
             .participationId(participationId)
+            .challengeId(challengeId)
             .type("CHALLENGE_REQUEST")
             .isRead(false)
             .build();
+        System.out.println("알림 생성: actorUserId = " + requesterUserId);
         notificationMapper.insertNotification(notification);
     }
 
