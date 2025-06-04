@@ -88,6 +88,7 @@
 				v-if="tab === '1'"
 				:challengeId="id"
 				:refreshKey="refreshKey"
+				:canWritePermission="canWrite"
 			/>
 			<!-- 참여자 보기 -->
 			<ChallengeParticipantsView
@@ -102,6 +103,7 @@
 				v-if="tab === '4'"
 				:challengeId="id"
 				:refreshKey="refreshKey"
+				:canWritePermission="true"
 				only-mine
 			/>
 		</div>

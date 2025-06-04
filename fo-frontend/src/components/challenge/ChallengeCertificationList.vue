@@ -61,7 +61,12 @@
 								rounded="lg"
 								height="450"
 								class="cert-card"
-								@click="openDialog(log.certificationId)"
+								:class="{ clickable: canViewDetail }"
+								@click="
+									canViewDetail
+										? openDialog(log.certificationId)
+										: showAccessDenied()
+								"
 							>
 								<!-- 이미지 영역 -->
 								<div class="image-container">
@@ -129,6 +134,10 @@
 										>
 									</div>
 								</v-card-text>
+								<div v-if="!canViewDetail" class="access-overlay">
+									<v-icon color="white" size="20">mdi-lock</v-icon>
+									<span class="access-text">참여 후 상세보기</span>
+								</div>
 							</v-card>
 						</v-hover>
 					</v-col>
@@ -189,6 +198,7 @@ const props = defineProps({
 	challengeId: { type: Number, required: true },
 	refreshKey: { type: Number, required: true },
 	onlyMine: { type: Boolean, default: false },
+	canWritePermission: { type: Boolean, default: false },
 })
 
 // 상태 관리
@@ -265,11 +275,25 @@ function openDialog(certId) {
 	dialog.value = true
 }
 
+// 🆕 상세보기 권한 계산
+const canViewDetail = computed(() => {
+	// 본인 인증만 보는 경우는 항상 허용
+	if (props.onlyMine) return true
+
+	// 전체 인증 목록에서는 참여 권한이 있을 때만 상세보기 허용
+	return props.canWritePermission
+})
+
+// 🆕 접근 거부 알림
+function showAccessDenied() {
+	alert('챌린지에 참여한 후 인증 상세를 볼 수 있습니다.')
+}
+
 // 페이징된 데이터 로드 함수
 async function fetchLogs() {
 	loading.value = true
 	try {
-		// ✅ 페이징 API 호출로 변경
+		//  페이징 API 호출로 변경
 		const result = await getCertifications(
 			props.challengeId,
 			currentPage.value,

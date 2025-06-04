@@ -562,9 +562,11 @@ async function onToggleFavorite(challenge) {
 		challenge.isFavorite = !challenge.isFavorite
 		await toggleFavoriteChallenge(challenge.challengeId)
 
-		// 관심 등록 성공시에만 메시지 표시
+		// 내 챌린지 등록 성공시에만 메시지 표시
 		if (challenge.isFavorite) {
-			alert('관심챌린지로 등록되었습니다.')
+			alert('내 챌린지에 추가되었습니다.')
+		} else {
+			alert('내 챌린지에서 제거되었습니다.')
 		}
 	} catch (err) {
 		// 실패 시 원래 상태로 복구
@@ -573,10 +575,10 @@ async function onToggleFavorite(challenge) {
 		// 10개 제한 에러 처리
 		if (err.response?.data?.errorCode === 'FAVORITE_LIMIT_EXCEEDED') {
 			alert(
-				'관심 챌린지는 최대 10개까지만 등록할 수 있습니다.\n기존 관심 챌린지를 삭제 후 다시 시도해주세요.'
+				'내 챌린지는 최대 10개까지만 등록할 수 있습니다.\n기존 내 챌린지를 삭제 후 다시 시도해주세요.'
 			)
 		} else {
-			console.error('관심 챌린지 토글 실패:', err)
+			console.error('내 챌린지 토글 실패:', err)
 			handleApiError(err)
 		}
 	}
@@ -656,7 +658,7 @@ async function onCancel(challengeId) {
 	}
 }
 
-// 관심 챌린지로
+// 내 챌린지로
 function goToFavoriteChallenge() {
 	router.push('/challenges/favorite')
 }

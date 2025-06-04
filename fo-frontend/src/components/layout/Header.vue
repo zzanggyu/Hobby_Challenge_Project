@@ -73,7 +73,7 @@
 						</template>
 						<v-list-item-title>내 챌린지</v-list-item-title>
 						<v-list-item-subtitle
-							>관심 & 참여중인 챌린지</v-list-item-subtitle
+							>관심 & 참여 (요청) 중인 챌린지</v-list-item-subtitle
 						>
 					</v-list-item>
 

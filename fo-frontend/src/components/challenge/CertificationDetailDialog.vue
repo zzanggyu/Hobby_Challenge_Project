@@ -236,6 +236,7 @@
 			</div>
 
 			<!-- 4) 댓글 입력 -->
+
 			<v-textarea
 				v-model="newComment"
 				label="댓글 남기기"
@@ -307,10 +308,24 @@ const emit = defineEmits(['close', 'deleted'])
 
 // 데이터 로딩
 async function load() {
-	cert.value = await fetchCertDetail(props.challengeId, props.certificationId)
-	comments.value = await fetchComments(props.certificationId)
-	liked.value = cert.value.likedByMe || false
+	try {
+		cert.value = await fetchCertDetail(
+			props.challengeId,
+			props.certificationId
+		)
+		comments.value = await fetchComments(props.certificationId)
+		liked.value = cert.value.likedByMe || false
+	} catch (error) {
+		//  접근 권한 에러 처리
+		if (error.response?.data?.errorCode === 'CERTIFICATION_ACCESS_DENIED') {
+			alert('챌린지에 참여한 후 인증 상세를 볼 수 있습니다.')
+			emit('close') // 모달 닫기
+			return
+		}
+		console.error('인증 상세 로드 실패:', error)
+	}
 }
+
 onMounted(load)
 
 // 좋아요

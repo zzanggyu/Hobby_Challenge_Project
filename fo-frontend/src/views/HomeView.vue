@@ -14,13 +14,15 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
+import { useAuthStore } from '@/stores/auth'
 import ChallengeCarousel from '@/components/sections/ChallengeCarousel.vue'
 import AboutSection from '@/components/sections/AboutSection.vue'
 import RankingSection from '@/components/sections/RankingSection.vue'
 import { getPopularChallenges } from '@/services/challengeService'
 import { getCategories } from '../services/categoryService'
 
+const auth = useAuthStore()
 const popularChallenges = ref([])
 const categories = ref([]) // 카테고리 상태 선언
 const loading = ref(false)
@@ -44,12 +46,19 @@ const handleFavoriteUpdate = ({ challengeId, isFavorite }) => {
 	}
 }
 
+//  로그인 상태 변화 감지하여 데이터 새로고침
+const isLoggedIn = computed(() => auth.isAuthenticated)
+
 // 데이터 새로고침 함수 추가
 async function refreshData() {
 	try {
+		loading.value = true
 		popularChallenges.value = await getPopularChallenges(10)
 	} catch (e) {
 		console.error('데이터 새로고침 실패:', e)
+		popularChallenges.value = []
+	} finally {
+		loading.value = false
 	}
 }
 

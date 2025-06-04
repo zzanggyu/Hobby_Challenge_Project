@@ -118,7 +118,7 @@
 									@click="goToDetail(item.challengeId)"
 								>
 									<v-icon left size="16">mdi-arrow-right</v-icon>
-									자세히 보기
+									상세 보기
 								</v-btn>
 							</div>
 						</div>
@@ -245,9 +245,6 @@ async function toggleHeart(item) {
 		// API 호출
 		const response = await toggleFavoriteChallenge(item.challengeId)
 
-		// 로컬 상태 업데이트 (즉시 UI 반영)
-		// item.isFavorite = !item.isFavorite
-
 		// 부모 컴포넌트에 데이터 새로고침 요청
 		if (
 			response &&
@@ -261,15 +258,11 @@ async function toggleHeart(item) {
 			item.isFavorite = !item.isFavorite
 		}
 
-		// setTimeout(() => {
-		// 	emit('refresh-needed')
-		// }, 200)
-
 		// 성공 메시지
 		const message = item.isFavorite
-			? '관심 챌린지에 추가되었습니다!'
-			: '관심 챌린지에서 제거되었습니다!'
-		console.log(message)
+			? '내 챌린지에 추가되었습니다!'
+			: '내 챌린지에서 제거되었습니다!'
+		alert(message)
 		emit('favorite-updated', {
 			challengeId: item.challengeId,
 			isFavorite: item.isFavorite,

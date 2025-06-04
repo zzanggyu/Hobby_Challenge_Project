@@ -90,7 +90,7 @@
 				<v-icon size="80" color="grey-lighten-2" class="mb-4"
 					>mdi-heart-outline</v-icon
 				>
-				<h2 class="text-h5 mb-4">아직 관심 챌린지가 없어요</h2>
+				<h2 class="text-h5 mb-4">아직 내 챌린지가 없어요</h2>
 				<p class="text-body-1 text-grey mb-6">
 					마음에 드는 챌린지에 하트를 눌러 저장하거나<br />
 					새로운 챌린지에 참여 요청을 해보세요!
@@ -407,13 +407,21 @@ async function fetchFavorites() {
 
 //  관심 챌린지 토글 - 10개 제한
 async function onToggleFavorite(challengeId) {
+	const challenge = favorites.value.find(
+		(fav) => fav.challenge.challengeId === challengeId
+	)
+	const wasInFavorites =
+		challenge && !challenge.participating && !challenge.requesting
 	try {
 		await toggleFavoriteChallenge(challengeId)
+		if (wasInFavorites) {
+			alert('내 챌린지에서 제거되었습니다.')
+		}
 		await fetchFavorites()
 	} catch (err) {
 		// 10개 제한 에러 처리
 		if (err.response?.data?.errorCode === 'FAVORITE_LIMIT_EXCEEDED') {
-			alert('관심 챌린지는 최대 10개까지만 등록할 수 있습니다.')
+			alert('내 챌린지는 최대 10개까지만 등록할 수 있습니다.')
 		} else {
 			handleApiError(err)
 		}
