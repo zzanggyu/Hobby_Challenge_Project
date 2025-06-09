@@ -63,17 +63,28 @@
 								/>
 							</v-col>
 							<v-col cols="4">
+								<!-- 이메일 인증 요청 버튼 -->
 								<v-btn
+									class="font-weight-bold"
+									:loading="loadingEmail"
 									:disabled="
 										!rules.email.every(
 											(fn) => fn(credentials.email) === true
-										) || emailSent
+										) ||
+										emailSent ||
+										loadingEmail
 									"
-									color="primary"
+									color="green"
 									block
 									@click="sendEmailCode"
 								>
-									{{ emailSent ? timerDisplay : '인증 요청' }}
+									<template #default>
+										<span v-if="loadingEmail">요청 중...</span>
+										<span v-else-if="emailSent">{{
+											timerDisplay
+										}}</span>
+										<span v-else>인증 요청</span>
+									</template>
 								</v-btn>
 							</v-col>
 						</v-row>
@@ -147,16 +158,6 @@
 					clearable
 				/>
 
-				<!-- 취미 (복수 선택) -->
-				<!-- <v-select
-							v-model="credentials.hobbies"
-							:items="hobbyOptions"
-							label="취미"
-							multiple
-							chips
-							placeholder="여러 개 선택 가능"
-						/> -->
-
 				<!-- 프로필 이미지 -->
 				<!-- 에러 / 성공 메시지 -->
 				<v-alert v-if="error" type="error" dense class="mb-4">
@@ -170,9 +171,9 @@
 				<v-btn
 					:loading="loading"
 					:disabled="!valid || !emailVerified"
-					color="primary"
+					color="green"
 					block
-					class="mt-2"
+					class="mt-2 font-weight-bold"
 					@click="onSubmit"
 				>
 					회원가입
@@ -212,6 +213,7 @@ const timer = ref(0) // 남은 재요청 대기 시간(초)
 let timerId = null // setInterval ID
 const emailCode = ref('') // 사용자가 입력한 코드
 const emailVerified = ref(false) // 인증 성공 여부
+const loadingEmail = ref(false) // 이메일 인증 요청 로딩 상태
 
 const pad = (n) => n.toString().padStart(2, '0')
 const today = new Date()
@@ -292,14 +294,14 @@ const rules = {
 	],
 }
 
-// 1) 인증 요청
+//인증 요청
 async function sendEmailCode() {
-	if (emailSent.value) return
-	// TODO: 실제 API 호출
+	if (emailSent.value || loadingEmail.value) return
+	loadingEmail.value = true
 	try {
 		await sendSignupCode(credentials.email)
 		emailSent.value = true
-		timer.value = 300 // 5분 안에 인증증
+		timer.value = 300 // 5분
 		timerId = window.setInterval(() => {
 			if (timer.value > 0) {
 				timer.value--
@@ -312,9 +314,10 @@ async function sendEmailCode() {
 	} catch (e) {
 		error.value = e.response?.data?.message || '인증 요청에 실패했습니다.'
 		message.value = ''
+	} finally {
+		loadingEmail.value = false
 	}
 }
-
 // 남은 시간 → "m분 ss초" 포맷으로 변환
 const timerDisplay = computed(() => {
 	const m = Math.floor(timer.value / 60)

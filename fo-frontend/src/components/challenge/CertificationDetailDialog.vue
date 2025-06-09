@@ -247,6 +247,7 @@
 				max-rows="5"
 				:counter="100"
 				maxlength="100"
+				@keyup.enter="postComment"
 				:rules="[(v) => !v || v.length <= 100 || '100자 이내로 입력하세요']"
 				dense
 			>
