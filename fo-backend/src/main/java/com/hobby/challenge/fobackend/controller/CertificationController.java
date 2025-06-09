@@ -26,6 +26,7 @@ import com.hobby.challenge.fobackend.dto.PageResponseDTO;
 import com.hobby.challenge.fobackend.dto.ParticipationResponseDTO;
 import com.hobby.challenge.fobackend.exception.CustomException;
 import com.hobby.challenge.fobackend.exception.ErrorCode;
+import com.hobby.challenge.fobackend.mapper.CertificationMapper;
 import com.hobby.challenge.fobackend.mapper.ParticipationMapper;
 import com.hobby.challenge.fobackend.service.CertificationService;
 
@@ -37,6 +38,7 @@ import lombok.RequiredArgsConstructor;
 public class CertificationController {
 	private final CertificationService certificationService;
 	private final ParticipationMapper participationMapper;
+    private final CertificationMapper certificationMapper;
 //	private final S3StorageService s3StorageService;
 //    private final S3Presigner presigner;     // S3Config에서 빈으로 등록한 Presigner
 //    private final String s3BucketName;       // S3Config에서 빈으로 등록한 버킷 이름
@@ -114,11 +116,17 @@ public class CertificationController {
         @PathVariable("certificationId") Integer certificationId,
         @AuthenticationPrincipal(expression="userId", errorOnInvalidType = false) Integer userId) {
     	
-        // 🆕 참여 권한 체크
+        // 로그인 체크
+        if (userId == null) {
+            throw new CustomException(ErrorCode.UNAUTHORIZED, "로그인이 필요합니다.");
+        }
+    	
+        // 참여 권한 체크
         if (!hasViewPermission(userId, challengeId, certificationId)) {
             throw new CustomException(ErrorCode.CERTIFICATION_ACCESS_DENIED, 
                 "챌린지에 참여한 후 인증 상세를 볼 수 있습니다.");
         }
+        
 
         CertificationDTO cert = certificationService.getCertificationDetail(userId, certificationId);
         return ResponseEntity.ok(cert);
@@ -126,26 +134,42 @@ public class CertificationController {
     
 
 	 //  상세보기 권한 체크 헬퍼 메서드
-	 private boolean hasViewPermission(Integer userId, Integer challengeId, Integer certificationId) {
-	     if (userId == null) return false;
-	     
-	     // 1. 본인이 작성한 인증인 경우 항상 허용
-	     CertificationDTO cert = certificationService.getCertificationDetail(userId, certificationId);
-	     if (cert.getUserId().equals(userId)) {
-	         return true;
-	     }
-	     
-	     // 2. 챌린지에 승인된 참여자인 경우 허용
-	     ParticipationResponseDTO participation = 
-	         participationMapper.selectByUserAndChallenge(userId, challengeId);
-	     
-	     return participation != null && "APPROVED".equals(participation.getStatus());
-	 }
+    private boolean hasViewPermission(Integer userId, Integer challengeId, Integer certificationId) {
+        if (userId == null) return false;
+        
+        // 먼저 인증 정보를 직접 조회 
+        CertificationDTO cert = certificationMapper.selectById(certificationId);
+        if (cert == null) {
+            return false; // 존재하지 않는 인증
+        }
+        
+        // 본인이 작성한 인증인 경우 항상 허용
+        if (cert.getUserId().equals(userId)) {
+            return true;
+        }
+        
+        // 챌린지에 승인된 참여자인지 확인
+        ParticipationResponseDTO participation = 
+            participationMapper.selectByUserAndChallenge(userId, challengeId);
+        
+        //  디버깅을 위한 로그 출력
+        System.out.println("=== 권한 체크 디버깅 ===");
+        System.out.println("userId: " + userId);
+        System.out.println("challengeId: " + challengeId);
+        System.out.println("certificationId: " + certificationId);
+        System.out.println("cert.getUserId(): " + cert.getUserId());
+        System.out.println("participation: " + participation);
+        if (participation != null) {
+            System.out.println("participation.getStatus(): " + participation.getStatus());
+        }
+        
+        return participation != null && "APPROVED".equals(participation.getStatus());
+    }
 
 
 
     
-    // 인증 수정 (프리사인드 이미지키 + 코멘트) 
+
     // 인증 수정도 MultipartFile로 변경
     @PutMapping(value = "/{certificationId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<CertificationDTO> updateCertification(

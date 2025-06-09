@@ -20,6 +20,7 @@ public enum ErrorCode {
     UNAUTHORIZED("401001", "로그인이 필요합니다."),
     ACCESS_DENIED("403001", "접근 권한이 없습니다."),
     PARTICIPANT_ONLY("403002", "챌린지 참여자만 이용할 수 있습니다."),
+    USER_SUSPENDED("403015", "계정이 정지되었습니다. 관리자에게 문의하세요."),
     
     // 리프레시 토큰 관련
     INVALID_REFRESH_TOKEN ("400015", "리프레시 토큰이 만료되었거나 유효하지 않습니다. 다시 로그인해주세요."),

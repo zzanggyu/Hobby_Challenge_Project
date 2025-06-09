@@ -27,4 +27,5 @@ public class User {
     private Short level; 
     private LocalDateTime  createdDate;
     private LocalDateTime  modifiedDate;
+    private String status;
 }

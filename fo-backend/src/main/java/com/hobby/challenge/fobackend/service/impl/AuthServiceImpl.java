@@ -107,6 +107,12 @@ public class AuthServiceImpl implements AuthService{
         if (user == null) {
             throw new CustomException(ErrorCode.USER_NOT_FOUND, "존재하지 않는 계정입니다. 회원가입 하세요!");
         }
+        
+        // 사용자 상태 확인
+        if ("STOP".equals(user.getStatus())) {
+            throw new CustomException(ErrorCode.USER_SUSPENDED, "정지된 계정입니다. 관리자에게 문의하세요.");
+        }
+        
         // 1. 인증 
         Authentication auth = authManager.authenticate(
             new UsernamePasswordAuthenticationToken(dto.getLoginId(), dto.getPassword()));
