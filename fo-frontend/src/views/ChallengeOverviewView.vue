@@ -2,11 +2,38 @@
 	<v-container>
 		<!-- 상단 헤더 카드 -->
 		<v-card class="header-card mb-8">
-			<div class="header-content">
+			<div class="header-content d-flex justify-space-between align-start">
 				<div>
 					<h1 class="header-title">{{ detail.title }}</h1>
+					<!-- 설명 영역 - 더보기 기능 -->
 					<div class="header-description mb-3">
-						<p class="description-text">{{ detail.description }}</p>
+						<div class="preserve-linebreaks mt-2">
+							{{
+								showFullDescription
+									? decodeHtmlEntities(detail.description)
+									: getTruncatedDescription(detail.description)
+							}}
+						</div>
+
+						<!-- 더보기/접기 버튼 (설명이 길 때만 표시) -->
+						<div v-if="isDescriptionLong" class="mt-2">
+							<v-btn
+								size="small"
+								variant="text"
+								color="black"
+								@click="toggleDescription"
+								class="show-more-btn"
+							>
+								<v-icon left size="16">
+									{{
+										showFullDescription
+											? 'mdi-chevron-up'
+											: 'mdi-chevron-down'
+									}}
+								</v-icon>
+								{{ showFullDescription ? '접기' : '더보기' }}
+							</v-btn>
+						</div>
 					</div>
 					<div class="header-subtitle">
 						<v-chip
@@ -26,7 +53,7 @@
 						<v-icon left size="18">mdi-pencil</v-icon> 수정
 					</v-btn>
 					<v-btn outlined color="white" @click="onDelete">
-						<v-icon left size="18">mdi-delete</v-icon> 삭제
+						<v-icon left size="18">mdi-delete</v-icon> 챌린지 삭제
 					</v-btn>
 				</div>
 			</div>
@@ -145,9 +172,80 @@ const myStatus = ref('NONE') // NONE, REQUESTED, APPROVED
 const myParticipationId = ref(null)
 const leaving = ref(false)
 
+// 설명 표시 상태 관리
+const showFullDescription = ref(false)
+const DESCRIPTION_LIMIT = 200 // 글자 수 제한
+
+//  설명 관련 computed
+const isDescriptionLong = computed(() => {
+	if (!detail.value.description) return false
+	const decoded = decodeHtmlEntities(detail.value.description)
+	return decoded.length > DESCRIPTION_LIMIT
+})
+
+// HTML 엔티티 디코딩 함수
+function decodeHtmlEntities(text) {
+	if (!text) return ''
+
+	// 주요 HTML 엔티티들만 변환
+	const entityMap = {
+		'&#40;': '(',
+		'&#41;': ')',
+		'&#39;': "'",
+		'&#34;': '"',
+		'&lt;': '<',
+		'&gt;': '>',
+		'&amp;': '&',
+		'&nbsp;': ' ',
+		'&#8217;': "'", // 스마트 따옴표
+		'&#8216;': "'", // 스마트 따옴표
+		'&#8220;': '"', // 스마트 따옴표
+		'&#8221;': '"', // 스마트 따옴표
+	}
+
+	let result = text
+	Object.keys(entityMap).forEach((entity) => {
+		const regex = new RegExp(entity, 'g')
+		result = result.replace(regex, entityMap[entity])
+	})
+
+	return result
+}
+
 // 날짜 포맷
 function formatDate(d) {
 	return d ? new Date(d).toLocaleDateString() : '-'
+}
+
+// 축약된 설명 반환
+function getTruncatedDescription(description) {
+	if (!description) return ''
+
+	const decoded = decodeHtmlEntities(description)
+
+	if (decoded.length <= DESCRIPTION_LIMIT) {
+		return decoded
+	}
+
+	// 200자에서 자르되, 단어나 줄바꿈 중간에서 자르지 않도록
+	let truncated = decoded.substring(0, DESCRIPTION_LIMIT)
+
+	// 마지막 공백이나 줄바꿈 위치 찾기
+	const lastSpace = truncated.lastIndexOf(' ')
+	const lastNewline = truncated.lastIndexOf('\n')
+	const cutPoint = Math.max(lastSpace, lastNewline)
+
+	// 너무 짧지 않으면 적절한 위치에서 자르기
+	if (cutPoint > DESCRIPTION_LIMIT * 0.7) {
+		truncated = decoded.substring(0, cutPoint)
+	}
+
+	return truncated + '...'
+}
+
+// 더보기/접기 토글 함수
+function toggleDescription() {
+	showFullDescription.value = !showFullDescription.value
 }
 
 // 챌린지 상세 로드
@@ -304,5 +402,24 @@ onMounted(async () => {
 .header-actions .v-btn {
 	text-transform: none;
 	font-weight: 500;
+}
+.preserve-linebreaks {
+	white-space: pre-line;
+	word-wrap: break-word;
+	line-height: 1.5;
+}
+.show-more-btn {
+	opacity: 0.9;
+	text-transform: none;
+	font-weight: 700;
+	padding: 4px 8px;
+	min-width: auto;
+}
+
+.show-more-btn:hover {
+	opacity: 1;
+	background-color: rgba(255, 255, 255, 0.1);
+	transform: translateY(-1px);
+	transition: all 0.2s ease;
 }
 </style>
