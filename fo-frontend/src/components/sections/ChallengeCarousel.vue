@@ -55,6 +55,7 @@
 									}}
 								</v-icon>
 							</v-btn>
+
 							<!-- 상단: 카테고리명 칩 -->
 							<div class="d-flex align-center mb-3">
 								<v-chip

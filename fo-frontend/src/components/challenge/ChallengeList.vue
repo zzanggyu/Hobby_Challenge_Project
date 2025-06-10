@@ -219,8 +219,11 @@
 								</v-icon>
 							</v-btn>
 							<!-- 좋아요 수 -->
-							<span class="text-caption">
-								관심 {{ c.favoriteCount || 0 }}
+							<span
+								class="text-caption stats-text"
+								:class="{ 'stats-active': (c.favoriteCount || 0) > 0 }"
+							>
+								관심 {{ formatCount(c.favoriteCount || 0) }}
 							</span>
 						</div>
 					</v-card-title>
@@ -239,6 +242,24 @@
 
 					<!-- 정보 섹션 -->
 					<div class="px-4 pb-2">
+						<!-- 생성자 정보 -->
+						<div class="d-flex align-center mb-3">
+							<v-icon size="20" class="mr-2" color="primary">
+								mdi-account
+							</v-icon>
+							<span class="text-caption">
+								{{ c.creatorNickname }}
+							</span>
+						</div>
+						<!-- 참여자-->
+						<div class="d-flex align-center mb-3">
+							<v-icon size="16" class="mr-2" color="primary"
+								>mdi-account-group</v-icon
+							>
+							<span class="text-caption">
+								참여자 {{ formatCount(c.participantCount || 0) }}명
+							</span>
+						</div>
 						<!-- 기간 정보 -->
 						<div class="d-flex align-center mb-2">
 							<v-icon size="16" class="mr-2" color="primary">
@@ -247,16 +268,6 @@
 							<span class="text-caption">
 								{{ formatDate(c.startDate) }} ~
 								{{ formatDate(c.endDate) }}
-							</span>
-						</div>
-
-						<!-- 생성자 정보 -->
-						<div class="d-flex align-center mb-3">
-							<v-icon size="20" class="mr-2" color="primary">
-								mdi-account
-							</v-icon>
-							<span class="text-caption">
-								{{ c.creatorNickname }}
 							</span>
 						</div>
 					</div>
@@ -431,12 +442,12 @@ watch(currentPage, () => {
 	fetchChallenges()
 })
 
-// 좋아요 수 포맷팅 함수
-function formatFavoriteCount(count) {
+// 참여자 수 포맷함수
+function formatCount(count) {
 	if (!count || count === 0) return '0'
 	if (count < 1000) return count.toString()
-	if (count < 10000) return (count / 1000).toFixed(1) + 'K'
-	return (count / 10000).toFixed(1) + 'W'
+	if (count < 10000) return (count / 1000).toFixed(1) + '천'
+	return (count / 10000).toFixed(1) + '만'
 }
 
 // 설명 글자 수 제한

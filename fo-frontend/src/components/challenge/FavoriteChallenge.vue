@@ -167,14 +167,33 @@
 						</div>
 
 						<!-- 하트 버튼 (관심 챌린지만 해당) -->
-						<v-btn
+						<div
 							v-if="!fav.participating && !fav.requesting"
-							icon
-							size="small"
-							@click.stop="onToggleFavorite(fav.challenge.challengeId)"
+							class="d-flex flex-column align-center"
 						>
-							<v-icon color="red">mdi-heart</v-icon>
-						</v-btn>
+							<!-- 하트 버튼 -->
+							<v-btn
+								icon
+								size="small"
+								@click.stop="
+									onToggleFavorite(fav.challenge.challengeId)
+								"
+								class="mb-1"
+							>
+								<v-icon color="red">mdi-heart</v-icon>
+							</v-btn>
+
+							<!-- 관심 수 (하트 아래) -->
+							<span
+								class="text-caption stats-text"
+								:class="{
+									'stats-active':
+										(fav.challenge.favoriteCount || 0) > 0,
+								}"
+							>
+								관심 {{ formatCount(fav.challenge.favoriteCount || 0) }}
+							</span>
+						</div>
 					</v-card-title>
 
 					<!-- 카드 내용은 기존과 동일 -->
@@ -187,6 +206,25 @@
 
 					<!-- 정보 섹션 -->
 					<div class="px-4 pb-2">
+						<!-- 생성자 정보-->
+						<div class="d-flex align-center mb-2">
+							<v-icon size="16" class="mr-2">mdi-account</v-icon>
+							<span class="text-caption">{{
+								fav.challenge.creatorNickname
+							}}</span
+							>&nbsp &nbsp
+							<!-- 참여자 수 정보 -->
+							<v-icon size="16" class="mr-2" color="primary"
+								>mdi-account-group</v-icon
+							>
+
+							<span class="text-caption">
+								참여자
+								{{ formatCount(fav.challenge.participantCount || 0) }}명
+							</span>
+						</div>
+
+						<!-- 챌린지 기간 정보 -->
 						<div class="d-flex align-center mb-2">
 							<v-icon size="16" class="mr-2">mdi-calendar-range</v-icon>
 							<span class="text-caption">
@@ -194,12 +232,7 @@
 								{{ formatDate(fav.challenge.endDate) }}
 							</span>
 						</div>
-						<div class="d-flex align-center mb-2">
-							<v-icon size="16" class="mr-2">mdi-account</v-icon>
-							<span class="text-caption">{{
-								fav.challenge.creatorNickname
-							}}</span>
-						</div>
+
 						<div class="d-flex align-center mb-3">
 							<!-- 상태별 아이콘 표시 -->
 							<v-icon size="16" class="mr-2">
@@ -330,8 +363,8 @@ const requestingCount = computed(() => {
 // 기존 함수들은 그대로 유지...
 function truncateDescription(description) {
 	if (!description) return ''
-	return description.length > 150
-		? description.substring(0, 150) + '...'
+	return description.length > 200
+		? description.substring(0, 200) + '...'
 		: description
 }
 
@@ -342,6 +375,13 @@ function formatDate(date) {
 		month: 'short',
 		day: 'numeric',
 	})
+}
+// 카운트 포맷
+function formatCount(count) {
+	if (!count || count === 0) return '0'
+	if (count < 1000) return count.toString()
+	if (count < 10000) return (count / 1000).toFixed(1) + '천'
+	return (count / 10000).toFixed(1) + '만'
 }
 
 function categoryName(id) {
