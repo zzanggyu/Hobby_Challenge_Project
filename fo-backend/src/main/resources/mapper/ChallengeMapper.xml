@@ -35,6 +35,7 @@
 	    <result column="createdDate" property="createdDate"/>
 	    <result column="modifiedDate" property="modifiedDate"/>
 	    <result column="isFavorite" property="isFavorite"/>
+	    <result property="favoriteCount" column="favoriteCount"/>
 	    
 	    <!-- CREATED_BY로 USER 테이블(USER_ID)와 조인 -->
 		<association property="creator" javaType="com.hobby.challenge.fobackend.entity.User">
@@ -55,6 +56,8 @@
       		 , C.END_DATE AS endDate
       		 , C.CREATED_DATE createdDate
       		 , C.MODIFIED_DATE modifiedDate
+      		 , (SELECT COUNT(*) FROM FAVORITE_CHALLENGE FC 
+       		     WHERE FC.CHALLENGE_ID = C.CHALLENGE_ID) AS favoriteCount
 	         , CASE WHEN FC.USER_ID IS NOT NULL THEN TRUE ELSE FALSE END AS isFavorite <!-- 가상 컬럼 생성 관심 챌린지 여부-->
 	         , U.USER_ID AS userId
   			 , U.NICKNAME AS nickname

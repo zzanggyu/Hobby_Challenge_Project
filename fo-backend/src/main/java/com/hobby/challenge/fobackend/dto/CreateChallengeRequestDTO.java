@@ -32,7 +32,6 @@ public class CreateChallengeRequestDTO {
     
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
     @NotNull(message = "종료일을 선택하세요.")
-    @Future(message = "종료일은 시작일로부터 일주일 이후여야 합니다.")
     private LocalDate endDate;
 
     @NotNull(message = "카테고리를 선택하세요.")

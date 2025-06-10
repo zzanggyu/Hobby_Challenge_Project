@@ -1,6 +1,7 @@
 package com.hobby.challenge.fobackend.service.impl;
 
 import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
@@ -33,8 +34,9 @@ public class ChallengeServiceImpl implements ChallengeService{
     @Override
     @Transactional // 중간에 예외가 나면 롤백시킴
     public ChallengeResponseDTO createChallenge(CreateChallengeRequestDTO dto, Integer userId) {
-    	
-        // 1) 사용자당 하나만 생성 가능하도록 검사
+    	//시작 종료 날짜 제한
+    	validateChallengeBusiness(dto.getStartDate(), dto.getEndDate());
+        // 사용자당 하나만 생성 가능하도록 검사
         int existing = challengeMapper.countByCreator(userId);
         if (existing > 0) {
             throw new CustomException(ErrorCode.CHALLENGE_LIMIT_EXCEEDED);
@@ -105,6 +107,7 @@ public class ChallengeServiceImpl implements ChallengeService{
 	            .endDate(c.getEndDate())
 	            .createdDate(c.getCreatedDate())
 	            .isFavorite(c.getIsFavorite())
+	            .favoriteCount(c.getFavoriteCount())
 	            .build()
 	        )
 	        .toList();
@@ -134,6 +137,7 @@ public class ChallengeServiceImpl implements ChallengeService{
 //            .isFavorite(c.getIsFavorite()) 참여한 챌린지 조회이기 때문에 관심여부 필요없음
             .creatorNickname(c.getCreator().getNickname())
             .createdBy(c.getCreatedBy())
+            .favoriteCount(c.getFavoriteCount()) 
             .build();
     }
 	
@@ -170,6 +174,7 @@ public class ChallengeServiceImpl implements ChallengeService{
                 .endDate(c.getEndDate())
                 .createdDate(c.getCreatedDate())
                 .isFavorite(c.getIsFavorite())
+                .favoriteCount(c.getFavoriteCount()) 
                 .build()
             )
             .toList();
@@ -181,6 +186,8 @@ public class ChallengeServiceImpl implements ChallengeService{
     public ChallengeResponseDTO updateChallenge(Integer challengeId,
                                                 UpdateChallengeRequestDTO dto,
                                                 Integer userId) {
+    	// 날짜 제한
+    	validateChallengeBusiness(dto.getStartDate(), dto.getEndDate());
 
         Challenge c = challengeMapper.selectById(challengeId, null);
 
@@ -245,5 +252,28 @@ public class ChallengeServiceImpl implements ChallengeService{
     public int expireChallenges() {
         LocalDate today = LocalDate.now();
         return challengeMapper.softDeleteExpiredChallenges(today);
+    }
+    
+    private void validateChallengeBusiness(LocalDate startDate, LocalDate endDate) {
+        LocalDate today = LocalDate.now();
+        
+        // 시작일  오늘 이후여야 함 
+        if (startDate.isBefore(today)) {
+            throw new CustomException(ErrorCode.INVALID_START_DATE, 
+                "시작일은 오늘 이후로 설정해야 합니다.");
+        }
+        
+        // 종료일 시작일로부터 최소 7일 이후
+        long daysBetween = ChronoUnit.DAYS.between(startDate, endDate);
+        if (daysBetween < 7) {
+            throw new CustomException(ErrorCode.INVALID_DATE_RANGE, 
+                String.format("종료일은 시작일로부터 최소 7일 이후여야 합니다. (현재: %d일)", daysBetween));
+        }
+        
+        // 너무 긴 기간 방지 최대 1년
+        if (daysBetween > 365) {
+            throw new CustomException(ErrorCode.INVALID_DATE_RANGE, 
+                "챌린지 기간은 최대 1년까지만 가능합니다.");
+        }
     }
 }
