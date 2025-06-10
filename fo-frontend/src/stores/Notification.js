@@ -21,6 +21,13 @@ export const useNotificationStore = defineStore('notification', {
 	},
 
 	actions: {
+		clearNotifications() {
+			this.notifications = []
+			this.unreadCount = 0
+			this.loading = false
+			this.hasMore = true
+			this.page = 1
+		},
 		// 알림 목록 가져오기
 		async fetchNotifications(loadMore = false) {
 			if (this.loading || (!loadMore && this.notifications.length > 0))

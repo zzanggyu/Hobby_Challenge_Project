@@ -67,7 +67,7 @@
 								<v-text-field
 									v-model="startDateFormatted"
 									:rules="rules.startDate"
-									label="시작일"
+									label="시작일(오늘 날짜부터 선택 가능)"
 									readonly
 									v-bind="props"
 									outlined
@@ -76,7 +76,7 @@
 							</template>
 							<v-date-picker
 								v-model="startDate"
-								:min="today"
+								:min="minStartDate"
 								@update:model-value="startMenu = false"
 							/>
 						</v-menu>
@@ -152,6 +152,11 @@ const categoryId = ref(null)
 const startMenu = ref(false)
 const endMenu = ref(false)
 const today = new Date().toISOString().substr(0, 10)
+const minStartDate = (() => {
+	const date = new Date()
+	date.setDate(date.getDate() - 1) // 어제 날짜로 설정
+	return date.toISOString().substr(0, 10)
+})()
 
 const categories = ref([])
 
@@ -160,6 +165,8 @@ onMounted(async () => {
 	try {
 		const cats = await getCategories()
 		categories.value = cats
+		// 시작일 기본값을 오늘로 설정
+		startDate.value = new Date()
 	} catch (e) {
 		console.error('카테고리 불러오기 실패', e)
 	}
@@ -179,7 +186,7 @@ const endDateFormatted = computed(() =>
 const minEndDate = computed(() => {
 	if (!startDate.value) return null
 	const d = new Date(startDate.value)
-	d.setDate(d.getDate() + 7)
+	d.setDate(d.getDate() + 6)
 	return d.toISOString().substr(0, 10)
 })
 

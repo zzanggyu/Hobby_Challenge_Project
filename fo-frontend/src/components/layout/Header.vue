@@ -217,7 +217,8 @@ async function onLogout() {
 	}
 	// 클라이언트 쪽 auth store 초기화
 	auth.$patch({ isAuthenticated: false, user: null })
-	activeChallenge.value = null // 🆕 활성 챌린지도 초기화
+	notificationStore.clearNotifications()
+	activeChallenge.value = null //  활성 챌린지도 초기화
 	router.push('/')
 }
 

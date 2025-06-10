@@ -268,7 +268,7 @@ async function toggleHeart(item) {
 			isFavorite: item.isFavorite,
 		})
 	} catch (err) {
-		console.error('관심 챌린지 토글 실패:', err)
+		console.error('내내 챌린지 토글 실패:', err)
 
 		// 10개 제한 에러 처리
 		if (err.response?.data?.errorCode === 'FAVORITE_LIMIT_EXCEEDED') {

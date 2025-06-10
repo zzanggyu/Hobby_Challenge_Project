@@ -204,15 +204,25 @@
 							</v-chip>
 						</div>
 
-						<v-btn
-							icon
-							size="small"
-							@click.stop.prevent="onToggleFavorite(c)"
-						>
-							<v-icon :color="c.isFavorite ? 'red' : 'grey'">
-								{{ c.isFavorite ? 'mdi-heart' : 'mdi-heart-outline' }}
-							</v-icon>
-						</v-btn>
+						<!-- 좋아요 수 표시 -->
+						<div class="d-flex flex-column align-center">
+							<!-- 하트 버튼 -->
+							<v-btn
+								icon
+								size="small"
+								@click.stop.prevent="onToggleFavorite(c)"
+							>
+								<v-icon :color="c.isFavorite ? 'red' : 'grey'">
+									{{
+										c.isFavorite ? 'mdi-heart' : 'mdi-heart-outline'
+									}}
+								</v-icon>
+							</v-btn>
+							<!-- 좋아요 수 -->
+							<span class="text-caption">
+								관심 {{ c.favoriteCount || 0 }}
+							</span>
+						</div>
 					</v-card-title>
 
 					<!-- 카드 내용 -->
@@ -420,6 +430,14 @@ watch(selectedCategory, () => {
 watch(currentPage, () => {
 	fetchChallenges()
 })
+
+// 좋아요 수 포맷팅 함수
+function formatFavoriteCount(count) {
+	if (!count || count === 0) return '0'
+	if (count < 1000) return count.toString()
+	if (count < 10000) return (count / 1000).toFixed(1) + 'K'
+	return (count / 10000).toFixed(1) + 'W'
+}
 
 // 설명 글자 수 제한
 function truncateDescription(description) {

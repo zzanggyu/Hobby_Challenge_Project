@@ -1,4 +1,3 @@
-<!-- src/components/layout/NotificationBell.vue -->
 <template>
 	<v-menu v-model="open" location="bottom end" offset-y max-width="380">
 		<template #activator="{ props }">
@@ -85,12 +84,14 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useNotificationStore } from '@/stores/notification'
 import { formatDistanceToNow } from 'date-fns'
 import { ko } from 'date-fns/locale'
+import { useAuthStore } from '@/stores/auth'
 
+const authStore = useAuthStore()
 const router = useRouter()
 const store = useNotificationStore()
 const open = ref(false)
@@ -99,11 +100,25 @@ const recentNotifications = computed(() => store.recentNotifications)
 const unreadCount = computed(() => store.unreadCount)
 const loading = computed(() => store.loading)
 
+watch(
+	() => authStore.isAuthenticated,
+	(isAuthenticated) => {
+		if (!isAuthenticated) {
+			store.clearNotifications()
+			stopNotificationPolling()
+		} else {
+			store.fetchNotifications()
+			startNotificationPolling()
+		}
+	}
+)
+
 // 주기적 알림 확인을 위한 인터벌
 let notificationInterval = null
 
 // 알림 벨 클릭 시 최신 알림 로드
 async function onOpenBell() {
+	if (!authStore.isAuthenticated) return
 	if (!open.value) {
 		await store.refreshNotifications()
 	}
@@ -196,8 +211,10 @@ function stopNotificationPolling() {
 
 // 컴포넌트 마운트 시
 onMounted(() => {
-	store.fetchNotifications()
-	startNotificationPolling()
+	if (authStore.isAuthenticated) {
+		store.fetchNotifications()
+		startNotificationPolling()
+	}
 })
 
 // 컴포넌트 언마운트 시
