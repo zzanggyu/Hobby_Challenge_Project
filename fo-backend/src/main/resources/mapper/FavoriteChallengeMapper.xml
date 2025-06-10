@@ -22,6 +22,8 @@
 	      <result column="endDate" property="endDate" javaType="java.time.LocalDate" jdbcType="DATE"/>
 	      <result column="createdDate" property="createdDate" javaType="java.time.LocalDateTime" jdbcType="TIMESTAMP"/>
 	      <result column="creatorNickname" property="creatorNickname"/>
+	      <result column="favoriteCount" property="favoriteCount"/>
+  		  <result column="participantCount" property="participantCount"/>
 	    </association>
 	  </resultMap>
 
@@ -38,7 +40,14 @@
 			 , C.END_DATE AS c_endDate
 			 , C.CREATED_DATE AS c_createdDate
 			 , U.NICKNAME AS c_creatorNickname
-			FROM FAVORITE_CHALLENGE FC
+             , (SELECT COUNT(*) 
+                  FROM FAVORITE_CHALLENGE FC2 
+                 WHERE FC2.CHALLENGE_ID = C.CHALLENGE_ID) AS c_favoriteCount
+             , (SELECT COUNT(*) 
+                  FROM PARTICIPATION P2 
+                 WHERE P2.CHALLENGE_ID = C.CHALLENGE_ID 
+                   AND P2.STATUS = 'APPROVED') AS c_participantCount
+	      FROM FAVORITE_CHALLENGE FC
 	INNER JOIN CHALLENGE C
 			ON FC.CHALLENGE_ID = C.CHALLENGE_ID
 	INNER JOIN USER U

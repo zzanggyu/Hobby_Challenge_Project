@@ -97,6 +97,8 @@ public class FavoriteChallengeServiceImpl implements FavoriteChallengeService{
                         .createdDate(challenge.getCreatedDate())
                         .creatorNickname(challenge.getCreator().getNickname())
                         .isFavorite(challenge.getIsFavorite())
+                        .favoriteCount(challenge.getFavoriteCount()) 
+                        .participantCount(challenge.getParticipantCount())
                         .build();
                     
                     // FavoriteChallengeDTO 생성

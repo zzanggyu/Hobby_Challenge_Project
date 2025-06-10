@@ -36,6 +36,7 @@
 	    <result column="modifiedDate" property="modifiedDate"/>
 	    <result column="isFavorite" property="isFavorite"/>
 	    <result property="favoriteCount" column="favoriteCount"/>
+	    <result property="participantCount" column="participantCount"/>
 	    
 	    <!-- CREATED_BY로 USER 테이블(USER_ID)와 조인 -->
 		<association property="creator" javaType="com.hobby.challenge.fobackend.entity.User">
@@ -58,6 +59,10 @@
       		 , C.MODIFIED_DATE modifiedDate
       		 , (SELECT COUNT(*) FROM FAVORITE_CHALLENGE FC 
        		     WHERE FC.CHALLENGE_ID = C.CHALLENGE_ID) AS favoriteCount
+       		 , (SELECT COUNT(*) 
+	              FROM PARTICIPATION P2 
+	             WHERE P2.CHALLENGE_ID = C.CHALLENGE_ID 
+	               AND P2.STATUS = 'APPROVED') AS participantCount    
 	         , CASE WHEN FC.USER_ID IS NOT NULL THEN TRUE ELSE FALSE END AS isFavorite <!-- 가상 컬럼 생성 관심 챌린지 여부-->
 	         , U.USER_ID AS userId
   			 , U.NICKNAME AS nickname
@@ -131,6 +136,13 @@
 	         , CASE WHEN FC.USER_ID IS NOT NULL THEN TRUE ELSE FALSE END AS isFavorite
 	         , U.USER_ID AS userId
 	         , U.NICKNAME AS nickname
+             , (SELECT COUNT(*) 
+                  FROM FAVORITE_CHALLENGE FC2 
+                 WHERE FC2.CHALLENGE_ID = C.CHALLENGE_ID) AS favoriteCount
+             , (SELECT COUNT(*) 
+                  FROM PARTICIPATION P2 
+                 WHERE P2.CHALLENGE_ID = C.CHALLENGE_ID 
+                   AND P2.STATUS = 'APPROVED') AS participantCount
 	      FROM CHALLENGE C
      LEFT JOIN FAVORITE_CHALLENGE FC 
 	        ON C.CHALLENGE_ID = FC.CHALLENGE_ID AND FC.USER_ID = #{userId}
@@ -251,6 +263,10 @@
 	         , (SELECT COUNT(*) 
 	              FROM FAVORITE_CHALLENGE FC2 
 	             WHERE FC2.CHALLENGE_ID = C.CHALLENGE_ID) AS favoriteCount
+	         , (SELECT COUNT(*) 
+                  FROM PARTICIPATION P2 
+                 WHERE P2.CHALLENGE_ID = C.CHALLENGE_ID 
+                   AND P2.STATUS = 'APPROVED') AS participantCount
 	      FROM CHALLENGE C
 	 LEFT JOIN FAVORITE_CHALLENGE FC 
 	        ON C.CHALLENGE_ID = FC.CHALLENGE_ID 

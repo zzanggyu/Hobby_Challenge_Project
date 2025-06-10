@@ -28,6 +28,7 @@ public class ChallengeResponseDTO {
     
     private Boolean isFavorite; // 관심 챌린지 하트 여부
     private Integer favoriteCount; // 좋아요(관심 등록) 수
+    private Integer participantCount; // 참여자 수
     
     // USER NICKNAME
     private String creatorNickname;

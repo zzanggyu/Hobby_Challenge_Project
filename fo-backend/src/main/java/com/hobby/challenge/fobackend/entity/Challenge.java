@@ -27,5 +27,6 @@ public class Challenge {
     private Boolean isDeleted; // 챌린지 종료 삭제 여부 알기 위해서 추가함 테이블에 
     private Boolean isFavorite; // DB에는 없지만 관심 챌린지 여부를 알기 위해 가상 컬럼 추가 
     private Integer favoriteCount; // 좋아요(관심 등록) 수
+    private Integer participantCount; //참여자 수
     private User creator; 
 }

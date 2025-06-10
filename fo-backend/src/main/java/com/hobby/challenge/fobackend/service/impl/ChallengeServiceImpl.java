@@ -108,6 +108,7 @@ public class ChallengeServiceImpl implements ChallengeService{
 	            .createdDate(c.getCreatedDate())
 	            .isFavorite(c.getIsFavorite())
 	            .favoriteCount(c.getFavoriteCount())
+	            .participantCount(c.getParticipantCount())
 	            .build()
 	        )
 	        .toList();
@@ -138,6 +139,7 @@ public class ChallengeServiceImpl implements ChallengeService{
             .creatorNickname(c.getCreator().getNickname())
             .createdBy(c.getCreatedBy())
             .favoriteCount(c.getFavoriteCount()) 
+            .participantCount(c.getParticipantCount())
             .build();
     }
 	
@@ -175,6 +177,7 @@ public class ChallengeServiceImpl implements ChallengeService{
                 .createdDate(c.getCreatedDate())
                 .isFavorite(c.getIsFavorite())
                 .favoriteCount(c.getFavoriteCount()) 
+                .participantCount(c.getParticipantCount())
                 .build()
             )
             .toList();
