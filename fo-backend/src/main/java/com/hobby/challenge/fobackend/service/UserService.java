@@ -15,4 +15,10 @@ public interface UserService {
 
     // 회원 탈퇴 
     void deleteAccount(Integer userId, String password);
+    
+    // 레벨 계산
+    int calculateLevel(int points);
+    
+    // 포인트 (경험치)
+    void addPoints(Integer userId, int pointsToAdd, String reason);
 }

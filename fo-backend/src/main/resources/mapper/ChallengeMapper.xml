@@ -9,18 +9,22 @@
 			parameterType="com.hobby.challenge.fobackend.entity.Challenge"
 			useGeneratedKeys="true"
 			keyProperty="challengeId">
-		INSERT INTO CHALLENGE (TITLE
-							, DESCRIPTION
-							, START_DATE
-							, END_DATE
-							, CATEGORY_ID
-							, CREATED_BY)
-		VALUES (#{title}
-			 , #{description}
-			 , #{startDate}
-			 , #{endDate}
-			 , #{categoryId}
-			 , #{createdBy})
+		INSERT INTO CHALLENGE (
+					TITLE
+			      , DESCRIPTION
+				  , START_DATE
+				  , END_DATE
+				  , CATEGORY_ID
+				  , CREATED_BY
+				  )
+					VALUES (
+					#{title}
+			   	  , #{description}
+				  , #{startDate}
+				  , #{endDate}
+				  , #{categoryId}
+				  , #{createdBy}
+				  )
 	</insert>
 
 	<!-- Challenge User 조인용 resultMap-->

@@ -43,9 +43,9 @@ dependencies {
     // AWS S3
 	implementation platform('software.amazon.awssdk:bom:2.20.32')
 	implementation 'software.amazon.awssdk:s3'
-	implementation 'software.amazon.awssdk:s3-presigner'
+	//implementation 'software.amazon.awssdk:s3-presigner'
 	// AWS SDK Core (credentials 등 핵심 클래스 포함)
-    implementation 'software.amazon.awssdk:core'
+    //implementation 'software.amazon.awssdk:core'
 }
 
 tasks.named('test') {

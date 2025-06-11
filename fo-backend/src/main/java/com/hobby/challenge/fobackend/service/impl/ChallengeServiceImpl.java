@@ -17,9 +17,11 @@ import com.hobby.challenge.fobackend.dto.UpdateChallengeRequestDTO;
 import com.hobby.challenge.fobackend.entity.Challenge;
 import com.hobby.challenge.fobackend.exception.CustomException;
 import com.hobby.challenge.fobackend.exception.ErrorCode;
+import com.hobby.challenge.fobackend.mapper.CertificationMapper;
 import com.hobby.challenge.fobackend.mapper.ChallengeMapper;
 import com.hobby.challenge.fobackend.mapper.ParticipationMapper;
 import com.hobby.challenge.fobackend.service.ChallengeService;
+import com.hobby.challenge.fobackend.service.S3StorageService;
 
 import lombok.RequiredArgsConstructor;
 
@@ -28,6 +30,8 @@ import lombok.RequiredArgsConstructor;
 public class ChallengeServiceImpl implements ChallengeService{
 	private final ChallengeMapper challengeMapper;
 	private final ParticipationMapper participationMapper;
+    private final CertificationMapper certificationMapper;
+    private final S3StorageService s3StorageService;
 	
 
 	// 챌린지 생성 
@@ -240,12 +244,30 @@ public class ChallengeServiceImpl implements ChallengeService{
                                       "챌린지 생성자만 삭제할 수 있습니다.");
         }
         
+     // 삭제 전에 챌린지에 속한 모든 인증 이미지 조회
+        List<String> imageUrlsToDelete = certificationMapper.findImageUrlsByChallengeId(challengeId);
+        
         // 하드 삭제: 챌린지 테이블에서 완전히 제거
-        // CASCADE 설정으로 PARTICIPATION 테이블 데이터도 자동 삭제됨
         int rows = challengeMapper.hardDeleteChallenge(challengeId);
         if (rows == 0) {
             throw new CustomException(ErrorCode.CHALLENGE_NOT_FOUND,
                                       "이미 삭제되었거나 존재하지 않는 챌린지입니다.");
+        }
+        
+        // S3에서 모든 인증 이미지들 삭제
+        if (imageUrlsToDelete != null && !imageUrlsToDelete.isEmpty()) {
+            System.out.println("챌린지 삭제와 함께 " + imageUrlsToDelete.size() + "개의 S3 이미지를 삭제합니다.");
+            
+            for (String imageUrl : imageUrlsToDelete) {
+                try {
+                    s3StorageService.delete(imageUrl);
+                    System.out.println("S3 이미지 삭제 완료: " + imageUrl);
+                } catch (Exception e) {
+                    System.err.println("S3 이미지 삭제 실패: " + imageUrl + ", 에러: " + e.getMessage());
+                }
+            }
+            
+            System.out.println("챌린지 " + challengeId + " 삭제 및 관련 이미지 정리 완료");
         }
     }
     

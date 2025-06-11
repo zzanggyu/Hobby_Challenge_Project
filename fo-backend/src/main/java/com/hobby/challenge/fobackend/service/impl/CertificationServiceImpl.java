@@ -31,6 +31,7 @@ import com.hobby.challenge.fobackend.mapper.ParticipationMapper;
 import com.hobby.challenge.fobackend.service.CertificationService;
 import com.hobby.challenge.fobackend.service.NotificationService;
 import com.hobby.challenge.fobackend.service.S3StorageService;
+import com.hobby.challenge.fobackend.service.UserService;
 
 import lombok.RequiredArgsConstructor;
 
@@ -43,6 +44,7 @@ public class CertificationServiceImpl implements CertificationService {
 	private final ChallengeMapper challengeMapper;
 	private final CertLikeMapper certLikeMapper;
 	private final NotificationService notificationService;
+	private final UserService userService;
 	// TODO: 실제 이미지 파일 저장을 위한 서비스 (S3) 사용
 	private final S3StorageService s3StorageService; // S3 서비스 주입
 	@Value("${aws.s3.bucket-name}")
@@ -111,6 +113,8 @@ public class CertificationServiceImpl implements CertificationService {
         
         try {
             certificationMapper.insertCertification(cert);
+            
+            userService.addPoints(userId, 10, "CERT_UPLOAD"); // 인증 1개당 10포인트
         } catch (DuplicateKeyException e) {
             // S3에 업로드된 파일 삭제 (롤백)
             s3StorageService.delete(imageUrl);
@@ -255,7 +259,7 @@ public class CertificationServiceImpl implements CertificationService {
         MultipartFile image,
         String comment
     ) {
-        // 1) 기존 인증 조회 및 권한 확인
+        // 인증 조회 및 권한 확인
         CertificationDTO old = getCertificationDetail(userId, certificationId);
         if (!old.getUserId().equals(userId)) {
             throw new CustomException(
@@ -264,27 +268,36 @@ public class CertificationServiceImpl implements CertificationService {
             );
         }
         
-        // 2) 새 이미지가 있으면 업로드
-        String imageUrl = old.getImageUrl(); // 기본값은 기존 URL
+        String imageUrl = old.getImageUrl();
+        
+        // 새 이미지가 있다면 업로드
         if (image != null && !image.isEmpty()) {
+            // 파일 검증
             validateImageFile(image);
+            
+            // ✅ 수정: 기존 이미지 URL 저장 (old 변수 사용)
+            String oldImageUrl = old.getImageUrl();
             
             try {
                 // 새 이미지 업로드
-                String newUrl = s3StorageService.upload(image, "certifications/" + challengeId);
+                imageUrl = s3StorageService.upload(image, "certifications/" + challengeId);
                 
-                // 기존 이미지 삭제
-                if (old.getImageUrl() != null) {
-                    s3StorageService.delete(old.getImageUrl());
+                // 기존 이미지 S3에서 삭제 (새 이미지 업로드 성공 후)
+                if (oldImageUrl != null && !oldImageUrl.isEmpty() && !oldImageUrl.equals(imageUrl)) {
+                    try {
+                        s3StorageService.delete(oldImageUrl);
+                        System.out.println("기존 S3 이미지 삭제 완료: " + oldImageUrl);
+                    } catch (Exception deleteError) {
+                        System.err.println("기존 S3 이미지 삭제 실패: " + oldImageUrl + ", 에러: " + deleteError.getMessage());
+                    }
                 }
                 
-                imageUrl = newUrl;
             } catch (IOException e) {
                 throw new CustomException(ErrorCode.FILE_UPLOAD_FAILED, "이미지 업로드에 실패했습니다.");
             }
         }
         
-        // 3) DB 업데이트
+        // DB 업데이트
         certificationMapper.updateCertification(
             certificationId, userId, comment, imageUrl
         );
@@ -307,8 +320,24 @@ public class CertificationServiceImpl implements CertificationService {
 	            "본인이 등록한 인증만 삭제할 수 있습니다."
 	        );
 	    }
-	    // 실제 삭제 호출
+	    
+	    // S3에서 이미지 삭제 (DB 삭제 전에 URL 저장)
+	    String imageUrlToDelete = dto.getImageUrl();
+	    
+	    // DB에서 삭제 호출
 	    certificationMapper.deleteById(certificationId, userId);
+	    
+	    // S3에서 이미지 파일 삭제
+	    if (imageUrlToDelete != null && !imageUrlToDelete.isEmpty()) {
+	        try {
+	            s3StorageService.delete(imageUrlToDelete);
+	            System.out.println("S3 이미지 삭제 완료: " + imageUrlToDelete);
+	        } catch (Exception e) {
+	            System.err.println("S3 이미지 삭제 실패: " + imageUrlToDelete + ", 에러: " + e.getMessage());
+	        }
+	    } else {
+	        System.out.println("삭제할 이미지 URL이 없습니다.");
+	    }
 	}
 
 }

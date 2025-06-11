@@ -38,7 +38,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter { // 모든 HT
 	 // HTTP 요청에 담겨 온 쿠키들 중 "token" 쿠키를 찾아 값을 저장
 	    String token = null; // JWT를 담을 token을 null로 초기화
 	    Cookie[] cookies = request.getCookies(); // 쿠키 배열을 변수에 저장
-	    System.out.println("🔍 Cookies: " + (cookies != null ? cookies.length : "null")); // 디버깅용
 
 	    if(cookies != null && cookies.length > 0) { // null 체크 + 길이 체크
 	        for (Cookie cookie : cookies) {
@@ -48,7 +47,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter { // 모든 HT
 	            }
 	        }
 	    }
-	    System.out.println("🔍 Token found: " + (token != null)); // 디버깅용
+
 	    
 		// 토큰 유효 시 스프링 시큐리티 컨텍스트에 인증 정보 세팅하고 항상 다음 필터로 요청을 넘긴다.
 	    if (token != null && tokenProvider.validateToken(token)) {

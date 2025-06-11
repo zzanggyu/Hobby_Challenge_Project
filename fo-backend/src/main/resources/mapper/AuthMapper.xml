@@ -3,6 +3,30 @@
   PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
          "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.hobby.challenge.fobackend.mapper.AuthMapper">
+
+	<!-- 회원 등록 -->
+	<insert id="insertUser" 
+	parameterType="com.hobby.challenge.fobackend.entity.User" 
+	useGeneratedKeys="true" 
+	keyProperty="userId">
+	 <!-- 사용자 테이블 -->
+	  INSERT INTO USER (
+	  		 LOGIN_ID <!-- 로그인 아이디 컬럼-->
+		   , USERNAME <!-- 사용자 이름 컬럼-->
+		   , PASSWORD <!-- 사용자 비밀번호 컬럼-->
+		   , EMAIL <!-- 이메일 컬럼-->
+		   , NICKNAME <!-- 닉네임(별명) 컬럼-->
+		   , BIRTH_DATE <!-- 생년월일 컬럼-->
+		   )
+	  		 VALUES (
+	  		 #{loginId} 
+	  	   , #{username} 
+	  	   , #{password} 
+	  	   , #{email} 
+	  	   , #{nickname}
+	  	   , #{birthDate}
+		   )		
+	</insert>
 	
 	<!--  로그인 시 사용자 조회 비밀번호 -->
 	<select id="findByLoginId" resultType="com.hobby.challenge.fobackend.entity.User">
@@ -72,27 +96,7 @@
 	     WHERE NICKNAME = #{nickname}
 	</select>
 
-	<!-- 회원 등록 -->
-	<insert id="insertUser" 
-	parameterType="com.hobby.challenge.fobackend.entity.User" 
-	useGeneratedKeys="true" 
-	keyProperty="userId">
-	 <!-- 사용자 테이블 -->
-	  INSERT INTO USER (LOGIN_ID <!-- 로그인 아이디 컬럼-->
-		   , USERNAME <!-- 사용자 이름 컬럼-->
-		   , PASSWORD <!-- 사용자 비밀번호 컬럼-->
-		   , EMAIL <!-- 이메일 컬럼-->
-		   , NICKNAME <!-- 닉네임(별명) 컬럼-->
-		   , BIRTH_DATE <!-- 생년월일 컬럼-->
-	)
-	  VALUES (#{loginId} 
-	  	   , #{username} 
-	  	   , #{password} 
-	  	   , #{email} 
-	  	   , #{nickname}
-	  	   , #{birthDate}
-	)		
-	</insert>
+
 	
 	  <!-- 5) 비밀번호 재설정용 업데이트 -->
     <update id="updatePassword">

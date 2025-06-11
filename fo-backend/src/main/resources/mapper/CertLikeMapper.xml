@@ -9,14 +9,14 @@
   <insert id="insertLike"
   		  parameterType="map">
   		  
-  	    INSERT
-  	      INTO 
-  	 CERT_LIKE (
-  	 		   CERTIFICATION_ID
-  			 , USER_ID
-  			 )
-  	    VALUES (#{certificationId}
-  			 , #{userId})
+  	    INSERT INTO CERT_LIKE (
+	  	 		    CERTIFICATION_ID
+	  			  , USER_ID
+	  		 	  )
+		  	        VALUES (
+		  	        #{certificationId}
+		  	      , #{userId}
+		  	      )
   </insert>
 
   <!-- 좋아요 여부 -->

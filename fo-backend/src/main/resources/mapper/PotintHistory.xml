@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.hobby.challenge.fobackend.mapper.PointHistoryMapper">
+
+    <!-- PointHistory 결과 매핑 -->
+    <resultMap id="PointHistoryMap" type="com.hobby.challenge.fobackend.entity.PointHistory">
+        <id column="HISTORY_ID" property="historyId"/>
+        <result column="USER_ID" property="userId"/>
+        <result column="TYPE" property="type"/>
+        <result column="POINTS" property="points"/>
+        <result column="CREATED_DATE" property="createdDate"/>
+    </resultMap>
+
+    <!-- 포인트 히스토리 등록 -->
+    <insert id="insert" 
+            parameterType="com.hobby.challenge.fobackend.entity.PointHistory"
+            useGeneratedKeys="true" 
+            keyProperty="historyId">
+        INSERT INTO POINT_HISTORY (
+		            USER_ID
+		          , TYPE
+		          , POINTS
+        		  ) VALUES (
+           	 		#{userId}
+           		  , #{type}
+          		  , #{points}
+       			  )
+    </insert>
+
+    <!-- 사용자별 포인트 히스토리 조회-->
+    <select id="findByUserId" 
+            parameterType="int" 
+            resultMap="PointHistoryMap">
+        SELECT HISTORY_ID
+             , USER_ID
+             , TYPE
+             , POINTS
+             , CREATED_DATE
+          FROM POINT_HISTORY
+         WHERE USER_ID = #{userId}
+      ORDER BY CREATED_DATE DESC
+    </select>
+
+    <!-- 사용자 총 포인트 계산 -->
+    <select id="getTotalPointsByUserId" 
+            parameterType="int" 
+            resultType="int">
+        SELECT COALESCE(SUM(POINTS), 0)
+          FROM POINT_HISTORY
+         WHERE USER_ID = #{userId}
+    </select>
+
+</mapper>

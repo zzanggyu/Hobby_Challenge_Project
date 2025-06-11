@@ -10,18 +10,21 @@
 	          useGeneratedKeys="true" 
 	          keyProperty="certificationId">
 	          
-		    INSERT INTO CERTIFICATION (PARTICIPATION_ID
+		    INSERT INTO CERTIFICATION (
+		    						  PARTICIPATION_ID
 								    , COMMENT
 								    , IMAGE_URL
 								    , LIKE_COUNT
 								    , CREATED_BY
-		    					      ) 
-		    VALUES (#{participationId}
-		         , #{comment}
-		         , #{imageUrl}
-		         , #{likeCount}
-		         , #{createdBy}
-		    )
+		    					    ) 
+								    VALUES 
+								    (
+							    	  #{participationId}
+							        , #{comment}
+							        , #{imageUrl}
+							        , #{likeCount}
+							        , #{createdBy}
+								    )
 	  </insert>
 	  
 
@@ -81,54 +84,67 @@
            </if>
     </select>
 	  
-	  <!-- 인증 단건 조회 -->
-	  <select id="selectById" 
-	  		  parameterType="int" 
-	  		  resultMap="CertMap">
-	  		  
-		    SELECT C.CERTIFICATION_ID AS CERTIFICATION_ID
-		         , C.CREATED_BY AS CREATED_BY	         
-		         , C.COMMENT AS COMMENT
-		         , C.IMAGE_URL AS IMAGE_URL
-		         , C.CREATED_DATE AS CREATED_DATE
-		         , C.LIKE_COUNT AS LIKE_COUNT
-		         , U.NICKNAME AS NICKNAME
-		         , U.LEVEL AS LEVEL
-		         , (SELECT COUNT(*) FROM CERT_COMMENT CC <!-- 댓글 수 -->
-            		 WHERE CC.CERTIFICATION_ID = C.CERTIFICATION_ID) as COMMENT_COUNT
-		      FROM CERTIFICATION C
-		      JOIN PARTICIPATION P
-		        ON C.PARTICIPATION_ID = P.PARTICIPATION_ID
-		      JOIN USER U 
-		        ON C.CREATED_BY = U.USER_ID
-		     WHERE C.CERTIFICATION_ID = #{certificationId}
-          ORDER BY C.CREATED_DATE DESC
-	  </select>
+	 <!-- 인증 단건 조회 -->
+	 <select id="selectById" 
+	 		  parameterType="int" 
+	 		  resultMap="CertMap">
+	 		  
+	    SELECT C.CERTIFICATION_ID AS CERTIFICATION_ID
+	         , C.CREATED_BY AS CREATED_BY	         
+	         , C.COMMENT AS COMMENT
+	         , C.IMAGE_URL AS IMAGE_URL
+	         , C.CREATED_DATE AS CREATED_DATE
+	         , C.LIKE_COUNT AS LIKE_COUNT
+	         , U.NICKNAME AS NICKNAME
+	         , U.LEVEL AS LEVEL
+	         , (SELECT COUNT(*) FROM CERT_COMMENT CC <!-- 댓글 수 -->
+	          		 WHERE CC.CERTIFICATION_ID = C.CERTIFICATION_ID) as COMMENT_COUNT
+	      FROM CERTIFICATION C
+	      JOIN PARTICIPATION P
+	        ON C.PARTICIPATION_ID = P.PARTICIPATION_ID
+	      JOIN USER U 
+	        ON C.CREATED_BY = U.USER_ID
+	     WHERE C.CERTIFICATION_ID = #{certificationId}
+	        ORDER BY C.CREATED_DATE DESC
+	 </select>
+	 
+	  <!--  챌린지 삭제시 S3에서 이미지 제거하기 위해 IMAGEURL 조회   -->
+	 <select id="findImageUrlsByChallengeId" 
+        parameterType="int" 
+        resultType="string">
+    SELECT C.IMAGE_URL
+      FROM CERTIFICATION C
+     INNER JOIN PARTICIPATION P 
+        ON C.PARTICIPATION_ID = P.PARTICIPATION_ID
+     WHERE P.CHALLENGE_ID = #{challengeId}
+       AND C.IMAGE_URL IS NOT NULL
+       AND C.IMAGE_URL != ''
+	</select>
 	  
 	  
 	  
-	  <!-- 인증 수정 (본인 인증일 떄) -->
-	  <update id="updateCertification"
-	  		  parameterType="map">
-	  		  
-	  	    UPDATE CERTIFICATION
-	  	       SET COMMENT = #{comment}
-	  	         , IMAGE_URL = #{imageUrl}
-	  	         , MODIFIED_DATE = NOW()
-	  	     WHERE CERTIFICATION_ID = #{certificationId}
-	  	       AND CREATED_BY = #{userId}
-	  </update>
+	 <!-- 인증 수정 (본인 인증일 떄) -->
+	 <update id="updateCertification"
+	 		  parameterType="map">
+ 		  
+ 	    UPDATE CERTIFICATION
+ 	       SET COMMENT = #{comment}
+ 	         , IMAGE_URL = #{imageUrl}
+ 	         , MODIFIED_DATE = NOW()
+ 	     WHERE CERTIFICATION_ID = #{certificationId}
+ 	       AND CREATED_BY = #{userId}
+	 </update>
 	  
 
  	  <!-- 인증 삭제 (본인 인증일 떄) -->	
-	  <delete id="deleteById" 
+	 <delete id="deleteById" 
 	  		  parameterType="map">
 	  		  
-		    DELETE 
-		      FROM CERTIFICATION
-		     WHERE CERTIFICATION_ID = #{certificationId}
-		       AND CREATED_BY = #{userId}
-  	  </delete>
+	    DELETE 
+	      FROM CERTIFICATION
+	     WHERE CERTIFICATION_ID = #{certificationId}
+	       AND CREATED_BY = #{userId}
+  	 </delete>
   	  
 
 

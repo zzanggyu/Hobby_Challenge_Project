@@ -33,7 +33,8 @@ public interface CertificationMapper {
   // 단건 인증 조회
   CertificationDTO selectById(@Param("certificationId") Integer certificationId);
   
-
+  // 챌린지 삭제시 S3에서 이미지 제거하기 위해 IMAGEURL 조회 
+  List<String> findImageUrlsByChallengeId(@Param("challengeId") Integer challengeId);
   
   // 인증 수정
   void updateCertification(@Param("certificationId") Integer certificationId,

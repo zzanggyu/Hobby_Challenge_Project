@@ -6,22 +6,23 @@
 
     <!-- 새 알림 생성 -->
     <insert id="insertNotification" parameterType="com.hobby.challenge.fobackend.entity.Notification">
-        INSERT 
-          INTO NOTIFICATION (USER_ID 
-            			 , CHALLENGE_ID 
-				         , PARTICIPATION_ID
-				         , CERT_ID
-				         , TYPE 
-				         , IS_READ
-				         , ACTOR_USER_ID
-		          ) VALUES (#{userId} 
-				         , #{challengeId} 
-				         , #{participationId} 
-				         , #{certId}
-				         , #{type}
-				         , 0
-				         , #{actorUserId}
-				         )
+        INSERT INTO NOTIFICATION (
+          	   USER_ID 
+   			 , CHALLENGE_ID 
+	         , PARTICIPATION_ID
+	         , CERT_ID
+	         , TYPE 
+	         , IS_READ
+	         , ACTOR_USER_ID
+		     ) VALUES (
+		       #{userId} 
+	         , #{challengeId} 
+	         , #{participationId} 
+	         , #{certId}
+	         , #{type}
+	         , 0
+	         , #{actorUserId}
+	         )
     </insert>
     
     <!-- ResultMap 정의 -->

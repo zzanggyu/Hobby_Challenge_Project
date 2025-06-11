@@ -21,6 +21,11 @@ public interface UserMapper {
     void updatePassword(@Param("userId") Integer userId, 
                         @Param("password") String password);
     
+    // 포인트 업데이트
+    void updatePointsAndLevel(@Param("userId") Integer userId, 
+            @Param("points") Integer points, 
+            @Param("level") Integer level);
+    
     // 계정 탈퇴 
     void deleteUser(@Param("userId") Integer userId);
 }

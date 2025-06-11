@@ -7,14 +7,18 @@
 	<insert id="insertParticipation"
         useGeneratedKeys="true"
         keyProperty="participationId">
-		INSERT INTO PARTICIPATION (USER_ID
-								,  CHALLENGE_ID
-								,  STATUS
-								,  ROLE)
-		VALUES (#{userId}
-			 ,  #{challengeId}
-			 ,  #{status}
-			 ,  #{role})
+		INSERT INTO PARTICIPATION (
+			   USER_ID
+			 , CHALLENGE_ID
+			 , STATUS
+			 , ROLE
+			 )
+			   VALUES (
+			   #{userId}
+			 , #{challengeId}
+			 , #{status}
+			 , #{role}
+			 )
 	</insert>
 	
 	<resultMap id="RequestMap"

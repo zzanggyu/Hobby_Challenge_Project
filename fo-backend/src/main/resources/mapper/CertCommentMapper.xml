@@ -10,13 +10,16 @@
   			useGeneratedKeys="true" 
   			keyProperty="commentId">
   	
-  		INSERT 
-  		  INTO CERT_COMMENT (CERTIFICATION_ID
-  		  				  , CREATED_BY 
-  		  				  , CONTENT)
-  		VALUES (#{certificationId}
-  		     , #{createdBy}
-  		     , #{content})
+  		INSERT INTO CERT_COMMENT (
+   					CERTIFICATION_ID
+  				  , CREATED_BY 
+  				  , CONTENT
+  				  )
+					VALUES (
+					#{certificationId}
+	  		      , #{createdBy}
+	  		      , #{content}
+	  		      )
   	</insert>
   	
   	<!-- 댓글 목록 조회 -->
