@@ -19,13 +19,14 @@
 			<!-- 텍스트 영역 개선 -->
 			<v-textarea
 				v-model="comment"
-				label="한 줄 메시지"
-				:rules="[rules.required, rules.maxLength]"
-				:counter="100"
+				label="한 줄 메시지 (선택)"
+				:rules="[rules.maxLength]"
+				:counter="50"
 				rows="4"
 				auto-grow
 				clearable
 				class="mb-4"
+				placeholder="오늘의 운동 한마디를 남겨보세요! (선택사항, 50자 이내)"
 			/>
 
 			<!-- 압축 정보 표시 추가 -->
@@ -132,8 +133,7 @@ const hasWritePermission = computed(() => {
 
 // 유효성 검사 규칙
 const rules = {
-	required: (v) => !!v || '메시지를 입력하세요.',
-	maxLength: (v) => (v && v.length <= 100) || '100자 이내로 입력하세요.',
+	maxLength: (v) => !v || v.length <= 50 || '50자 이내로 입력하세요.',
 	fileSize: (v) =>
 		!v || v.size <= 10 * 1024 * 1024 || '파일 크기는 10MB 이하여야 합니다.',
 }
@@ -141,10 +141,9 @@ const rules = {
 // 폼 유효성 체크
 const valid = computed(() => {
 	return (
-		comment.value &&
-		comment.value.length <= 100 &&
-		processedFile.value && //  processedFile로 변경
-		(!processedFile.value || processedFile.value.size <= 5 * 1024 * 1024) // 리사이징 후 5MB 체크
+		(!comment.value || comment.value.length <= 50) && // 빈값이거나 50자 이하
+		processedFile.value &&
+		(!processedFile.value || processedFile.value.size <= 5 * 1024 * 1024)
 	)
 })
 

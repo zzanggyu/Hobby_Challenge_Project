@@ -178,14 +178,79 @@ async function handleClick(notification) {
 		await store.markAsRead(notification.id)
 	}
 
-	// 관련 페이지로 이동
-	if (notification.targetType === 'challenge' && notification.targetId) {
-		router.push({
-			name: 'challenge-overview',
-			params: { id: notification.targetId },
-		})
+	// 알림 타입별 라우팅 처리
+	try {
+		// targetType과 targetId를 활용한 통합 라우팅
+		if (notification.targetType && notification.targetId) {
+			switch (notification.targetType) {
+				case 'challenge':
+					router.push({
+						name: 'challenge-overview',
+						params: { id: notification.targetId },
+					})
+					break
+
+				case 'certification':
+					// 댓글 알림인 경우 댓글 섹션으로 스크롤
+					const routeConfig = {
+						name: 'certification-detail',
+						params: { id: notification.targetId },
+					}
+					if (notification.type === 'NEW_COMMENT') {
+						routeConfig.hash = '#comments'
+					}
+					router.push(routeConfig)
+					break
+
+				case 'user':
+					router.push({
+						name: 'user-profile',
+						params: { id: notification.targetId },
+					})
+					break
+
+				case 'notice':
+					// TODO: 공지 알림 처리
+					router.push({ name: 'my-notifications' })
+					break
+
+				case 'report':
+					// TODO: 신고 알림 처리
+					router.push({ name: 'my-notifications' })
+					break
+
+				default:
+					console.warn(
+						`처리되지 않은 targetType: ${notification.targetType}`
+					)
+					router.push({ name: 'my-notifications' })
+					break
+			}
+		} else {
+			// targetType이나 targetId가 없는 경우 타입별 기본 처리
+			switch (notification.type) {
+				case 'SYSTEM_NOTICE':
+					// TODO: 시스템 공지 알림 처리
+					router.push({ name: 'my-notifications' })
+					break
+
+				case 'REPORTED':
+					// TODO: 신고 알림 처리
+					router.push({ name: 'my-notifications' })
+					break
+
+				default:
+					// 기타 모든 알림은 전체 알림 페이지로
+					console.warn(`처리되지 않은 알림 타입: ${notification.type}`)
+					router.push({ name: 'my-notifications' })
+					break
+			}
+		}
+	} catch (error) {
+		console.error('알림 클릭 처리 중 오류:', error)
+		// 오류 발생 시 안전하게 전체 알림 페이지로 이동
+		router.push({ name: 'my-notifications' })
 	}
-	// 다른 타입들도 필요시 추가
 }
 
 // 전체 보기로 이동

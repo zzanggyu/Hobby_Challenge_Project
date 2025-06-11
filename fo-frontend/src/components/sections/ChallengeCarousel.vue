@@ -40,6 +40,7 @@
 							class="color-card d-flex flex-column justify-space-between pa-6 text-white"
 							:style="{ background: item.bg || '#7e5bef' }"
 						>
+							<!--관심 등록 하트 토글버튼-->
 							<v-btn
 								icon
 								size="small"
@@ -106,7 +107,7 @@
 										>mdi-clock-outline</v-icon
 									>
 									<span class="text-caption">
-										{{ formatCreatedDate(item.createdDate) }}
+										{{ item.formattedCreatedDate }}
 									</span>
 								</div>
 
@@ -163,7 +164,7 @@ const router = useRouter()
 const props = defineProps({
 	challenges: { type: Array, required: true }, // 슬라이드로 보여줄 챌린지 배열
 	maxItems: { type: Number, default: 20 }, // 최대 보여줄 카드 개수
-	interval: { type: Number, default: 4000 }, // 자동 슬라이드 간격 4초
+	interval: { type: Number, default: 10000 }, // 자동 슬라이드 간격 4초
 	autoPlay: { type: Boolean, default: true }, // 자동재생 여부
 	categories: { type: Array, required: true },
 })
@@ -173,15 +174,24 @@ const heartLoading = ref(false)
 const detailLoading = ref(false)
 const targetId = ref(null)
 
-//  추가: 이벤트 emit 정의
+//  이벤트 emit 정의
 const emit = defineEmits(['favorite-updated'])
-// 카테고리명 반환 함수 (카테고리 데이터 구조에 맞게 수정)
+
+// 중복 호출 방지
+const enhancedChallenges = computed(() => {
+	return props.challenges.map((item) => ({
+		...item,
+		formattedCreatedDate: formatCreatedDate(item.createdDate),
+	}))
+})
+
+// 카테고리명 반환 함수
 function getCategoryName(categoryId) {
 	const found = props.categories.find((c) => c.categoryId === categoryId)
 	return found ? found.categoryName : '기타'
 }
 
-// 설명 글자 수 제한 함수 (카드 내 텍스트가 너무 길면 말줄임표로 처리)
+// 설명 글자 수 제한 함수
 function truncateDescription(description) {
 	if (!description) return ''
 	return description.length > 200
@@ -189,7 +199,7 @@ function truncateDescription(description) {
 		: description
 }
 
-// 날짜 포맷팅 함수 (챌린지 리스트와 동일하게)
+// 날짜 포맷팅 함수
 function formatDate(dateStr) {
 	if (!dateStr) return '-'
 	const date = new Date(dateStr)
@@ -202,23 +212,47 @@ function formatDate(dateStr) {
 // 생성일 포맷팅 함수
 function formatCreatedDate(dateStr) {
 	if (!dateStr) return '-'
-	const date = new Date(dateStr)
-	const now = new Date()
-	const diffDays = Math.floor((now - date) / (1000 * 60 * 60 * 24))
 
-	if (diffDays === 0) return '오늘 생성'
-	if (diffDays === 1) return '어제 생성'
-	if (diffDays < 7) return `${diffDays}일 전 생성`
-	if (diffDays < 30) return `${Math.floor(diffDays / 7)}주 전 생성`
-	return `${Math.floor(diffDays / 30)}개월 전 생성`
+	try {
+		// 생성 날짜
+		const createdDate = new Date(dateStr)
+
+		// 오늘 날짜
+		const today = new Date()
+
+		// 시간 부분 제거하고 날짜만 비교
+		const createdDateOnly = new Date(
+			createdDate.getFullYear(),
+			createdDate.getMonth(),
+			createdDate.getDate()
+		)
+		const todayDateOnly = new Date(
+			today.getFullYear(),
+			today.getMonth(),
+			today.getDate()
+		)
+
+		// 날짜 차이 계산
+		const diffTime = todayDateOnly.getTime() - createdDateOnly.getTime()
+		const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24))
+
+		if (diffDays === 0) return '오늘 생성'
+		if (diffDays === 1) return '어제 생성'
+		if (diffDays < 7) return `${diffDays}일 전 생성`
+		if (diffDays < 30) return `${Math.floor(diffDays / 7)}주 전 생성`
+		return `${Math.floor(diffDays / 30)}개월 전 생성`
+	} catch (error) {
+		console.error('날짜 형식 오류:', error, dateStr)
+		return '생성일 알 수 없음'
+	}
 }
 
-// 챌린지 상세 페이지로 이동하는 함수 - 오직 버튼을 통해서만 호출됨
+// 챌린지 상세 페이지로 이동하는 함수
 function goToDetail(challengeId) {
 	detailLoading.value = true
 	targetId.value = challengeId
 
-	// Vue Router를 사용해서 챌린지 상세 페이지로 이동
+	// 챌린지 상세 페이지로 이동
 	router.push({
 		name: 'challenge-overview', // 라우터에 정의된 챌린지 상세 페이지 이름
 		params: { id: challengeId }, // 챌린지 ID를 파라미터로 전달
@@ -269,7 +303,7 @@ async function toggleHeart(item) {
 			isFavorite: item.isFavorite,
 		})
 	} catch (err) {
-		console.error('내내 챌린지 토글 실패:', err)
+		console.error('내 챌린지 토글 실패:', err)
 
 		// 10개 제한 에러 처리
 		if (err.response?.data?.errorCode === 'FAVORITE_LIMIT_EXCEEDED') {
@@ -287,7 +321,9 @@ async function toggleHeart(item) {
 }
 
 // limited: 상위 maxItems개로 잘라서 실제 슬라이드로 보여줌
-const limited = computed(() => props.challenges.slice(0, props.maxItems))
+const limited = computed(() =>
+	enhancedChallenges.value.slice(0, props.maxItems)
+)
 const active = ref(0) // 현재 활성 인덱스(슬라이드 위치)
 const playing = ref(props.autoPlay) // 자동재생 on/off
 let timer = null // setInterval 핸들 저장
@@ -334,7 +370,6 @@ onBeforeUnmount(stopAuto)
 	border-radius: 30px;
 	overflow: hidden;
 	transition: transform 0.2s ease-in-out; /* 호버 효과를 위한 부드러운 전환 */
-	/* cursor: pointer; 제거 - 카드 전체가 클릭 가능하지 않음을 명시 */
 }
 
 .challenge-card:hover {

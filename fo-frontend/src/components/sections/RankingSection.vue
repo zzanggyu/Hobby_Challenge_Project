@@ -82,7 +82,7 @@
 						<!-- 레벨 표시 -->
 						<v-chip
 							size="small"
-							color="secondary"
+							:color="getLevelColor(user.level)"
 							variant="outlined"
 							class="mb-3"
 						>
@@ -109,7 +109,7 @@
 							<span class="text-body-2 ml-1">개</span>
 						</div>
 
-						<!-- 포인트 (있다면) -->
+						<!-- 포인트  -->
 						<div v-if="user.points" class="text-caption text-grey">
 							{{ user.points?.toLocaleString() }}P
 						</div>
@@ -181,14 +181,24 @@ function getRankCardClass(index) {
 	return 'rank-normal'
 }
 
+// 레벨별 색상
+function getLevelColor(level = 1) {
+	if (level >= 40) return 'black'
+	if (level >= 30) return 'purple'
+	if (level >= 25) return 'deepblue'
+	if (level >= 20) return 'blue'
+	if (level >= 15) return 'green'
+	if (level >= 10) return 'yellow'
+	if (level >= 5) return 'orange'
+	if (level >= 2) return 'red'
+	return 'grey'
+}
 // 데이터 로드
 async function loadRankings() {
 	loading.value = true
 	try {
 		rankings.value = await fetchUserRankings(9) // 상위 9명만 표시
-		console.log('사용자 랭킹 데이터:', rankings.value)
 	} catch (error) {
-		console.error('랭킹 로드 실패:', error)
 		rankings.value = []
 	} finally {
 		loading.value = false

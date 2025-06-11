@@ -363,8 +363,8 @@ const requestingCount = computed(() => {
 // 기존 함수들은 그대로 유지...
 function truncateDescription(description) {
 	if (!description) return ''
-	return description.length > 200
-		? description.substring(0, 200) + '...'
+	return description.length > 100
+		? description.substring(0, 100) + '...'
 		: description
 }
 

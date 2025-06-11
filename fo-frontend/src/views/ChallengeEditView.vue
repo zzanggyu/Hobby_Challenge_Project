@@ -1,120 +1,141 @@
 <template>
 	<v-container class="pa-6" fluid>
 		<v-card class="mx-auto" max-width="800" elevation="4">
-			<h2 class="text-h6 font-weight-bold mb-6">챌린지 수정</h2>
-
-			<v-form ref="form" v-model="valid" @submit.prevent="onSubmit">
-				<!-- 제목 -->
-				<v-text-field
-					v-model="model.title"
-					:rules="rules.title"
-					label="제목"
-					required
-					clearable
-					class="mb-4"
-				/>
-
-				<!-- 설명 -->
-				<v-textarea
-					v-model="model.description"
-					:rules="rules.description"
-					label="설명"
-					clearable
-					h
-					min-rows="10"
-					max-rows="10"
-					rows="10"
-					counter="500"
-					class="mb-4"
-				/>
-
-				<!-- 기간 -->
-				<div class="d-flex flex-column flex-sm-row gap-4 mb-4">
-					<v-menu
-						v-model="startMenu"
-						:close-on-content-click="false"
-						transition="scale-transition"
-						offset-y
-					>
-						<template #activator="{ props }">
+			<!-- 카드 헤더 -->
+			<v-card-title class="headline grey--text text--darken-1">
+				<v-icon class="mr-3" size="36" color="orange">mdi-pencil</v-icon>
+				챌린지 수정
+			</v-card-title>
+			<v-divider></v-divider>
+			<v-card-text>
+				<v-form ref="form" v-model="valid" @submit.prevent="onSubmit">
+					<v-row dense>
+						<!-- 제목 -->
+						<v-col cols="12" md="6">
 							<v-text-field
-								v-model="startDateFormatted"
-								:rules="rules.date"
-								label="시작일"
-								readonly
-								v-bind="props"
+								v-model="model.title"
+								:rules="rules.title"
+								label="챌린지 제목"
 								outlined
 								dense
 								required
+								clearable
 							/>
-						</template>
-						<v-date-picker
-							v-model="model.startDate"
-							:min="today"
-							@update:model-value="startMenu = false"
-						/>
-					</v-menu>
-					<v-menu
-						v-model="endMenu"
-						:close-on-content-click="false"
-						transition="scale-transition"
-						offset-y
-					>
-						<template #activator="{ props }">
-							<v-text-field
-								v-model="endDateFormatted"
-								:rules="rules.date"
-								label="종료일 (최소 일주일 뒤)"
-								readonly
-								v-bind="props"
+						</v-col>
+
+						<!-- 카테고리 -->
+						<v-col cols="12" md="6">
+							<v-select
+								v-model="model.categoryId"
+								:items="categories"
+								:rules="rules.categoryId"
+								item-title="categoryName"
+								item-value="categoryId"
+								label="카테고리"
 								outlined
 								dense
 								required
+								clearable
+								placeholder="카테고리를 선택하세요"
 							/>
-						</template>
-						<v-date-picker
-							v-model="model.endDate"
-							:min="minEndDate"
-							@update:model-value="endMenu = false"
-						/>
-					</v-menu>
-				</div>
+						</v-col>
 
-				<!-- 카테고리 -->
-				<v-select
-					v-model="model.categoryId"
-					:items="categories"
-					item-title="categoryName"
-					item-value="categoryId"
-					label="카테고리"
-					:rules="rules.category"
-					clearable
-					placeholder="카테고리를 선택하세요"
-					required
-					class="mb-6"
-				/>
+						<!-- 설명 -->
+						<v-col cols="12">
+							<v-textarea
+								v-model="model.description"
+								:rules="rules.description"
+								label="설명"
+								clearable
+								min-rows="10"
+								max-rows="10"
+								rows="10"
+								counter="500"
+								class="mb-4"
+							/>
+						</v-col>
 
-				<!-- 액션 버튼 -->
-				<div class="d-flex justify-end mt-6">
-					<v-btn variant="outlined" class="mr-2" @click="router.back()"
-						>취소</v-btn
-					>
-					<v-btn
-						:loading="loading"
-						type="submit"
-						:disabled="
-							!model.title ||
-							!model.description ||
-							!model.startDate ||
-							!model.endDate ||
-							!model.categoryId
-						"
-						color="primary"
-					>
-						저장
-					</v-btn>
-				</div>
-			</v-form>
+						<!-- 시작일 -->
+						<v-col cols="12" md="6">
+							<v-menu
+								v-model="startMenu"
+								:close-on-content-click="false"
+								transition="scale-transition"
+								offset-y
+							>
+								<template #activator="{ props }">
+									<v-text-field
+										v-model="startDateFormatted"
+										:rules="rules.startDate"
+										label="시작일"
+										readonly
+										v-bind="props"
+										outlined
+										dense
+										required
+									/>
+								</template>
+								<v-date-picker
+									v-model="model.startDate"
+									:min="today"
+									@update:model-value="startMenu = false"
+								/>
+							</v-menu>
+						</v-col>
+
+						<!-- 종료일 -->
+						<v-col cols="12" md="6">
+							<v-menu
+								v-model="endMenu"
+								:close-on-content-click="false"
+								transition="scale-transition"
+								offset-y
+							>
+								<template #activator="{ props }">
+									<v-text-field
+										v-model="endDateFormatted"
+										:rules="rules.endDate"
+										label="종료일 (최소 일주일 뒤)"
+										readonly
+										v-bind="props"
+										outlined
+										dense
+										required
+									/>
+								</template>
+								<v-date-picker
+									v-model="model.endDate"
+									:min="minEndDate"
+									@update:model-value="endMenu = false"
+								/>
+							</v-menu>
+						</v-col>
+					</v-row>
+				</v-form>
+			</v-card-text>
+
+			<!-- 카드 액션: 버튼 우측 정렬 -->
+			<v-divider></v-divider>
+			<v-card-actions>
+				<v-spacer></v-spacer>
+				<v-btn variant="outlined" class="mr-2" @click="router.back()">
+					취소
+				</v-btn>
+				<v-btn
+					color="primary"
+					:loading="loading"
+					:disabled="
+						!model.title ||
+						!model.description ||
+						!model.categoryId ||
+						!model.startDate ||
+						!model.endDate
+					"
+					@click="onSubmit"
+				>
+					수정하기
+				</v-btn>
+			</v-card-actions>
 		</v-card>
 	</v-container>
 </template>
@@ -190,10 +211,10 @@ const rules = {
 	endDate: [
 		(v) => !!v || '종료일을 선택하세요.',
 		(v) =>
-			!startDate.value ||
+			!model.startDate ||
 			!v ||
-			(new Date(v) - new Date(startDate.value)) / (1000 * 60 * 60 * 24) >=
-				7 ||
+			(new Date(v) - new Date(model.startDate)) / (1000 * 60 * 60 * 24) >=
+				6 ||
 			'종료일은 시작일로부터 최소 일주일 이상 뒤여야 합니다.',
 	],
 }

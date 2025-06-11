@@ -50,7 +50,7 @@
 
 			<!-- 수정 모드일 때 -->
 			<div v-if="editing">
-				<!-- 🆕 수정 모드 이미지 미리보기 -->
+				<!--  수정 모드 이미지 미리보기 -->
 				<div v-if="editing" class="mb-4">
 					<h4 class="text-subtitle-1 mb-3">
 						{{
@@ -102,7 +102,7 @@
 						:key="`file-input-${editing}`"
 						:model-value="editedImageFile"
 						@update:model-value="onImageChange"
-						label="새 이미지 선택 (선택사항)"
+						label="새 이미지 선택 (선택)"
 						accept="image/*"
 						prepend-icon="mdi-camera-plus"
 						show-size
@@ -120,7 +120,6 @@
 								files.type?.startsWith('image/') ||
 								'이미지 파일만 업로드 가능합니다.',
 						]"
-						hint="JPG, PNG, GIF → 자동으로 800x600 JPEG로 최적화됩니다 (10MB까지 업로드 가능)"
 						persistent-hint
 					>
 						<template v-slot:prepend>
@@ -138,7 +137,7 @@
 										? 'mdi-cog-sync'
 										: editedImageFile
 										? 'mdi-check-circle'
-										: 'mdi-camera-plus'
+										: 'mdi-check-circle'
 								}}
 							</v-icon>
 						</template>
@@ -148,12 +147,16 @@
 				<!-- 코멘트 수정 -->
 				<v-textarea
 					v-model="editedComment"
-					label="코멘트 수정"
+					label="코멘트 수정 (선택)"
 					outlined
 					rows="3"
-					counter="500"
-					maxlength="500"
+					counter="50"
+					maxlength="50"
 					class="mb-3"
+					placeholder="간단한 메시지를 입력하세요 (선택사항, 50자 이내)"
+					:rules="[
+						(v) => !v || v.length <= 50 || '50자 이내로 입력하세요',
+					]"
 				/>
 				<v-btn small color="primary" @click="saveEdit">저장</v-btn>
 				<v-btn small @click="cancelEdit">취소</v-btn>
@@ -163,11 +166,18 @@
 			</div>
 
 			<!-- 2) 좋아요 -->
-			<v-btn icon @click="toggleLike">
-				<v-icon :color="liked ? 'red' : 'grey'">mdi-heart</v-icon>
-			</v-btn>
-			<span>{{ cert.likeCount }} likes</span>
-
+			<div class="d-flex justify-end mb-4">
+				<div class="d-flex flex-column align-center">
+					<v-btn icon @click="toggleLike" class="mb-1" size="small">
+						<v-icon :color="liked ? 'red' : 'grey'" size="20"
+							>mdi-heart</v-icon
+						>
+					</v-btn>
+					<span class="text-caption text-center">
+						좋아요 <strong>{{ cert.likeCount }}</strong>
+					</span>
+				</div>
+			</div>
 			<v-divider class="my-4" />
 
 			<!-- 3) 댓글 리스트 -->
@@ -188,6 +198,11 @@
 							max-rows="5"
 							:counter="100"
 							maxlength="100"
+							:rules="[
+								(v) => !!v?.trim() || '댓글을 입력하세요.',
+								(v) =>
+									!v || v.length <= 100 || '100자 이내로 입력하세요',
+							]"
 							style="min-width: 500px"
 						/>
 						<v-btn
@@ -247,8 +262,10 @@
 				max-rows="5"
 				:counter="100"
 				maxlength="100"
-				@keyup.enter="postComment"
-				:rules="[(v) => !v || v.length <= 100 || '100자 이내로 입력하세요']"
+				:rules="[
+					(v) => !!v?.trim() || '댓글을 입력하세요.',
+					(v) => !v || v.length <= 100 || '100자 이내로 입력하세요',
+				]"
 				dense
 			>
 				<template v-slot:append-inner>
@@ -305,7 +322,7 @@ const savingEdit = ref(false)
 // 이미지 확대 상태
 const showFullImage = ref(false)
 
-const emit = defineEmits(['close', 'deleted'])
+const emit = defineEmits(['close', 'deleted', 'updated'])
 
 // 데이터 로딩
 async function load() {
@@ -338,6 +355,10 @@ async function toggleLike() {
 		)
 		liked.value = result
 		cert.value.likeCount += result ? 1 : -1
+		// emit('updated', {
+		// 	certificationId: props.certificationId,
+		// 	updatedData: { likeCount: cert.value.likeCount },
+		// })
 	} catch (e) {
 		alert('좋아요 처리 중 오류가 발생했습니다.')
 	}
@@ -345,10 +366,24 @@ async function toggleLike() {
 
 // 댓글 등록
 async function postComment() {
-	if (!newComment.value) return
-	await addComment(props.certificationId, newComment.value)
-	newComment.value = ''
-	comments.value = await fetchComments(props.certificationId)
+	const trimmedComment = newComment.value?.trim()
+	if (!trimmedComment) {
+		alert('댓글을 입력하세요.')
+		return
+	}
+
+	try {
+		await addComment(props.certificationId, trimmedComment)
+		newComment.value = ''
+		await load() // 댓글 목록 새로고침
+	} catch (error) {
+		console.error('댓글 등록 실패:', error)
+		alert('댓글 등록에 실패했습니다.')
+	}
+	// emit('updated', {
+	// 	certificationId: props.certificationId,
+	// 	updatedData: { commentCount: comments.value.length },
+	// })
 }
 
 // 댓글 수정 시작
@@ -360,6 +395,11 @@ function startEditComment(c) {
 
 // 댓글 수정
 async function saveEditedComment() {
+	const trimmedContent = editedContent.value?.trim()
+	if (!trimmedContent) {
+		alert('댓글을 입력하세요.')
+		return
+	}
 	if (!editedContent.value) return
 
 	console.log('댓글 수정 데이터 확인:', {
@@ -374,6 +414,10 @@ async function saveEditedComment() {
 	)
 	editingCommentId.value = null
 	comments.value = await fetchComments(props.certificationId)
+	// emit('updated', {
+	// 	certificationId: props.certificationId,
+	// 	updatedData: { commentCount: comments.value.length },
+	// })
 }
 
 // 댓글 삭제
@@ -381,6 +425,10 @@ async function removeComment(commentId) {
 	if (!confirm('댓글을 삭제하시겠습니까?')) return
 	await deleteComment(props.certificationId, commentId)
 	comments.value = await fetchComments(props.certificationId)
+	// emit('updated', {
+	// 	certificationId: props.certificationId,
+	// 	updatedData: { commentCount: comments.value.length },
+	// })
 }
 
 // 인증 삭제
@@ -443,7 +491,7 @@ async function onImageChange(files) {
 		imageProcessing.value = true
 
 		//  원본 이미지 정보 확인
-		console.log(' 원본 이미지 분석 중...')
+
 		const originalInfo = await getImageInfo(selectedFile)
 
 		console.log(' 원본 정보:', originalInfo)
@@ -451,9 +499,9 @@ async function onImageChange(files) {
 		// 이미지 리사이징 수행
 		console.log(' 이미지 리사이징 시작...')
 		const resizedFile = await resizeImage(selectedFile, {
-			maxWidth: 800, // 챌린지 인증에 적합한 크기
+			maxWidth: 800,
 			maxHeight: 600,
-			quality: 0.85, // 85% 품질 (Instagram 수준)
+			quality: 0.85,
 			format: 'jpeg', // 호환성을 위해 JPEG 통일
 		})
 
@@ -518,24 +566,14 @@ function cancelEdit() {
 // 인증 게시글 편집
 // 인증 수정 저장 - 이미지 + 코멘트
 async function saveEdit() {
-	if (!editedComment.value.trim()) {
-		alert('코멘트를 입력해주세요.')
+	// 50자 초과시에만 체크
+	if (editedComment.value && editedComment.value.length > 50) {
+		alert('코멘트는 50자 이내로 입력하세요.')
 		return
 	}
-
 	savingEdit.value = true
 
 	try {
-		console.log('=== 인증 수정 시작 ===')
-		console.log('Props:', {
-			challengeId: props.challengeId,
-			certificationId: props.certificationId,
-		})
-		console.log('수정 내용:', {
-			comment: editedComment.value,
-			hasNewImage: !!editedImageFile.value,
-		})
-
 		const formData = new FormData()
 		formData.append('comment', editedComment.value)
 
@@ -545,7 +583,7 @@ async function saveEdit() {
 		}
 
 		// FormData 내용 확인
-		console.log('FormData 내용:')
+
 		for (let [key, value] of formData.entries()) {
 			console.log(`${key}:`, value)
 		}
@@ -562,16 +600,13 @@ async function saveEdit() {
 		editing.value = false
 		editedImageFile.value = null
 		editedImagePreview.value = null
-
-		console.log('=== 인증 수정 완료 ===')
-		console.log('업데이트된 인증:', updatedCert)
+		emit('updated', {
+			certificationId: props.certificationId,
+			updatedData: updatedCert,
+		})
 
 		alert('인증이 성공적으로 수정되었습니다!')
 	} catch (error) {
-		console.error('=== 인증 수정 실패 ===')
-		console.error('에러:', error)
-		console.error('응답:', error.response?.data)
-
 		const errorMessage =
 			error.response?.data?.message || '인증 수정에 실패했습니다.'
 		alert(errorMessage)

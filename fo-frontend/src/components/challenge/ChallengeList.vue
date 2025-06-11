@@ -427,7 +427,7 @@ const selectedCategory = ref(null)
 const myParts = ref(new Set())
 const myPartsMap = ref({})
 
-// 검색 수행 여부 상태태
+// 검색 수행 여부 상태
 const isSearched = ref(false)
 
 // 카테고리 변경시에만 자동 검색 (검색어는 수동)
@@ -453,8 +453,8 @@ function formatCount(count) {
 // 설명 글자 수 제한
 function truncateDescription(description) {
 	if (!description) return ''
-	return description.length > 200
-		? description.substring(0, 200) + '...'
+	return description.length > 100
+		? description.substring(0, 100) + '...'
 		: description
 }
 

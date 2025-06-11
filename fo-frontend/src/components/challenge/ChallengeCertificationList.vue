@@ -128,10 +128,23 @@
 											</v-chip>
 										</div>
 
-										<span
-											><v-icon>mdi-account</v-icon>
-											{{ log.nickname }}</span
-										>
+										<div class="d-flex align-center">
+											<!-- 레벨  -->
+											<v-chip
+												size="x-small"
+												:color="getLevelColor(log.level || 1)"
+												class="mr-2"
+											>
+												<v-icon size="10" left>mdi-star</v-icon>
+												Lv.{{ log.level || 1 }}
+											</v-chip>
+
+											<!-- 닉네임 -->
+											<div>
+												<v-icon size="16">mdi-account</v-icon>
+												{{ log.nickname }}
+											</div>
+										</div>
 									</div>
 								</v-card-text>
 								<div v-if="!canViewDetail" class="access-overlay">
@@ -181,6 +194,7 @@
 				:challengeId="props.challengeId"
 				@close="dialog = false"
 				@deleted="onDeleted"
+				@updated="onUpdated"
 			/>
 		</v-dialog>
 	</v-container>
@@ -270,12 +284,36 @@ function formatTime(datetime) {
 	return format(parseISO(datetime), 'a h:mm', { locale: ko })
 }
 
+// 레벨별 색상
+function getLevelColor(level) {
+	if (level >= 40) return 'black'
+	if (level >= 30) return 'purple'
+	if (level >= 25) return 'deepblue'
+	if (level >= 20) return 'blue'
+	if (level >= 15) return 'green'
+	if (level >= 10) return 'yellow'
+	if (level >= 5) return 'orange'
+	if (level >= 2) return 'red'
+	return 'grey'
+}
+
+//  다이얼로그 닫힐 때 새로고침
+watch(dialog, (newValue, oldValue) => {
+	console.log('다이얼로그 상태 변경:', { oldValue, newValue })
+
+	if (oldValue === true && newValue === false) {
+		console.log('다이얼로그 닫힘 - 목록 새로고침')
+		fetchLogs()
+	}
+})
+
+// 다이얼로그
 function openDialog(certId) {
 	selectedCertId.value = certId
 	dialog.value = true
 }
 
-// 🆕 상세보기 권한 계산
+//  상세보기 권한 계산
 const canViewDetail = computed(() => {
 	// 본인 인증만 보는 경우는 항상 허용
 	if (props.onlyMine) return true
@@ -284,7 +322,7 @@ const canViewDetail = computed(() => {
 	return props.canWritePermission
 })
 
-// 🆕 접근 거부 알림
+//  접근 거부 알림
 function showAccessDenied() {
 	alert('챌린지에 참여한 후 인증 상세를 볼 수 있습니다.')
 }
@@ -317,6 +355,22 @@ async function fetchLogs() {
 	}
 }
 
+// 이벤트 핸들러들
+// 삭제 시
+function onDeleted(certId) {
+	// 삭제 후 현재 페이지를 다시 로드
+	fetchLogs()
+	dialog.value = false
+}
+// 수정 시
+async function onUpdated(eventData) {
+	try {
+		await fetchLogs()
+	} catch (error) {
+		console.error(' 목록 새로고침 실패:', error)
+	}
+}
+
 onMounted(() => {
 	fetchLogs()
 })
@@ -344,13 +398,6 @@ watch(pageSize, () => {
 
 // 정렬 변경 시에는 현재 페이지 데이터만 재정렬 (서버 요청 X)
 // 만약 서버에서 정렬을 처리하려면 fetchLogs() 호출
-
-// 이벤트 핸들러들
-function onDeleted(certId) {
-	// 삭제 후 현재 페이지를 다시 로드
-	fetchLogs()
-	dialog.value = false
-}
 </script>
 
 <style scoped>

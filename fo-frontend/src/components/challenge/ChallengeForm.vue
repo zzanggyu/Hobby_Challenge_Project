@@ -221,7 +221,7 @@ const rules = {
 			!startDate.value ||
 			!v ||
 			(new Date(v) - new Date(startDate.value)) / (1000 * 60 * 60 * 24) >=
-				7 ||
+				6 ||
 			'종료일은 시작일로부터 최소 일주일 이상 뒤여야 합니다.',
 	],
 }

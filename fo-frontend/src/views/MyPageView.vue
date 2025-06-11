@@ -102,10 +102,14 @@
 								</template>
 								<v-list-item-title>레벨 및 경험치</v-list-item-title>
 								<v-list-item-subtitle>
-									<v-chip small color="primary" class="mr-2">
+									<v-chip
+										small
+										:color="getLevelColor(userInfo.level)"
+										class="mr-2"
+									>
 										Lv.{{ userInfo.level }}
 									</v-chip>
-									<v-chip small color="secondary">
+									<v-chip small :color="getLevelColor(userInfo.level)">
 										{{ userInfo.points }} EXP
 									</v-chip>
 								</v-list-item-subtitle>
@@ -241,7 +245,7 @@
 				<v-card-text class="pb-0">
 					<v-alert type="error" variant="tonal" class="mb-4">
 						<div class="d-flex align-center">
-							<v-icon class="mr-2">mdi-database-remove</v-icon>
+							<!-- <v-icon class="mr-2">mdi-database-remove</v-icon> -->
 							<div>
 								<strong>경고!</strong><br />
 								탈퇴 후에는 데이터를 복구할 수 없습니다.
@@ -350,6 +354,9 @@ const passwordRules = [
 	(v) =>
 		/^(?=.*[A-Za-z])(?=.*\d)(?=.*[!@#$%^&*]).{8,20}$/.test(v) ||
 		'영문, 숫자, 특수문자를 포함한 8~20자여야 합니다.',
+	(v) =>
+		v !== passwordData.value.currentPassword ||
+		'새 비밀번호는 현재 비밀번호와 달라야 합니다.',
 ]
 
 const confirmPasswordRules = [
@@ -401,7 +408,7 @@ async function saveNickname() {
 	}
 }
 
-// 🆕 비밀번호 폼 초기화 함수 추가
+//  비밀번호 폼 초기화 함수
 function resetPasswordForm() {
 	passwordData.value = {
 		currentPassword: '',
@@ -448,8 +455,13 @@ async function deleteAccount() {
 
 	withdrawing.value = true
 	try {
-		await apiDeleteAccount(withdrawPassword.value)
-		alert('회원 탈퇴가 완료되었습니다.')
+		//확인
+		if (confirm('정말 탈퇴하시겠습니까??') == true) {
+			await apiDeleteAccount(withdrawPassword.value)
+			alert('회원 탈퇴가 완료되었습니다.')
+		} else {
+			return false //취소
+		}
 
 		// 로그아웃 처리
 		await auth.logout()
@@ -464,6 +476,19 @@ async function deleteAccount() {
 		withdrawPassword.value = ''
 		showWithdrawPassword.value = false
 	}
+}
+
+// 레벨별 색상
+function getLevelColor(level) {
+	if (level >= 40) return 'black'
+	if (level >= 30) return 'purple'
+	if (level >= 25) return 'deepblue'
+	if (level >= 20) return 'blue'
+	if (level >= 15) return 'green'
+	if (level >= 10) return 'yellow'
+	if (level >= 5) return 'orange'
+	if (level >= 2) return 'red'
+	return 'grey'
 }
 
 onMounted(() => {

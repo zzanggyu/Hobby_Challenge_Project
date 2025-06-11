@@ -2,9 +2,8 @@
 	<!-- 로고 + 이름 -->
 	<v-app-bar app color="white" height="80" elevation="4">
 		<v-toolbar-title>
-			<!-- 요소들을 분리해서 배치 -->
 			<div class="d-flex align-center">
-				<!-- 1. 로고만 있는 버튼 -->
+				<!--  로고만 있는 버튼 -->
 				<v-btn
 					variant="text"
 					height="80"
@@ -15,7 +14,7 @@
 					<img src="@/assets/logo.png" alt="로고" height="85" width="90" />
 				</v-btn>
 
-				<!-- 2. 환영 메시지 -->
+				<!--  환영 메시지 -->
 				<div
 					v-if="auth.isAuthenticated"
 					class="welcome-message-simple ml-3 mr-4"
@@ -141,7 +140,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import NotificationBell from '@/components/layout/NotificationBell.vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
@@ -152,18 +151,20 @@ import { getMyParticipations } from '@/services/participationService'
 const router = useRouter()
 const auth = useAuthStore()
 
-// 🆕 활성 챌린지 상태 관리
+//  활성 챌린지 상태 관리
 const activeChallenge = ref(null)
 
-// 🆕 현재 진행중인 챌린지가 있는지 확인
+//  현재 진행중인 챌린지가 있는지 확인
 const hasActiveChallenge = computed(() => {
 	return activeChallenge.value !== null
 })
 
-// 🆕 내 참여중인 챌린지 확인
+//  내 참여중인 챌린지 확인
 async function checkActiveChallenge() {
-	if (!auth.isAuthenticated || !auth.user?.userId) return
-
+	if (!auth.isAuthenticated || !auth.user?.userId) {
+		activeChallenge.value = null
+		return
+	}
 	try {
 		const participations = await getMyParticipations(auth.user.userId)
 		// APPROVED 상태이거나 OWNER 역할인 챌린지 찾기
@@ -176,6 +177,22 @@ async function checkActiveChallenge() {
 		activeChallenge.value = null
 	}
 }
+
+watch(
+	() => auth.isAuthenticated,
+	async (newVal, oldVal) => {
+		console.log('Header - 로그인 상태 변경:', oldVal, '→', newVal)
+
+		if (newVal) {
+			// 로그인 시: 활성 챌린지 확인
+			await checkActiveChallenge()
+		} else {
+			// 로그아웃 시: 활성 챌린지 초기화
+			activeChallenge.value = null
+		}
+	},
+	{ immediate: false }
+)
 
 // 페이지 이동 함수들
 function goHome() {
@@ -194,7 +211,7 @@ function goFavoriteChallenge() {
 	router.push('/challenges/favorite')
 }
 
-// 🆕 진행중인 챌린지로 이동
+//  진행중인 챌린지로 이동
 function goActiveChallenge() {
 	if (activeChallenge.value) {
 		router.push({
@@ -217,7 +234,7 @@ async function onLogout() {
 	}
 	// 클라이언트 쪽 auth store 초기화
 	auth.$patch({ isAuthenticated: false, user: null })
-	notificationStore.clearNotifications()
+
 	activeChallenge.value = null //  활성 챌린지도 초기화
 	router.push('/')
 }
@@ -226,14 +243,14 @@ function goToSignup() {
 	router.push('/signup')
 }
 
-// 🆕 컴포넌트 마운트 시 활성 챌린지 확인
+//  컴포넌트 마운트 시 활성 챌린지 확인
 onMounted(() => {
 	if (auth.isAuthenticated) {
 		checkActiveChallenge()
 	}
 })
 
-// 🆕 로그인 상태 변화 감지해서 활성 챌린지 업데이트
+//  로그인 상태 변화 감지해서 활성 챌린지 업데이트
 // (만약 필요하다면 watch로 auth.isAuthenticated 감시)
 </script>
 
@@ -258,7 +275,7 @@ onMounted(() => {
 	color: #7b1fa2;
 }
 
-/* 🆕 드롭다운 메뉴 스타일 */
+/*  드롭다운 메뉴 스타일 */
 .dropdown-btn {
 	transition: all 0.2s ease;
 }
