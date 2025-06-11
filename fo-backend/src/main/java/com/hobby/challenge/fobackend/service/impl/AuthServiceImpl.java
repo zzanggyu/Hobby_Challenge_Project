@@ -67,11 +67,12 @@ public class AuthServiceImpl implements AuthService{
 		    throw new CustomException(ErrorCode.DUPLICATE_EMAIL);
 		}
 		
+		// 닉네임 중복 확인
 	    if (authMapper.findByNickname(dto.getNickname()) != null) {
 	        throw new CustomException(ErrorCode.DUPLICATE_NICKNAME);
 	    }
         
-        // 1) DTO의 birthDate(String) → LocalDate로 파싱
+        // DTO의 birthDate(String) → LocalDate로 파싱
         LocalDate birth = LocalDate.parse(dto.getBirthDate(), DateTimeFormatter.ofPattern("yyyy.MM.dd"));
         if (birth.isAfter(LocalDate.now())) {
             throw new CustomException(ErrorCode.INVALID_BIRTHDATE);
@@ -113,25 +114,25 @@ public class AuthServiceImpl implements AuthService{
             throw new CustomException(ErrorCode.USER_SUSPENDED, "정지된 계정입니다. 관리자에게 문의하세요.");
         }
         
-        // 1. 인증 
+        // 인증 
         Authentication auth = authManager.authenticate(
             new UsernamePasswordAuthenticationToken(dto.getLoginId(), dto.getPassword()));
         SecurityContextHolder.getContext().setAuthentication(auth);
 
-        // 2. 엑세스 토큰 생성 + 쿠키 세팅
+        // 엑세스 토큰 생성 + 쿠키 세팅
         String accessToken = tokenProvider.createToken(dto.getLoginId());
         ResponseCookie cookie = ResponseCookie.from("token", accessToken)
             .httpOnly(true)
             .secure(false)  // HTTPS 아닌 로컬에선 이 옵션 때문에 브라우저가 보내지 않음 ,개발 중에는 false, 운영(HTTPS) 시 true
             .path("/")
             .maxAge(jwtExpirationMs/1000)
-            .sameSite("Lax") // cross-site 허용
+            .sameSite("Lax") // cross-site 허용 'strict'가 더 센 보안 CSRF 공격 방지 
             .build();
         response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
         
         // Refresh Token 생성
         String refreshToken = tokenProvider.createRefreshToken(dto.getLoginId());
-        // Redis에 (key=refresh:{token}, value=loginId) TTL 설정
+        // Redis에 (key=refresh:{token}, value=loginId) TTL 설정 (Time To Live)
         redisTemplate.opsForValue()
                      .set("refresh:" + refreshToken, dto.getLoginId(),
                           jwtRefreshExpirationMs, TimeUnit.MILLISECONDS);
@@ -146,7 +147,7 @@ public class AuthServiceImpl implements AuthService{
                 .build()
                 .toString());
 
-        // 3. 로그인 이력
+        //  로그인 이력
         loginHistoryService.recordLoginHistory(
             LoginHistoryDTO.builder()
                 .userId(user.getUserId())
@@ -154,7 +155,7 @@ public class AuthServiceImpl implements AuthService{
                 .build()
         );
         
-        // 4) 응답 DTO
+        // 응답 DTO
         LoginResponseDTO res = LoginResponseDTO.builder()
             .userId(user.getUserId())
             .nickname(user.getNickname())

@@ -14,7 +14,7 @@ public interface CertificationMapper {
   // 인증 등록
   void insertCertification(Certification certification);
 	
-  // 페이징된 인증 조회 (기존 findByChallenge 대체)
+  // 페이징된 인증 조회 
   List<CertificationDTO> findByChallengeWithPaging(
       @Param("challengeId") Integer challengeId,
       @Param("userId") Integer userId,

@@ -75,11 +75,16 @@ public class UserServiceImpl implements UserService {
             if (points >= totalRequiredPoints) {
                 level++;
             } else {
-                break;
+                return level;
             }
         }
         
-        return level;
+        // 레벨 51 이후부터는 500P씩 고정 
+        int remainingPoints = points - totalRequiredPoints;
+        int additionalLevels = remainingPoints / 500;
+        
+        return level + additionalLevels;  // 레벨 52 이상
+
     }
     
     // 포인트 추가 및 레벨 업데이트
@@ -132,6 +137,12 @@ public class UserServiceImpl implements UserService {
         if (!passwordEncoder.matches(dto.getCurrentPassword(), user.getPassword())) {
             throw new CustomException(ErrorCode.INVALID_PASSWORD, 
                 "현재 비밀번호가 일치하지 않습니다.");
+        }
+        
+        // 새 비밀번호가 기존과 같은지 확인
+        if (passwordEncoder.matches(dto.getNewPassword(), user.getPassword())) {
+            throw new CustomException(ErrorCode.SAME_PASSWORD, 
+                "새 비밀번호는 현재 비밀번호와 달라야 합니다.");
         }
         
         // 새 비밀번호로 변경

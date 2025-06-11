@@ -52,5 +52,14 @@
           FROM POINT_HISTORY
          WHERE USER_ID = #{userId}
     </select>
+    
+    <!-- 특정 타입의 포인트를 지급 받았는지 오늘 날짜로 확인 -->
+    <select id="hasReceivedPointsToday" resultType="boolean">
+	    SELECT COUNT(*) > 0
+	      FROM POINT_HISTORY
+	     WHERE USER_ID = #{userId}
+	       AND TYPE = #{type}
+	       AND DATE(CREATED_DATE) = CURDATE()
+	</select>
 
 </mapper>

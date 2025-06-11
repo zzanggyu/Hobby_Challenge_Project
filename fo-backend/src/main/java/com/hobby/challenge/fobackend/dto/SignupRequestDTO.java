@@ -41,9 +41,13 @@ public class SignupRequestDTO {
     @Size(max = 100, message = "이메일은 최대 100자까지 입력할 수 있습니다.")
     private String email;
 
-    // 이름: 최대 5자(프론트 placeholder 기준)
+    // 이름: 최대 20자(프론트 placeholder 기준)
     @NotBlank(message = "이름을 입력하세요.")
-    @Size(max = 5, message = "이름은 최대 5자까지 입력할 수 있습니다.")
+    @Size(max = 20, message = "이름은 최대 20자까지 입력할 수 있습니다.")
+    @Pattern(
+    	    regexp = "^[가-힣a-zA-Z\\s]+$",
+    	    message = "이름은 한글과 영문만 입력할 수 있습니다."
+    	)
     private String username;
 
     // 닉네임(선택): 2~10자 (입력 안 하면 username 그대로 저장 로직 필요)

@@ -69,7 +69,7 @@ public class AuthController {
             @RequestParam("email") @Email String email,
             @RequestParam("code") @NotBlank String code) {
         boolean ok = emailAuthService.verifyCode("signup", email, code);
-        if (!ok) throw new CustomException(ErrorCode.INVALID_CREDENTIALS);
+        if (!ok) throw new CustomException(ErrorCode.INVALID_CREDENTIALS_EMAIL);
         return ResponseEntity.ok().build();
     }
 	

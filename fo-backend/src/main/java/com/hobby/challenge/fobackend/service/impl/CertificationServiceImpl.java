@@ -28,6 +28,7 @@ import com.hobby.challenge.fobackend.mapper.CertLikeMapper;
 import com.hobby.challenge.fobackend.mapper.CertificationMapper;
 import com.hobby.challenge.fobackend.mapper.ChallengeMapper;
 import com.hobby.challenge.fobackend.mapper.ParticipationMapper;
+import com.hobby.challenge.fobackend.mapper.PointHistoryMapper;
 import com.hobby.challenge.fobackend.service.CertificationService;
 import com.hobby.challenge.fobackend.service.NotificationService;
 import com.hobby.challenge.fobackend.service.S3StorageService;
@@ -45,6 +46,7 @@ public class CertificationServiceImpl implements CertificationService {
 	private final CertLikeMapper certLikeMapper;
 	private final NotificationService notificationService;
 	private final UserService userService;
+	private final PointHistoryMapper pointHistoryMapper;
 	// TODO: 실제 이미지 파일 저장을 위한 서비스 (S3) 사용
 	private final S3StorageService s3StorageService; // S3 서비스 주입
 	@Value("${aws.s3.bucket-name}")
@@ -113,8 +115,15 @@ public class CertificationServiceImpl implements CertificationService {
         
         try {
             certificationMapper.insertCertification(cert);
-            
-            userService.addPoints(userId, 10, "CERT_UPLOAD"); // 인증 1개당 10포인트
+            // 중복 포인트 지급 방지: 오늘 이미 인증 포인트를 받았는지 체크
+            boolean alreadyReceivedToday = pointHistoryMapper.hasReceivedPointsToday(userId, "CERT_UPLOAD");
+            if (!alreadyReceivedToday) {
+                userService.addPoints(userId, 10, "CERT_UPLOAD"); 
+                System.out.println("인증 포인트 지급: 10P (사용자 ID: " + userId + ")");
+            } else {
+                System.out.println("오늘 이미 인증 포인트를 받았음 (사용자 ID: " + userId + ")");
+            }
+
         } catch (DuplicateKeyException e) {
             // S3에 업로드된 파일 삭제 (롤백)
             s3StorageService.delete(imageUrl);
