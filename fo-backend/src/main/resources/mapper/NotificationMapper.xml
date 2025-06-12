@@ -32,13 +32,15 @@
         <result column="TYPE" property="type"/>
         <result column="IS_READ" property="read" javaType="boolean"/>
         <result column="CREATED_DATE" property="createdAt"/>
-        <result column="CHALLENGE_ID" property="targetId"/>
+        <result column="CHALLENGE_ID" property="challengeId"/> 
+		<result column="TARGET_ID" property="targetId"/> 
+        <result column="CERT_CHALLENGE_ID" property="certChallengeId"/>
         <result column="CHALLENGE_TITLE" property="challengeTitle"/>
         <result column="PARTICIPANT_NICKNAME" property="participantNickname"/>
-        <result column="target_type" property="targetType"/>
-        <result column="title" property="title"/>
-        <result column="message" property="message"/>
-        <result column="actor_nickname" property="actorNickname"/>
+        <result column="TARGET_TYPE" property="targetType"/>
+        <result column="TITLE" property="title"/>
+        <result column="MESSAGE" property="message"/>
+        <result column="ACTOR_NICKNAME" property="actorNickname"/>
     </resultMap>
 
     <!-- 알림 목록 조회 (관련 정보 조인) - 수정된 버전 -->
@@ -50,7 +52,7 @@
              , n.CREATED_DATE
              , n.CHALLENGE_ID
              , n.CERT_ID
-             , actor.NICKNAME AS actorNickname
+             , actor.NICKNAME AS ACTOR_NICKNAME
              
              <!-- 알림 제목 생성 -->
              , (CASE 
@@ -65,7 +67,7 @@
                     WHEN n.TYPE = 'CHALLENGE_ENDING_SOON' THEN '챌린지 종료 예정'
                     WHEN n.TYPE = 'CHALLENGE_ENDED' THEN '챌린지 종료됨'
                     ELSE '알림'
-                END) AS title
+                END) AS TITLE
                 
              <!-- 알림 메시지 생성 -->
              , (CASE 
@@ -90,7 +92,7 @@
                     WHEN n.TYPE = 'CHALLENGE_ENDED' THEN 
                         CONCAT('"', c.TITLE, '" 챌린지가 종료되었습니다. 수고하셨습니다!')
                     ELSE '새로운 알림이 있습니다.'
-                END) AS message
+                END) AS MESSAGE
                 
                 
              <!-- targetType 결정 -->
@@ -98,14 +100,17 @@
                     WHEN n.CHALLENGE_ID IS NOT NULL THEN 'challenge'
                     WHEN n.CERT_ID IS NOT NULL THEN 'certification'
                     ELSE NULL
-                END) AS target_type
+                END) AS TARGET_TYPE
                 
              <!-- targetId 결정 (챌린지 관련이면 challenge_id, 인증 관련이면 cert_id) -->
              , (CASE 
                     WHEN n.CHALLENGE_ID IS NOT NULL THEN n.CHALLENGE_ID
                     WHEN n.CERT_ID IS NOT NULL THEN n.CERT_ID
                     ELSE NULL
-                END) AS target_id
+                END) AS TARGET_ID
+             
+             <!-- 인증 관련 알림 인증이 속한 챌린지 ID도 필요 -->   
+             , COALESCE(n.CHALLENGE_ID, cert_participation.CHALLENGE_ID) AS CERT_CHALLENGE_ID
                 
              <!-- 관련 정보 -->
              , c.TITLE AS CHALLENGE_TITLE
@@ -130,6 +135,10 @@
         <!-- 인증 작성자 정보 조인 (인증 관련 알림의 경우) -->
      LEFT JOIN CERTIFICATION cert 
             ON n.CERT_ID = cert.CERTIFICATION_ID
+     LEFT JOIN PARTICIPATION cert_participation
+            ON cert.PARTICIPATION_ID = cert_participation.PARTICIPATION_ID
+     LEFT JOIN CHALLENGE cert_challenge  
+            ON cert_participation.CHALLENGE_ID = cert_challenge.CHALLENGE_ID
      LEFT JOIN USER cu  
             ON cert.CREATED_BY = cu.USER_ID
         

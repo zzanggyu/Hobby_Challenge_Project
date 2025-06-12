@@ -95,10 +95,9 @@
 	      FROM USER
 	     WHERE NICKNAME = #{nickname}
 	</select>
-
-
 	
-	  <!-- 5) 비밀번호 재설정용 업데이트 -->
+	
+	  <!-- 비밀번호 재설정용 업데이트 -->
     <update id="updatePassword">
       UPDATE USER
          SET PASSWORD = #{newPassword}

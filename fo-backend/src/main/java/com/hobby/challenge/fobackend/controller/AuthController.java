@@ -59,7 +59,7 @@ public class AuthController {
     @PostMapping("/signup/send-code")
     public ResponseEntity<Void> sendSignupCode(
             @RequestParam("email") @Email String email) {
-        emailAuthService.sendVerificationCode("signup", email);
+    	authService.sendSignupEmailCode(email);
         return ResponseEntity.ok().build();
     }
     
@@ -147,6 +147,14 @@ public class AuthController {
             @Valid @RequestBody FindIdRequestDTO dto) {
         String loginId = authService.findLoginIdByEmail(dto.getEmail(), dto.getUsername());
         return ResponseEntity.ok(new FindIdResponseDTO(loginId));
+    }
+    
+    // 회원가입 이메일 인증 초기화
+    @PostMapping("/signup/reset-verification")
+    public ResponseEntity<Void> resetSignupVerification(
+            @RequestParam("email") @Email String email) {
+        authService.resetSignupEmailVerification(email);
+        return ResponseEntity.ok().build();
     }
 	
 	// 새로고침 시 현재 인증된 사용자 정보를 반환

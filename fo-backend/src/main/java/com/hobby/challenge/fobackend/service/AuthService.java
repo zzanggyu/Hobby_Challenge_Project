@@ -32,6 +32,9 @@ public interface AuthService {
     // 아이디 찾기
     String findLoginIdByEmail(String email, String username);
     
+    // 인증번호 초기화
+    void resetSignupEmailVerification(String email);
+    
     // 비밀번호 재설정 인증
     void sendPasswordResetCode(String loginId, String email);
     void verifyPasswordResetCode(String email, String code);

@@ -2,13 +2,15 @@ package com.hobby.challenge.fobackend.security;
 
 import java.io.IOException;
 
-
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
+
+import com.hobby.challenge.fobackend.mapper.AuthMapper;
+
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;
@@ -22,6 +24,7 @@ import lombok.RequiredArgsConstructor;
 public class JwtAuthenticationFilter extends OncePerRequestFilter { // 모든 HTTP 요청마다 doFilterInternal 한 번씩 호충
 	private final JwtTokenProvider tokenProvider;
 	private final CustomUserDetailsService userDetailService;
+	// TODO 정지 상태 체크 구현
 
 	@Override
 	protected void doFilterInternal(HttpServletRequest request, 

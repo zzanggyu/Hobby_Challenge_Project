@@ -241,6 +241,13 @@ public class AuthServiceImpl implements AuthService{
     // 회원가입 이메일 인증
     @Override
     public void sendSignupEmailCode(String email) {
+    	
+    	// 이메일 중복 검사
+        User existingUser = authMapper.findByEmail(email);
+        if (existingUser != null) {
+            throw new CustomException(ErrorCode.DUPLICATE_EMAIL);
+            
+        }
         emailAuthService.sendVerificationCode("signup", email);
     }
 
@@ -274,6 +281,16 @@ public class AuthServiceImpl implements AuthService{
     public void resetPassword(String loginId, String newPassword) {
         String enc = passwordEncoder.encode(newPassword);
         authMapper.updatePassword(loginId, enc);
+    }
+    
+    // 회원가입 이메일 인증 초기화
+    @Override
+    public void resetSignupEmailVerification(String email) {
+        // Redis에서 해당 이메일의 인증코드 삭제
+        String redisKey = "email:signup:" + email;
+        redisTemplate.delete(redisKey);
+        
+        System.out.println("이메일 인증 상태가 완전히 초기화되었습니다: " + email);
     }
     
     // 아이디 찾기

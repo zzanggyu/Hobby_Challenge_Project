@@ -29,6 +29,8 @@ public interface AuthMapper {
 	// SELECT * FROM USER_ID = #{userId}
 	User findById(@Param("userId") Integer userId);
 	
+
+	
     // 비밀번호 재설정 시, 로그인 아이디(loginId)로 DB의 PASSWORD를 업데이트
     void updatePassword(@Param("loginId") String loginId,
                         @Param("newPassword") String newPassword);

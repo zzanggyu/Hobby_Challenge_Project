@@ -30,6 +30,10 @@ public class SignupRequestDTO {
     @NotBlank(message = "비밀번호를 입력하세요.")
     @Size(min = 8, max = 20, message = "비밀번호는 8~20자 사이여야 합니다.")
     @Pattern(
+    	    regexp = "^[A-Za-z0-9!@#$%^&*]+$",
+    	    message = "비밀번호: 영문, 숫자, 특수문자만 사용 가능합니다."
+    	)
+    @Pattern(
       regexp = "^(?=.*[A-Za-z])(?=.*\\d)(?=.*[!@#$%^&*]).+$",
       message = "비밀번호는 영문·숫자·특수문자를 각각 최소 1자 이상 포함해야 합니다."
     )
@@ -43,20 +47,17 @@ public class SignupRequestDTO {
 
     // 이름: 최대 20자(프론트 placeholder 기준)
     @NotBlank(message = "이름을 입력하세요.")
-    @Size(max = 20, message = "이름은 최대 20자까지 입력할 수 있습니다.")
-    @Pattern(
-    	    regexp = "^[가-힣a-zA-Z\\s]+$",
-    	    message = "이름은 한글과 영문만 입력할 수 있습니다."
-    	)
+    @Size(min = 2, max = 20, message = "이름은 2~20여야 합니다.")
+    @Pattern(regexp = "^[가-힣a-zA-Z]+$", message = "이름: 한글, 영문 대/소문자를 사용해 주세요. (특수기호, 공백 사용 불가)")
     private String username;
 
     // 닉네임(선택): 2~10자 (입력 안 하면 username 그대로 저장 로직 필요)
     @NotBlank(message = "닉네임을 입력하세요.")
     @Size(min = 2, max = 10, message = "닉네임은 2~10자여야 합니다.")
     @Pattern(
-      regexp = "^$|.{2,10}$",
-      message = "별명은 2~10자여야 합니다. 입력하지 않으면 이름이 닉네임으로 저장됩니다."
-    )
+    	    regexp = "^[가-힣a-zA-Z0-9_]+$", 
+    	    message = "닉네임: 한글, 영문, 숫자, 언더스코어만 사용 가능합니다. (공백 사용 불가)"
+    	)
     private String nickname;
 
     // 생년월일: YYYY-MM-DD 형식

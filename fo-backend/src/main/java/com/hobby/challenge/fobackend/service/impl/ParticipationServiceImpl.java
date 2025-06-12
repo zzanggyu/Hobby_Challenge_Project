@@ -102,9 +102,29 @@ public class ParticipationServiceImpl implements ParticipationService {
 	// 참여 상태 업데이트 , 알림 생성
 	@Override
 	public ParticipationResponseDTO changeStatus(Integer participationId, String status) {
-        participationMapper.updateStatus(participationId, status);
-        ParticipationResponseDTO participation = participationMapper.selectById(participationId);
+		ParticipationResponseDTO participation = participationMapper.selectById(participationId);
+		
+        // Null 체크 침여자가 취소했을 때 
+        if (participation == null) {
+            throw new CustomException(
+                ErrorCode.PARTICIPATION_CANCEL_FORBIDDEN,
+                "참여 요청이 이미 취소되었거나 존재하지 않습니다. 페이지를 새로고침해주세요."
+            );
+        }
         
+        if (!"REQUESTED".equals(participation.getStatus())) {
+            String message = switch (participation.getStatus()) {
+                case "APPROVED" -> "이미 승인된 요청입니다.";
+                case "REJECTED" -> "이미 거절된 요청입니다.";
+                default -> "처리할 수 없는 상태의 요청입니다.";
+            };
+            throw new CustomException(ErrorCode.PARTICIPATION_CANCEL_FORBIDDEN, message);
+        }
+        	
+        participationMapper.updateStatus(participationId, status);
+        
+        participation.setStatus(status);
+
         // 알림 생성: 승인/거절 알림을 요청자에게 전송
         if ("APPROVED".equals(status)) {
             notificationService.createParticipationApprovedNotification(
