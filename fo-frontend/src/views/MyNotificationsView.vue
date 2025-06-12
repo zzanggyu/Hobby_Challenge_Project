@@ -198,18 +198,104 @@ async function handleNotificationClick(notification) {
 		await notificationStore.markAsRead(notification.id)
 	}
 
-	// 관련 페이지로 이동
-	if (notification.targetType === 'challenge' && notification.targetId) {
-		router.push({
-			name: 'challenge-overview',
-			params: { id: notification.targetId },
-		})
-	} else if (
-		notification.targetType === 'certification' &&
-		notification.targetId
-	) {
-		// 인증 상세 페이지 등으로 이동 (필요시 구현)
-		console.log('인증 관련 알림 클릭:', notification)
+	try {
+		//  챌린지 관련 알림들
+		if (notification.targetType === 'challenge' && notification.targetId) {
+			router.push({
+				name: 'challenge-overview',
+				params: { id: notification.targetId },
+			})
+			return
+		}
+
+		//  인증 관련 알림들 (NEW_CERT, NEW_COMMENT, NEW_LIKE)
+		if (
+			notification.targetType === 'certification' &&
+			notification.targetId
+		) {
+			const challengeId =
+				notification.certChallengeId || notification.challengeId
+
+			if (challengeId) {
+				//  쿼리 파라미터로 모달 열기 신호
+				router.push({
+					name: 'challenge-overview',
+					params: { id: challengeId },
+					hash: '#certifications',
+					query: {
+						cert: notification.targetId,
+						open: '1',
+						// 타임스탬프 추가로 같은 알림 재클릭 시에도 감지
+						t: Date.now(),
+					},
+				})
+			} else {
+				router.push({
+					name: 'mypage',
+					query: { tab: 'certifications' },
+				})
+			}
+			return
+		}
+
+		//  타입별 처리
+		switch (notification.type) {
+			case 'CHALLENGE_REQUEST':
+			case 'CHALLENGE_REQUEST_APPROVED':
+			case 'CHALLENGE_REQUEST_REJECTED':
+			case 'CHALLENGE_STARTING_SOON':
+			case 'CHALLENGE_STARTED':
+			case 'CHALLENGE_ENDING_SOON':
+			case 'CHALLENGE_ENDED':
+				// 챌린지 관련 - certChallengeId 또는 challengeId 사용
+				const relatedChallengeId =
+					notification.certChallengeId ||
+					notification.challengeId ||
+					notification.targetId
+				if (relatedChallengeId) {
+					router.push({
+						name: 'challenge-overview',
+						params: { id: relatedChallengeId },
+					})
+				} else {
+					router.push({ name: 'challenge-list' })
+				}
+				break
+
+			case 'NEW_CERT':
+			case 'NEW_COMMENT':
+			case 'NEW_LIKE':
+				// 인증 관련 - certChallengeId 사용
+				const certChallengeId =
+					notification.certChallengeId || notification.challengeId
+				if (certChallengeId) {
+					router.push({
+						name: 'challenge-overview',
+						params: { id: certChallengeId },
+						hash: '#certifications',
+						query: {
+							cert: notification.targetId || notification.certId,
+							open: '1',
+							t: Date.now(),
+						},
+					})
+				} else {
+					console.warn(
+						'인증 관련 알림이지만 챌린지 ID가 없음:',
+						notification
+					)
+					router.push({ name: 'mypage', query: { tab: 'certifications' } })
+				}
+				break
+
+			default:
+				// 기본적으로 홈으로 이동
+				router.push({ name: 'my-notifications' })
+				break
+		}
+	} catch (error) {
+		console.error('알림 클릭 처리 중 오류:', error)
+		alert('페이지 이동 중 오류가 발생했습니다.')
 	}
 }
 

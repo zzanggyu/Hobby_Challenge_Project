@@ -54,6 +54,9 @@
 											icon
 											size="small"
 											color="primary"
+											:disabled="
+												!hasNicknameChanged || savingNickname
+											"
 											@click="saveNickname"
 											:loading="savingNickname"
 										>
@@ -68,6 +71,17 @@
 										</v-btn>
 									</div>
 								</template>
+							</v-list-item>
+							<v-list-item
+								v-if="
+									editingNickname &&
+									!hasNicknameChanged &&
+									newNickname.trim()
+								"
+							>
+								<v-alert type="info" variant="tonal" density="compact">
+									현재 닉네임과 동일합니다. 변경사항이 없어요.
+								</v-alert>
 							</v-list-item>
 							<v-divider class="my-4" />
 
@@ -131,7 +145,7 @@
 							<!-- 현재 비밀번호 - 눈 모양 아이콘 추가 -->
 							<v-text-field
 								v-model="passwordData.currentPassword"
-								:rules="[(v) => !!v || '현재 비밀번호를 입력하세요.']"
+								:rules="currentPasswordRules"
 								:type="showCurrentPassword ? 'text' : 'password'"
 								:append-inner-icon="
 									showCurrentPassword ? 'mdi-eye-off' : 'mdi-eye'
@@ -185,7 +199,15 @@
 
 					<v-card-actions class="px-6 pb-6">
 						<v-spacer />
-
+						<v-btn
+							color="secondary"
+							variant="outlined"
+							@click="resetPasswordForm"
+							:disabled="changingPassword"
+							class="mr-2"
+						>
+							초기화
+						</v-btn>
 						<v-btn
 							color="primary"
 							:disabled="!passwordValid"
@@ -299,7 +321,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import {
@@ -316,6 +338,7 @@ const auth = useAuthStore()
 const userInfo = ref({})
 const editingNickname = ref(false)
 const newNickname = ref('')
+const originalNickname = ref('')
 const savingNickname = ref(false)
 const passwordValid = ref(false)
 const changingPassword = ref(false)
@@ -339,6 +362,21 @@ const passwordData = ref({
 	confirmPassword: '',
 })
 
+// 개별 오류 메시지
+const passwordErrors = ref({
+	currentPassword: '',
+	newPassword: '',
+	confirmPassword: '',
+})
+
+// 닉네임 변경 여부 체크
+const hasNicknameChanged = computed(() => {
+	return (
+		newNickname.value.trim() !== '' &&
+		newNickname.value.trim() !== originalNickname.value
+	)
+})
+
 // 유효성 검사 규칙
 const nicknameRules = [
 	(v) => !!v || '닉네임을 입력하세요.',
@@ -349,16 +387,31 @@ const nicknameRules = [
 		'한글, 영문, 숫자, 언더스코어만 사용 가능합니다.',
 ]
 
+// 현재 비밀번호호
+const currentPasswordRules = [
+	(v) => !!v || '현재 비밀번호를 입력하세요.',
+	(v) =>
+		/^(?=.*[A-Za-z])(?=.*\d)(?=.*[!@#$%^&*]).{8,20}$/.test(v) ||
+		'영문, 숫자, 특수문자를 포함한 8~20자여야 합니다.',
+	(v) =>
+		/^[A-Za-z0-9!@#$%^&*]{8,20}$/.test(v) ||
+		'비밀번호: 영문, 숫자, 특수문자만 사용 가능합니다. (8~20자)',
+]
+
 const passwordRules = [
 	(v) => !!v || '새 비밀번호를 입력하세요.',
 	(v) =>
 		/^(?=.*[A-Za-z])(?=.*\d)(?=.*[!@#$%^&*]).{8,20}$/.test(v) ||
 		'영문, 숫자, 특수문자를 포함한 8~20자여야 합니다.',
 	(v) =>
+		/^[A-Za-z0-9!@#$%^&*]{8,20}$/.test(v) ||
+		'비밀번호: 영문, 숫자, 특수문자만 사용 가능합니다. (8~20자)',
+	(v) =>
 		v !== passwordData.value.currentPassword ||
 		'새 비밀번호는 현재 비밀번호와 달라야 합니다.',
 ]
 
+// 비밀번호 확인
 const confirmPasswordRules = [
 	(v) => !!v || '비밀번호 확인을 입력하세요.',
 	(v) =>
@@ -369,6 +422,7 @@ const confirmPasswordRules = [
 async function loadMyInfo() {
 	try {
 		userInfo.value = await getMyInfo()
+		originalNickname.value = userInfo.value.nickname
 	} catch (error) {
 		console.error('사용자 정보 조회 실패:', error)
 	}
@@ -388,6 +442,23 @@ function cancelEditNickname() {
 
 // 닉네임 저장
 async function saveNickname() {
+	//  변경사항이 없으면 요청 차단
+	if (!hasNicknameChanged.value) {
+		alert('변경사항이 없습니다.')
+		return
+	}
+
+	//  빈 값 체크
+	if (!newNickname.value.trim()) {
+		alert('닉네임을 입력해주세요.')
+		return
+	}
+
+	//  동일한 값인지 재확인
+	if (newNickname.value.trim() === originalNickname.value) {
+		alert('현재 닉네임과 동일합니다.')
+		return
+	}
 	// 유효성 검사
 	const valid = nicknameRules.every((rule) => rule(newNickname.value) === true)
 	if (!valid) return
@@ -396,12 +467,13 @@ async function saveNickname() {
 	try {
 		const updated = await updateNickname(newNickname.value)
 		userInfo.value = updated
+		originalNickname.value = updated.nickname
 		editingNickname.value = false
+
 		// 스토어 업데이트
 		auth.user.nickname = updated.nickname
 		alert('닉네임이 성공적으로 변경되었습니다!')
 	} catch (error) {
-		console.error('닉네임 변경 실패:', error)
 		alert(error.response?.data?.message || '닉네임 변경에 실패했습니다.')
 	} finally {
 		savingNickname.value = false

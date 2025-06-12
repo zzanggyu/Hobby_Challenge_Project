@@ -6,6 +6,17 @@
 
 			<v-divider />
 
+			<v-alert
+				v-if="error"
+				type="error"
+				dense
+				class="ma-4"
+				closable
+				@click:close="error = ''"
+			>
+				{{ error }}
+			</v-alert>
+
 			<!-- 요청 리스트 -->
 			<v-list density="compact" lines="two">
 				<!-- 요청 항목 -->
@@ -59,16 +70,68 @@ const route = useRoute()
 const id = Number(route.params.id)
 const requests = ref([])
 
+const error = ref('')
+const processing = ref(null)
+
 async function load() {
-	requests.value = await getRequests(id)
+	try {
+		requests.value = await getRequests(id)
+	} catch (err) {
+		error.value = '요청 목록을 불러오는데 실패했습니다.'
+	}
 }
+
+// 참여 승인
 async function approve(pid) {
-	await changeStatus(pid, 'APPROVED')
-	load()
+	processing.value = pid
+	error.value = ''
+	try {
+		await changeStatus(pid, 'APPROVED')
+		requests.value = requests.value.filter((r) => r.participationId !== pid)
+	} catch (err) {
+		//  에러 처리
+		const errorMessage = err.response?.data?.message
+
+		if (errorMessage?.includes('취소')) {
+			error.value = '참여 요청이 이미 취소되었습니다. 목록을 새로고침합니다.'
+			setTimeout(() => load(), 2000) // 2초 후 자동 새로고침
+		} else if (errorMessage?.includes('이미')) {
+			error.value = '이미 처리된 요청입니다.'
+			setTimeout(() => load(), 2000)
+		} else {
+			error.value = errorMessage || '승인 처리 중 오류가 발생했습니다.'
+		}
+	} finally {
+		processing.value = null
+	}
 }
+
+// 참여 거절
 async function reject(pid) {
-	await changeStatus(pid, 'REJECTED')
-	load()
+	processing.value = pid
+	error.value = ''
+
+	try {
+		await changeStatus(pid, 'REJECTED')
+
+		// 성공 시 해당 항목 제거
+		requests.value = requests.value.filter((r) => r.participationId !== pid)
+	} catch (err) {
+		// 에러 처리
+		const errorMessage = err.response?.data?.message
+
+		if (errorMessage?.includes('취소')) {
+			error.value = '참여 요청이 이미 취소되었습니다. 목록을 새로고침합니다.'
+			setTimeout(() => load(), 2000)
+		} else if (errorMessage?.includes('이미')) {
+			error.value = '이미 처리된 요청입니다.'
+			setTimeout(() => load(), 2000)
+		} else {
+			error.value = errorMessage || '거절 처리 중 오류가 발생했습니다.'
+		}
+	} finally {
+		processing.value = null
+	}
 }
 
 function formatDate(iso) {

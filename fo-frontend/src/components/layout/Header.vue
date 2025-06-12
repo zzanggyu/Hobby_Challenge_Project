@@ -199,14 +199,66 @@ function goHome() {
 	router.push('/')
 }
 
+// 챌린지 목록으로 이동
 function goChallengeList() {
 	router.push('/challenges')
 }
 
-function goChallengeCreate() {
+// 챌린지 생성 페이지로 이동
+async function goChallengeCreate() {
+	try {
+		// 내 참여 현황 조회
+		const participations = await getMyParticipations(auth.user.userId)
+
+		//  내가 생성한 챌린지 확인 (OWNER)
+		const myChallenge = participations.find((p) => p.role === 'OWNER')
+
+		if (myChallenge) {
+			const challengeTitle = myChallenge.challenge?.title || '챌린지'
+			alert(
+				`이미 "${challengeTitle}"를 생성하셨습니다.\n\n한 사용자당 하나의 챌린지만 생성할 수 있어요.`
+			)
+
+			return
+		}
+
+		// 참여중인 챌린지 확인 (APPROVED)
+		const participatingChallenge = participations.find(
+			(p) => p.status === 'APPROVED'
+		)
+
+		if (participatingChallenge) {
+			const challengeTitle =
+				participatingChallenge.challenge?.title || '챌린지'
+			alert(
+				`현재 "${challengeTitle}"에 참여중입니다.\n\n참여중인 챌린지가 있으면 새로운 챌린지를 생성할 수 없어요.`
+			)
+
+			return
+		}
+
+		// 요청중인 챌린지 확인 (REQUESTED)
+		const requestedChallenge = participations.find(
+			(p) => p.status === 'REQUESTED'
+		)
+
+		if (requestedChallenge) {
+			const challengeTitle = requestedChallenge.challenge?.title || '챌린지'
+			alert(
+				`현재 "${challengeTitle}"에 참여 요청중입니다.\n\n참여 요청중인 챌린지가 있으면 새로운 챌린지를 생성할 수 없어요.`
+			)
+
+			return
+		}
+	} catch (error) {
+		console.error('챌린지 생성 권한 확인 실패:', error)
+	}
+
+	//  모든 조건 통과 시 생성 페이지로 이동
 	router.push('/challenges/new')
 }
 
+// 내 챌린지로 이동
 function goFavoriteChallenge() {
 	router.push('/challenges/favorite')
 }
@@ -221,6 +273,7 @@ function goActiveChallenge() {
 	}
 }
 
+// 내정보 페이지로 이동
 function goMyPage() {
 	router.push('/mypage')
 }

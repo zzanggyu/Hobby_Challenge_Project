@@ -52,6 +52,14 @@ export function sendPasswordResetCode(loginId, email) {
 export function verifyPasswordCode(email, code) {
 	return api.post('/auth/password/verify-code', { email, code })
 }
+
+// 회원가입 이메일 인증 초기화
+export function resetSignupVerification(email) {
+	return api.post('/auth/signup/reset-verification', null, {
+		params: { email },
+	})
+}
+
 // 3) 새 비밀번호 저장
 export function resetPassword(loginId, newPassword) {
 	return api.post('/auth/password/reset', { loginId, newPassword })

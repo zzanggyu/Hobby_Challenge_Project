@@ -208,7 +208,9 @@
 					<div class="px-4 pb-2">
 						<!-- 생성자 정보-->
 						<div class="d-flex align-center mb-2">
-							<v-icon size="16" class="mr-2">mdi-account</v-icon>
+							<v-icon size="16" class="mr-2" color="primary"
+								>mdi-account</v-icon
+							>
 							<span class="text-caption">{{
 								fav.challenge.creatorNickname
 							}}</span
@@ -226,7 +228,9 @@
 
 						<!-- 챌린지 기간 정보 -->
 						<div class="d-flex align-center mb-2">
-							<v-icon size="16" class="mr-2">mdi-calendar-range</v-icon>
+							<v-icon size="16" class="mr-2" color="primary"
+								>mdi-calendar-range</v-icon
+							>
 							<span class="text-caption">
 								{{ formatDate(fav.challenge.startDate) }} ~
 								{{ formatDate(fav.challenge.endDate) }}
@@ -235,7 +239,7 @@
 
 						<div class="d-flex align-center mb-3">
 							<!-- 상태별 아이콘 표시 -->
-							<v-icon size="16" class="mr-2">
+							<v-icon size="16" class="mr-2" color="red">
 								{{
 									fav.participating
 										? 'mdi-check-circle'
@@ -273,7 +277,7 @@
 
 						<template v-else-if="fav.requesting">
 							<v-btn
-								color="warning"
+								color="error"
 								variant="tonal"
 								size="small"
 								:loading="
@@ -288,7 +292,7 @@
 
 						<template v-else>
 							<v-btn
-								color="primary"
+								color="secondary"
 								variant="tonal"
 								size="small"
 								:loading="
@@ -352,15 +356,17 @@ const favoriteOnlyCount = computed(() => {
 	).length
 })
 
+// 참여중인 챌린지
 const participatingCount = computed(() => {
 	return favorites.value.filter((fav) => fav.participating).length
 })
 
+// 요청 중인 챌린지
 const requestingCount = computed(() => {
 	return favorites.value.filter((fav) => fav.requesting).length
 })
 
-// 기존 함수들은 그대로 유지...
+// 보여줄 글자 수수
 function truncateDescription(description) {
 	if (!description) return ''
 	return description.length > 100
@@ -368,6 +374,7 @@ function truncateDescription(description) {
 		: description
 }
 
+// 날짜 포맷맷
 function formatDate(date) {
 	if (!date) return '-'
 	return new Date(date).toLocaleDateString('ko-KR', {

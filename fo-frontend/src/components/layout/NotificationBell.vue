@@ -178,77 +178,109 @@ async function handleClick(notification) {
 		await store.markAsRead(notification.id)
 	}
 
-	// 알림 타입별 라우팅 처리
+	console.log('🔔 알림 클릭:', notification) // 디버깅용
+
 	try {
-		// targetType과 targetId를 활용한 통합 라우팅
-		if (notification.targetType && notification.targetId) {
-			switch (notification.targetType) {
-				case 'challenge':
+		// 1. 챌린지 관련 알림들
+		if (notification.targetType === 'challenge' && notification.targetId) {
+			router.push({
+				name: 'challenge-overview',
+				params: { id: notification.targetId },
+			})
+			return
+		}
+
+		// 2. 인증 관련 알림들 (NEW_CERT, NEW_COMMENT, NEW_LIKE)
+		if (
+			notification.targetType === 'certification' &&
+			notification.targetId
+		) {
+			const challengeId =
+				notification.certChallengeId || notification.challengeId
+
+			if (challengeId) {
+				// 🆕 쿼리 파라미터로 모달 열기 신호
+				router.push({
+					name: 'challenge-overview',
+					params: { id: challengeId },
+					hash: '#certifications',
+					query: {
+						cert: notification.targetId, // 간단하게 cert로 축약
+						open: '1', // 모달 열기 신호
+					},
+				})
+			}
+			return
+		}
+
+		// 3. 타입별 기본 처리 (targetType이 없거나 누락된 경우)
+		switch (notification.type) {
+			case 'CHALLENGE_REQUEST':
+			case 'CHALLENGE_REQUEST_APPROVED':
+			case 'CHALLENGE_REQUEST_REJECTED':
+			case 'CHALLENGE_STARTING_SOON':
+			case 'CHALLENGE_STARTED':
+			case 'CHALLENGE_ENDING_SOON':
+			case 'CHALLENGE_ENDED':
+				// 챌린지 관련 - certChallengeId 또는 challengeId 사용
+				const relatedChallengeId =
+					notification.certChallengeId ||
+					notification.challengeId ||
+					notification.targetId
+				if (relatedChallengeId) {
 					router.push({
 						name: 'challenge-overview',
-						params: { id: notification.targetId },
+						params: { id: relatedChallengeId },
 					})
-					break
+				} else {
+					router.push({ name: 'challenge-list' })
+				}
+				break
 
-				case 'certification':
-					// 댓글 알림인 경우 댓글 섹션으로 스크롤
-					const routeConfig = {
-						name: 'certification-detail',
-						params: { id: notification.targetId },
-					}
-					if (notification.type === 'NEW_COMMENT') {
-						routeConfig.hash = '#comments'
-					}
-					router.push(routeConfig)
-					break
-
-				case 'user':
+			case 'NEW_CERT':
+			case 'NEW_COMMENT':
+			case 'NEW_LIKE':
+				// 인증 관련 - certChallengeId 사용
+				const certChallengeId =
+					notification.certChallengeId || notification.challengeId
+				if (certChallengeId) {
 					router.push({
-						name: 'user-profile',
-						params: { id: notification.targetId },
+						name: 'challenge-overview',
+						params: { id: certChallengeId },
+						hash: '#certifications',
+						query: notification.certId
+							? {
+									certId: notification.certId,
+									openCert: 'true',
+							  }
+							: {},
 					})
-					break
-
-				case 'notice':
-					// TODO: 공지 알림 처리
-					router.push({ name: 'my-notifications' })
-					break
-
-				case 'report':
-					// TODO: 신고 알림 처리
-					router.push({ name: 'my-notifications' })
-					break
-
-				default:
+				} else {
 					console.warn(
-						`처리되지 않은 targetType: ${notification.targetType}`
+						'인증 관련 알림이지만 챌린지 ID가 없음:',
+						notification
 					)
-					router.push({ name: 'my-notifications' })
-					break
-			}
-		} else {
-			// targetType이나 targetId가 없는 경우 타입별 기본 처리
-			switch (notification.type) {
-				case 'SYSTEM_NOTICE':
-					// TODO: 시스템 공지 알림 처리
-					router.push({ name: 'my-notifications' })
-					break
+					router.push({ name: 'mypage', query: { tab: 'certifications' } })
+				}
+				break
 
-				case 'REPORTED':
-					// TODO: 신고 알림 처리
-					router.push({ name: 'my-notifications' })
-					break
+			case 'SYSTEM_NOTICE':
+				// 시스템 공지사항
+				router.push({ name: 'home' })
+				break
 
-				default:
-					// 기타 모든 알림은 전체 알림 페이지로
-					console.warn(`처리되지 않은 알림 타입: ${notification.type}`)
-					router.push({ name: 'my-notifications' })
-					break
-			}
+			default:
+				console.warn(
+					'🚨 처리되지 않은 알림 타입:',
+					notification.type,
+					notification
+				)
+				router.push({ name: 'my-notifications' })
+				break
 		}
 	} catch (error) {
 		console.error('알림 클릭 처리 중 오류:', error)
-		// 오류 발생 시 안전하게 전체 알림 페이지로 이동
+		alert('페이지 이동 중 오류가 발생했습니다.')
 		router.push({ name: 'my-notifications' })
 	}
 }

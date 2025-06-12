@@ -116,6 +116,8 @@
 				:challengeId="id"
 				:refreshKey="refreshKey"
 				:canWritePermission="canWrite"
+				:autoOpenCertId="autoOpenCertId"
+				@cert-modal-opened="onCertModalOpened"
 			/>
 			<!-- 참여자 보기 -->
 			<ChallengeParticipantsView
@@ -131,14 +133,16 @@
 				:challengeId="id"
 				:refreshKey="refreshKey"
 				:canWritePermission="true"
-				only-mine
+				:autoOpenCertId="autoOpenCertId"
+				@cert-modal-opened="onCertModalOpened"
+				:onlyMine="true"
 			/>
 		</div>
 	</v-container>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import {
 	deleteChallenge,
@@ -175,6 +179,9 @@ const leaving = ref(false)
 // 설명 표시 상태 관리
 const showFullDescription = ref(false)
 const DESCRIPTION_LIMIT = 200 // 글자 수 제한
+
+//  자동 모달 열기를 위한 상태
+const autoOpenCertId = ref(null)
 
 //  설명 관련 computed
 const isDescriptionLong = computed(() => {
@@ -246,6 +253,40 @@ function getTruncatedDescription(description) {
 // 더보기/접기 토글 함수
 function toggleDescription() {
 	showFullDescription.value = !showFullDescription.value
+}
+
+//  URL 쿼리 파라미터 감시 (알림에서 온 경우)
+watch(
+	() => route.query,
+	(newQuery) => {
+		// cert=123&open=1 형태로 온 경우
+		if (newQuery.open === '1' && newQuery.cert) {
+			const certId = parseInt(newQuery.cert)
+
+			// 🆕 먼저 URL 정리 (즉시)
+			router.replace({
+				name: route.name,
+				params: route.params,
+				hash: '#certifications',
+			})
+
+			// 인증 목록 탭으로 전환
+			tab.value = '1'
+
+			// 🆕 autoOpenCertId 초기화 후 설정 (강제 watch 트리거)
+			autoOpenCertId.value = null
+			setTimeout(() => {
+				autoOpenCertId.value = certId
+			}, 100)
+		}
+	},
+	{ immediate: true }
+)
+
+function onCertModalOpened() {
+	setTimeout(() => {
+		autoOpenCertId.value = null
+	}, 100)
 }
 
 // 챌린지 상세 로드
@@ -338,7 +379,6 @@ async function onLeave() {
 		tab.value = '1'
 		refreshKey.value++
 	} catch (e) {
-		console.error(e)
 		alert('탈퇴 중 오류가 발생했습니다.')
 	} finally {
 		leaving.value = false

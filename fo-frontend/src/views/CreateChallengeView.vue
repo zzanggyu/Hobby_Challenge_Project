@@ -1,7 +1,6 @@
 <template>
 	<div>
 		<ChallengeForm />
-		<!-- 나중에 <ChallengeForm/> 컴포넌트를 여기 넣을 예정 -->
 	</div>
 </template>
 

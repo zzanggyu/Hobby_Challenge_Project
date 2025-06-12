@@ -61,6 +61,7 @@
 								rounded="lg"
 								height="450"
 								class="cert-card"
+								:data-cert-id="log.certificationId"
 								:class="{ clickable: canViewDetail }"
 								@click="
 									canViewDetail
@@ -110,7 +111,7 @@
 
 									<!-- 코멘트 -->
 									<p class="text-body-2 mb-3 comment-preview">
-										{{ log.comment || '(코멘트 없음)' }}
+										{{ log.comment || '' }}
 									</p>
 
 									<!-- 좋아요/댓글 수 -->
@@ -213,7 +214,10 @@ const props = defineProps({
 	refreshKey: { type: Number, required: true },
 	onlyMine: { type: Boolean, default: false },
 	canWritePermission: { type: Boolean, default: false },
+	autoOpenCertId: { type: Number, default: null }, // 자동 열기할 인증 ID
 })
+
+const emit = defineEmits(['cert-modal-opened'])
 
 // 상태 관리
 const logs = ref([])
@@ -297,21 +301,85 @@ function getLevelColor(level) {
 	return 'grey'
 }
 
+//  autoOpenCertId 감시하여 자동 모달 열기
+watch(
+	() => props.autoOpenCertId,
+	(certId) => {
+		if (certId) {
+			//  데이터가 로드되기를 기다림
+			const tryOpenModal = () => {
+				if (logs.value.length === 0) {
+					setTimeout(tryOpenModal, 200)
+					return
+				}
+
+				// 해당 인증이 현재 로드된 목록에 있는지 확인
+				const targetCert = logs.value.find(
+					(log) => log.certificationId === certId
+				)
+
+				if (targetCert) {
+					// 바로 모달 열기
+					openDialog(certId)
+					emit('cert-modal-opened') // 부모에게 모달 열림 알림
+
+					// 해당 인증 스크롤 (애니메이션 없이)
+					setTimeout(() => {
+						scrollToCertification(certId)
+					}, 300)
+				} else {
+					//  전체 페이지에서 검색
+					searchAndOpenCertification(certId)
+				}
+			}
+
+			// 즉시 시도하거나 약간의 지연 후 시도
+			if (logs.value.length > 0) {
+				tryOpenModal()
+			} else {
+				setTimeout(tryOpenModal, 300)
+			}
+		}
+	}
+)
+
+//  전체 페이지에서 인증 검색
+async function searchAndOpenCertification(certId) {
+	// 첫 페이지로 이동
+	currentPage.value = 1
+
+	// 데이터 로드 대기
+	await new Promise((resolve) => setTimeout(resolve, 500))
+
+	const targetCert = logs.value.find((log) => log.certificationId === certId)
+	if (targetCert) {
+		openDialog(certId)
+		emit('cert-modal-opened')
+		setTimeout(() => scrollToCertification(certId), 300)
+	} else {
+		// 모달은 열되 에러 메시지 표시하지 않음 (사용자 경험 고려)
+	}
+}
+
+// 스크롤 함수
+function scrollToCertification(certId) {
+	const certElement = document.querySelector(`[data-cert-id="${certId}"]`)
+	if (certElement) {
+		// 부드러운 스크롤만
+		certElement.scrollIntoView({
+			behavior: 'smooth',
+			block: 'center',
+		})
+	} else {
+	}
+}
+
 //  다이얼로그 닫힐 때 새로고침
 watch(dialog, (newValue, oldValue) => {
-	console.log('다이얼로그 상태 변경:', { oldValue, newValue })
-
 	if (oldValue === true && newValue === false) {
-		console.log('다이얼로그 닫힘 - 목록 새로고침')
 		fetchLogs()
 	}
 })
-
-// 다이얼로그
-function openDialog(certId) {
-	selectedCertId.value = certId
-	dialog.value = true
-}
 
 //  상세보기 권한 계산
 const canViewDetail = computed(() => {
@@ -353,6 +421,12 @@ async function fetchLogs() {
 	} finally {
 		loading.value = false
 	}
+}
+
+// 다이얼로그
+function openDialog(certId) {
+	selectedCertId.value = certId
+	dialog.value = true
 }
 
 // 이벤트 핸들러들

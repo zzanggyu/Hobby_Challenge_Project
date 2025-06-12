@@ -578,6 +578,12 @@ async function fetchChallenges() {
 async function fetchCategories() {
 	try {
 		categories.value = await getCategories()
+		// '기타' 는 마지막으로 정렬 나머지는 이름순
+		categories.value.sort((a, b) => {
+			if (a.categoryName === '기타') return 1
+			if (b.categoryName === '기타') return -1
+			return a.categoryName.localeCompare(b.categoryName, 'ko-KR')
+		})
 	} catch (err) {
 		console.error('카테고리 로드 실패', err)
 	}
@@ -625,23 +631,11 @@ async function onJoin(challengeId) {
 	targetId.value = challengeId
 
 	try {
-		const result = await joinChallenge(challengeId)
-
-		// 1. 참여 내역 업데이트
-		await fetchMyParticipations()
-
-		// 2. 해당 챌린지만 상태 업데이트 (전체 다시 가져오지 않음)
-		const challengeIndex = challenges.value.findIndex(
-			(c) => c.challengeId === challengeId
-		)
-		if (challengeIndex !== -1) {
-			challenges.value[challengeIndex].requested = true
-			challenges.value[challengeIndex].approved = false
-		}
-
+		await joinChallenge(challengeId)
 		alert('참여 요청이 완료되었습니다!')
+		await fetchChallenges() // 또는 해당 페이지의 새로고침 함수
 	} catch (err) {
-		// 에러 처리...
+		handleApiError(err) // 서버 오류를 그대로 처리
 	} finally {
 		isJoining.value = false
 		targetId.value = null

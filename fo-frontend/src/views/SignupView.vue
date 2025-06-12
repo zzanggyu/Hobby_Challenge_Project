@@ -63,29 +63,51 @@
 								/>
 							</v-col>
 							<v-col cols="4">
-								<!-- 이메일 인증 요청 버튼 -->
+								<!-- 인증 진행중이 아닐 때: 인증 요청 버튼 -->
 								<v-btn
+									v-if="!emailSent"
 									class="font-weight-bold"
 									:loading="loadingEmail"
 									:disabled="
-										!rules.email.every(
-											(fn) => fn(credentials.email) === true
+										!credentials.email ||
+										!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(
+											credentials.email
 										) ||
-										emailSent ||
 										loadingEmail
 									"
 									color="green"
 									block
 									@click="sendEmailCode"
 								>
-									<template #default>
-										<span v-if="loadingEmail">요청 중...</span>
-										<span v-else-if="emailSent">{{
-											timerDisplay
-										}}</span>
-										<span v-else>인증 요청</span>
-									</template>
+									<span v-if="loadingEmail">요청 중...</span>
+									<span v-else>인증 요청</span>
 								</v-btn>
+
+								<!-- 인증 진행중일 때: 타이머 + 초기화 버튼 -->
+								<div v-else>
+									<v-btn
+										color="success"
+										variant="flat"
+										size="default"
+										block
+										class="mb-2 font-weight-bold"
+										disabled
+									>
+										<v-icon left>mdi-clock-outline</v-icon>
+										{{ timerDisplay }}
+									</v-btn>
+									<v-btn
+										color="error"
+										variant="tonal"
+										size="default"
+										block
+										class="mb-2 font-weight-bold"
+										@click="resetEmailVerification"
+									>
+										<v-icon left size="16">mdi-refresh</v-icon>
+										초기화
+									</v-btn>
+								</div>
 							</v-col>
 						</v-row>
 
@@ -96,6 +118,7 @@
 									v-model="emailCode"
 									:rules="[(v) => !!v || '코드를 입력하세요.']"
 									label="인증 코드"
+									maxlength="6"
 									placeholder="메일로 받은 6자리"
 									required
 								/>
@@ -105,12 +128,28 @@
 									:disabled="emailVerified || emailCode.length !== 6"
 									color="success"
 									block
+									class="mb-2 font-weight-bold"
 									@click="verifyEmailCode"
 								>
 									{{ emailVerified ? '인증 완료' : '인증 확인' }}
 								</v-btn>
 							</v-col>
 						</v-row>
+						<v-alert
+							v-if="emailSent && message"
+							type="success"
+							density="compact"
+							class="mb-4"
+						>
+							<v-icon left size="16">
+								{{
+									message.includes('완료')
+										? 'mdi-check-circle'
+										: 'mdi-email-check'
+								}}
+							</v-icon>
+							{{ message }}
+						</v-alert>
 					</div>
 
 					<!-- 인증 완료 -->
@@ -126,7 +165,7 @@
 					v-model="credentials.username"
 					:rules="rules.username"
 					label="이름"
-					placeholder="예) 홍길동"
+					placeholder="예) 홍길동, DanielKim"
 					prepend-inner-icon="mdi-account-circle"
 					required
 				/>
@@ -163,7 +202,16 @@
 				<v-alert v-if="error" type="error" dense class="mb-4">
 					{{ error }}
 				</v-alert>
-				<v-alert v-if="message" type="success" dense class="mb-4">
+				<v-alert
+					v-if="
+						message &&
+						!message.includes('인증코드가 발송') &&
+						!message.includes('인증이 완료')
+					"
+					type="success"
+					dense
+					class="mb-4"
+				>
 					{{ message }}
 				</v-alert>
 
@@ -195,6 +243,7 @@ import {
 	signup,
 	sendSignupCode,
 	verifySignupCode,
+	resetSignupVerification,
 } from '@/services/authService'
 import { format } from 'date-fns'
 
@@ -252,6 +301,9 @@ const rules = {
 	password: [
 		(v) => !!v || '비밀번호를 입력하세요.',
 		(v) =>
+			/^[A-Za-z0-9!@#$%^&*]{8,20}$/.test(v) ||
+			'비밀번호: 영문, 숫자, 특수문자만 사용 가능합니다. (8~20자)',
+		(v) =>
 			/^(?=.*[A-Za-z])(?=.*\d)(?=.*[!@#$%^&*]).{8,20}$/.test(v) ||
 			'비밀번호는 8~20자, 영문·숫자·특수문자 각각 1자 이상 포함해야 합니다.',
 	],
@@ -261,21 +313,20 @@ const rules = {
 	],
 	username: [
 		(v) => !!v || '이름을 입력하세요.',
+		(v) => (v && v.length >= 2) || '이름은 최소 2자 이상이어야 합니다.',
 		(v) => v.length <= 20 || '이름은 20자 이내여야 합니다.',
 		(v) =>
-			/^[가-힣a-zA-Z\s]+$/.test(v) ||
-			'이름은 한글과 영문만 입력할 수 있습니다.',
+			/^[가-힣a-zA-Z]+$/.test(v) ||
+			'이름: 한글, 영문 대/소문자를 사용해 주세요. (특수기호, 공백 사용 불가)',
 	],
 	// 닉네임 (필수)
 	nickname: [
 		(v) => !!v || '닉네임을 입력하세요.',
-		(v) =>
-			v === '' ||
-			(v.length >= 2 && v.length <= 10) ||
-			'닉네임은 2~10자여야 합니다.',
+		(v) => (v && v.length >= 2) || '닉네임은 최소 2자 이상이어야 합니다.',
+		(v) => (v && v.length <= 10) || '닉네임은 최대 10자까지 입력 가능합니다.',
 		(v) =>
 			/^[가-힣a-zA-Z0-9_]+$/.test(v) ||
-			'한글, 영문, 숫자, 언더바만 사용 가능합니다.',
+			'닉네임: 한글, 영문, 숫자, 언더스코어만 사용 가능합니다. (공백 사용 불가)',
 	],
 	// 3) 생년월일 – 필수, YYYY-MM-DD 형식
 	birthdate: [
@@ -300,7 +351,15 @@ const rules = {
 //인증 요청
 async function sendEmailCode() {
 	if (emailSent.value || loadingEmail.value) return
+	// 중복 검사
+	const emailValid = rules.email.every((fn) => fn(credentials.email) === true)
+	if (!emailValid) {
+		error.value = '올바른 이메일 주소를 입력해주세요.'
+		return
+	}
 	loadingEmail.value = true
+	error.value = ''
+	message.value = ''
 	try {
 		await sendSignupCode(credentials.email)
 		emailSent.value = true
@@ -313,9 +372,27 @@ async function sendEmailCode() {
 				emailSent.value = false
 			}
 		}, 1000)
-		error.value = ''
+		message.value = '인증코드가 발송되었습니다. 메일함을 확인해주세요.'
 	} catch (e) {
-		error.value = e.response?.data?.message || '인증 요청에 실패했습니다.'
+		const errorCode = e.response?.data?.code
+		const errorMessage = e.response?.data?.message
+
+		if (errorCode === '400012') {
+			// DUPLICATE_EMAIL
+			error.value =
+				'이미 가입된 이메일입니다. 다른 이메일을 사용하거나 로그인을 시도해주세요.'
+		} else if (errorCode === '400013') {
+			// 잘못된 이메일 형식
+			error.value = '올바른 이메일 형식이 아닙니다.'
+		} else if (errorCode === '500001') {
+			// 메일 서버 오류
+			error.value =
+				'메일 발송 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.'
+		} else {
+			error.value =
+				errorMessage ||
+				'인증코드 발송에 실패했습니다. 잠시 후 다시 시도해주세요.'
+		}
 		message.value = ''
 	} finally {
 		loadingEmail.value = false
@@ -338,10 +415,57 @@ async function verifyEmailCode() {
 		emailVerified.value = true
 		clearInterval(timerId)
 		error.value = ''
+
+		setTimeout(() => {
+			if (emailVerified.value) {
+				message.value = ''
+			}
+		}, 3000)
 	} catch (e) {
 		error.value =
 			e.response?.data?.message || '인증 코드가 올바르지 않습니다.'
 		message.value = ''
+	}
+}
+
+// 이메일 인증 초기화 레디스 TTL까지 정리
+async function resetEmailVerification() {
+	// 확인 메시지
+	if (
+		!confirm(
+			'이메일 인증을 다시 진행하시겠습니까?\n진행중인 인증이 취소됩니다.'
+		)
+	) {
+		return
+	}
+
+	try {
+		// 백엔드 Redis 초기화 (인증 진행중일 때만)
+		if (credentials.email && emailSent.value) {
+			await resetSignupVerification(credentials.email)
+			console.log('Redis 인증 상태 초기화 완료:', credentials.email)
+		}
+	} catch (e) {
+		console.warn('Redis 초기화 실패:', e.response?.data?.message || e.message)
+	}
+
+	// 타이머 정리
+	if (timerId) {
+		clearInterval(timerId)
+		timerId = null
+	}
+
+	// 상태 초기화
+	emailSent.value = false
+	emailVerified.value = false
+	emailCode.value = ''
+	timer.value = 0
+	loadingEmail.value = false
+
+	// 메시지 초기화
+	message.value = ''
+	if (error.value && error.value.includes('이메일')) {
+		error.value = ''
 	}
 }
 
