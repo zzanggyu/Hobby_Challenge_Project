@@ -15,12 +15,14 @@
 **HobbyChallenge**는 개인의 취미 활동을 체계적으로 관리하고, 다른 사용자들과 함께 동기부여를 받을 수 있는 소셜 웹 플랫폼입니다.
 
 ### 💡 기획 배경
+
 - **혼자서는 지속하기 어려운 취미 활동** → 커뮤니티와 함께 해결
 - **일회성 도전으로 끝나는 문제** → 데일리 인증을 통한 꾸준한 동기부여
 - **성취감 부족 문제** → 포인트/레벨 시스템으로 게임화된 경험 제공
 - **개인별 관심사 차이** → 카테고리별 관심 챌린지 맞춤 관리
 
 ### 🎯 핵심 기능
+
 - ✅ **개인 맞춤 챌린지**: 취미별 카테고리와 개인 관심 챌린지 (최대 10개)
 - ✅ **데일리 인증 시스템**: 1일 1회 사진+코멘트 인증, 포인트 지급 (5pt)
 - ✅ **커뮤니티 소셜**: 좋아요/댓글, 응원 메시지, 참여자간 상호작용
@@ -31,6 +33,7 @@
 ## 🛠️ 사용 기술
 
 ### Frontend (fo-frontend)
+
 ```json
 "Vue 3.5.13"           // Composition API 기반 SPA
 "Vuetify 3.8.0"        // Material Design 컴포넌트 라이브러리
@@ -42,6 +45,7 @@
 ```
 
 ### Backend (fo-backend)
+
 ```gradle
 "Spring Boot 3.5.0"         // REST API 서버 프레임워크
 "Spring Security"            // 인증/인가 처리
@@ -55,6 +59,7 @@
 ```
 
 ### Database & Infrastructure
+
 - **MySQL 8.x**: 메인 데이터베이스
 - **Redis**: 캐시 및 이메일 인증 토큰 저장
 - **AWS S3**: 인증 이미지 파일 저장소
@@ -103,24 +108,28 @@ hobby-challenge/
 ## 🗄️ 주요 기능 구현
 
 ### 🔐 사용자 인증 시스템
+
 - **JWT 토큰 기반 인증**: Access Token (1시간) + Refresh Token (7일)
 - **이메일 인증**: 회원가입, 아이디/비밀번호 찾기 시 Redis 기반 인증코드 (5-10분)
 - **Spring Security**: 보안 설정 및 권한 관리
 - **비밀번호 암호화**: BCrypt 해싱
 
 ### 🎯 챌린지 시스템
+
 - **CRUD 기능**: 생성/조회/수정/삭제 (생성자 권한)
 - **참여 관리**: 요청(REQUESTED) → 승인(APPROVED) 플로우
 - **관심 챌린지**: 사용자별 최대 10개 제한
 - **카테고리별 필터링**: 취미 분야별 검색
 
 ### 📸 인증 시스템
+
 - **이미지 업로드**: AWS S3 연동, 최대 5MB 제한
 - **일일 제한**: 1일 1회 인증만 가능, 당일 24시까지 수정/삭제
 - **포인트 지급**: 인증 완료 시 5pt 자동 지급
 - **소셜 기능**: 좋아요(1회 제한), 댓글(200자 제한)
 
 ### 📊 관리자 기능
+
 - **사용자 관리**: 조회/수정/정지/삭제, 다중 필터링
 - **챌린지 관리**: 활성화/비활성화, 단건/다중 수정/삭제
 - **인증 관리**: 코멘트 수정, 이미지 확대 보기
@@ -131,18 +140,14 @@ hobby-challenge/
 ## 🚀 설치 및 실행
 
 ### 📋 사전 요구사항
+
 - **Java 17** 이상
 - **Node.js 18** 이상
 - **MySQL 8.x**
-- **Redis** (선택사항)
-
-### 🗄️ 데이터베이스 설정
-```sql
-# MySQL 데이터베이스 생성
-CREATE DATABASE hobby_challenge CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-```
+- **Redis**
 
 ### 🖥️ 백엔드 실행
+
 ```bash
 # 1. 저장소 클론
 git clone [repository-url]
@@ -150,7 +155,7 @@ cd hobby-challenge/fo-backend
 
 # 2. 환경변수 설정 (.env 또는 application.properties)
 DB_PASSWORD=your_mysql_password
-MAIL_PASSWORD=your_gmail_app_password  
+MAIL_PASSWORD=your_gmail_app_password
 JWT_SECRET=your_jwt_secret_key
 AWS_ACCESS_KEY_ID=your_aws_access_key
 AWS_SECRET_ACCESS_KEY=your_aws_secret_key
@@ -158,9 +163,11 @@ AWS_SECRET_ACCESS_KEY=your_aws_secret_key
 # 3. 애플리케이션 실행
 ./gradlew bootRun
 ```
+
 서버 실행 후 `http://localhost:8081`에서 확인
 
 ### 🎨 프론트엔드 실행
+
 ```bash
 # 1. 프론트엔드 디렉토리 이동
 cd ../fo-frontend
@@ -171,6 +178,7 @@ npm install
 # 3. 개발 서버 실행
 npm run dev
 ```
+
 개발 서버 실행 후 `http://localhost:5173`에서 확인
 
 ---
@@ -178,18 +186,21 @@ npm run dev
 ## 🔍 API 엔드포인트
 
 ### 인증 관련
+
 - `POST /api/auth/register` - 회원가입
 - `POST /api/auth/login` - 로그인
 - `POST /api/auth/find-id` - 아이디 찾기
 - `POST /api/auth/reset-password` - 비밀번호 재설정
 
 ### 챌린지 관련
+
 - `GET /api/challenges` - 챌린지 목록 조회
 - `POST /api/challenges` - 챌린지 생성
 - `GET /api/challenges/{id}` - 챌린지 상세 조회
 - `PUT /api/challenges/{id}` - 챌린지 수정 (생성자만)
 
 ### 인증 관련
+
 - `POST /api/certifications` - 인증 업로드
 - `GET /api/certifications` - 인증 목록 조회
 - `POST /api/certifications/{id}/like` - 좋아요 토글
@@ -199,17 +210,20 @@ npm run dev
 ## 💡 개발 특징
 
 ### 보안
+
 - **JWT 기반 Stateless 인증**
 - **CORS 설정**: 프론트엔드-백엔드 통신
 - **입력 데이터 검증**: Bean Validation 활용
 - **SQL Injection 방지**: MyBatis 파라미터 바인딩
 
 ### 성능 최적화
+
 - **Redis 캐싱**: 이메일 인증코드, 세션 관리
 - **이미지 최적화**: S3 업로드, 파일 크기 제한
 - **페이징 처리**: 대용량 데이터 조회 최적화
 
 ### 사용자 경험
+
 - **반응형 디자인**: Vuetify Material Design
 - **실시간 검증**: 프론트엔드 입력 유효성 검사
 - **에러 핸들링**: 통일된 에러 응답 형식
@@ -219,34 +233,22 @@ npm run dev
 ## 🐛 트러블슈팅
 
 ### 자주 발생하는 이슈
+
 1. **JWT 토큰 만료**: 자동 리프레시 로직 확인
 2. **CORS 에러**: `CorsConfig.java` 설정 확인
 3. **이미지 업로드 실패**: AWS S3 권한 및 버킷 설정
 4. **이메일 발송 실패**: Gmail 앱 비밀번호 설정
-
-### 로그 확인
-```bash
-# 백엔드 로그 (DEBUG 레벨)
-tail -f logs/application.log
-
-# 프론트엔드 브라우저 콘솔
-F12 → Console 탭 확인
-```
 
 ---
 
 ## 👨‍💻 개발자 정보
 
 - **개발자**: 김현규
-- **소속**: ITS사업부  
-- **프로젝트 기간**: 2025.05.06 - 진행중
-- **프로젝트 유형**: Term Project 2
+- **이메일**: khgg010@naver.com
+- **프로젝트 기간**: 2025.05.06 - 2025.06.13
 
 ### 연락처
-- 개발 문의나 버그 리포트는 이슈로 등록해 주세요
+
+- 010-2716-8327
 
 ---
-
-## 📝 라이센스
-
-이 프로젝트는 교육용 목적으로 개발되었습니다.
