@@ -8,6 +8,11 @@
 ![MySQL](https://img.shields.io/badge/MySQL-4479A1?style=for-the-badge&logo=mysql&logoColor=white)
 ![JWT](https://img.shields.io/badge/JWT-000000?style=for-the-badge&logo=JSON%20web%20tokens&logoColor=white)
 
+## ⚠️ 프로젝트 범위
+
+본 저장소는 **사용자 서비스(FO)** 부분만 포함합니다.
+관리자 시스템(BO)은 회사 보안 정책에 따라 별도 관리됩니다.
+
 ---
 
 ## 📋 프로젝트 소개
@@ -150,7 +155,7 @@ hobby-challenge/
 
 ```bash
 # 1. 저장소 클론
-git clone [repository-url]
+git clone [https://github.com/zzanggyu/Hobby_Challenge_Project.git]
 cd hobby-challenge/fo-backend
 
 # 2. 환경변수 설정 (.env 또는 application.properties)
