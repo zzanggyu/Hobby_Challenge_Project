@@ -294,7 +294,6 @@ async function handleNotificationClick(notification) {
 				break
 		}
 	} catch (error) {
-		console.error('알림 클릭 처리 중 오류:', error)
 		alert('페이지 이동 중 오류가 발생했습니다.')
 	}
 }

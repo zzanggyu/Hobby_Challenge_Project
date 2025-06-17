@@ -1,7 +1,7 @@
 <template>
 	<v-container class="d-flex justify-center align-center" style="height: 80vh">
 		<v-card width="400" elevation="6" class="pa-6">
-			<h2 class="text-h5 mb-4 text-center">비밀번호 찾기</h2>
+			<h2 class="text-h5 mb-4 text-center">비밀번호 재설정</h2>
 
 			<v-form ref="form" v-model="valid" lazy-validation>
 				<!-- Step 1: 코드 발송 -->

@@ -592,9 +592,21 @@ async function fetchCategories() {
 // 챌린지 좋아요 토글
 async function onToggleFavorite(challenge) {
 	const originalState = challenge.isFavorite
-
+	const challengeId = challenge.challengeId
+	const originalCount = challenge.favoriteCount || 0
 	try {
-		challenge.isFavorite = !challenge.isFavorite
+		const challengeIndex = challenges.value.findIndex(
+			(c) => c.challengeId === challengeId
+		)
+
+		if (challengeIndex !== -1) {
+			//  상태와 숫자 모두 업데이트
+			challenges.value[challengeIndex].isFavorite = !originalState
+			challenges.value[challengeIndex].favoriteCount = originalState
+				? originalCount - 1 // 좋아요 취소 시 -1
+				: originalCount + 1 // 좋아요 추가 시 +1
+		}
+
 		await toggleFavoriteChallenge(challenge.challengeId)
 
 		// 내 챌린지 등록 성공시에만 메시지 표시
@@ -605,7 +617,13 @@ async function onToggleFavorite(challenge) {
 		}
 	} catch (err) {
 		// 실패 시 원래 상태로 복구
-		challenge.isFavorite = originalState
+		const challengeIndex = challenges.value.findIndex(
+			(c) => c.challengeId === challengeId
+		)
+		if (challengeIndex !== -1) {
+			challenges.value[challengeIndex].isFavorite = originalState
+			challenges.value[challengeIndex].favoriteCount = originalCount
+		}
 
 		// 10개 제한 에러 처리
 		if (err.response?.data?.errorCode === 'FAVORITE_LIMIT_EXCEEDED') {
@@ -632,8 +650,17 @@ async function onJoin(challengeId) {
 
 	try {
 		await joinChallenge(challengeId)
+		const challengeIndex = challenges.value.findIndex(
+			(c) => c.challengeId === challengeId
+		)
+		if (challengeIndex !== -1) {
+			challenges.value[challengeIndex].requested = true
+			challenges.value[challengeIndex].approved = false
+		}
+
+		// await fetchChallenges() // 또는 해당 페이지의 새로고침 함수
+		await fetchMyParticipations()
 		alert('참여 요청이 완료되었습니다!')
-		await fetchChallenges() // 또는 해당 페이지의 새로고침 함수
 	} catch (err) {
 		handleApiError(err) // 서버 오류를 그대로 처리
 	} finally {
@@ -712,7 +739,6 @@ onMounted(async () => {
 	text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
 }
 
-/* ✅ 새로운 네비게이션 스타일 */
 .navigation-section {
 	z-index: 10;
 }

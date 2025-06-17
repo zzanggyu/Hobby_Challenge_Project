@@ -29,35 +29,6 @@
 				placeholder="오늘의 운동 한마디를 남겨보세요! (선택사항, 50자 이내)"
 			/>
 
-			<!-- 압축 정보 표시 추가 -->
-			<!-- <v-alert
-				v-if="compressionInfo"
-				type="success"
-				variant="tonal"
-				class="mb-4"
-			>
-				이미지 최적화: {{ compressionInfo.original }} →
-				{{ compressionInfo.compressed }} ({{ compressionInfo.ratio }}% 절약)
-			</v-alert> -->
-
-			<!-- 처리 중 표시 -->
-			<!-- <v-alert
-				v-if="imageProcessing"
-				type="info"
-				variant="tonal"
-				class="mb-4"
-			>
-				<div class="d-flex align-center">
-					<v-progress-circular
-						indeterminate
-						size="20"
-						width="2"
-						class="mr-2"
-					/>
-					<span>이미지를 최적화하는 중...</span>
-				</div>
-			</v-alert> -->
-
 			<!-- 이미지 업로드  -->
 			<v-file-input
 				v-model="file"
@@ -110,14 +81,14 @@ const route = useRoute()
 const challengeId = Number(route.params.id)
 
 const comment = ref('')
-const file = ref(null)
-const processedFile = ref(null)
+const file = ref(null) // 원본 파일
+const processedFile = ref(null) // 리사이징 파일
 const busy = ref(false)
-const imagePreview = ref(null)
+const imagePreview = ref(null) // 미리보기 url
 const auth = useAuthStore()
 
 const compressionInfo = ref(null)
-const imageProcessing = ref(false)
+const imageProcessing = ref(false) // 처리 중
 
 const props = defineProps({
 	canWrite: {
@@ -126,8 +97,8 @@ const props = defineProps({
 	},
 })
 
+// 안내 메시지 표시 여부 결정: props 우선, 없으면 로그인 상태 사용
 const hasWritePermission = computed(() => {
-	// props로 받은 canWrite가 있으면 사용, 없으면 로그인 여부만 체크
 	return props.canWrite ?? auth.isAuthenticated
 })
 
@@ -152,6 +123,7 @@ const valid = computed(() => {
 watch(file, async (newFile) => {
 	// 파일이 제거되었을 때
 	if (!newFile) {
+		// 파일 제거 됐을 때 상태 초기화화
 		processedFile.value = null
 		imagePreview.value = null
 		compressionInfo.value = null
@@ -160,9 +132,8 @@ watch(file, async (newFile) => {
 
 	try {
 		imageProcessing.value = true
-		console.log(' 리사이징 시작:', newFile.name)
 
-		// 리사이징 수행
+		// 리사이징
 		const resizedFile = await resizeImage(newFile, {
 			maxWidth: 800,
 			maxHeight: 600,
@@ -193,8 +164,8 @@ watch(file, async (newFile) => {
 
 		console.log(' 리사이징 완료')
 	} catch (error) {
-		console.error(' 이미지 처리 실패:', error)
 		alert(`이미지 처리 중 오류가 발생했습니다: ${error.message}`)
+		// 에러 시 상태 초기화
 		processedFile.value = null
 		imagePreview.value = null
 		compressionInfo.value = null

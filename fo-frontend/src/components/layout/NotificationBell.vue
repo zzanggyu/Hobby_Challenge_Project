@@ -94,27 +94,31 @@ import { useAuthStore } from '@/stores/auth'
 const authStore = useAuthStore()
 const router = useRouter()
 const store = useNotificationStore()
+
+// 상태 관리
 const open = ref(false)
+// 주기적 알림 확인을 위한 인터벌
+let notificationInterval = null
 
 const recentNotifications = computed(() => store.recentNotifications)
 const unreadCount = computed(() => store.unreadCount)
 const loading = computed(() => store.loading)
 
+// 로그인 상태변화 감지, 폴링 관리
 watch(
 	() => authStore.isAuthenticated,
 	(isAuthenticated) => {
 		if (!isAuthenticated) {
+			// 로그아웃 시: 상태 초기화 + 폴링 중지
 			store.clearNotifications()
 			stopNotificationPolling()
 		} else {
+			// 로그인 시: 알림 로드 + 폴링 시작
 			store.fetchNotifications()
 			startNotificationPolling()
 		}
 	}
 )
-
-// 주기적 알림 확인을 위한 인터벌
-let notificationInterval = null
 
 // 알림 벨 클릭 시 최신 알림 로드
 async function onOpenBell() {
@@ -178,8 +182,6 @@ async function handleClick(notification) {
 		await store.markAsRead(notification.id)
 	}
 
-	console.log('🔔 알림 클릭:', notification) // 디버깅용
-
 	try {
 		// 1. 챌린지 관련 알림들
 		if (notification.targetType === 'challenge' && notification.targetId) {
@@ -199,7 +201,7 @@ async function handleClick(notification) {
 				notification.certChallengeId || notification.challengeId
 
 			if (challengeId) {
-				// 🆕 쿼리 파라미터로 모달 열기 신호
+				//  쿼리 파라미터로 모달 열기 신호
 				router.push({
 					name: 'challenge-overview',
 					params: { id: challengeId },
@@ -260,7 +262,10 @@ async function handleClick(notification) {
 						'인증 관련 알림이지만 챌린지 ID가 없음:',
 						notification
 					)
-					router.push({ name: 'mypage', query: { tab: 'certifications' } })
+					router.push({
+						name: 'challenge-overview',
+						query: { tab: 'certifications' },
+					})
 				}
 				break
 
@@ -270,11 +275,6 @@ async function handleClick(notification) {
 				break
 
 			default:
-				console.warn(
-					'🚨 처리되지 않은 알림 타입:',
-					notification.type,
-					notification
-				)
 				router.push({ name: 'my-notifications' })
 				break
 		}
@@ -323,7 +323,7 @@ onUnmounted(() => {
 <style scoped>
 .notification-content {
 	flex: 1;
-	min-width: 0; /* 텍스트 오버플로우 방지 */
+	min-width: 0;
 }
 
 .v-list-item {

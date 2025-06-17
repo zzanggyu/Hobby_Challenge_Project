@@ -64,7 +64,7 @@
 				<RouterLink to="/signup">회원가입</RouterLink><br />
 				<RouterLink to="/find-id">아이디 찾기</RouterLink>
 				<span class="mx-2">|</span>
-				<RouterLink to="/find-password">비밀번호 찾기</RouterLink>
+				<RouterLink to="/find-password">비밀번호 재설정</RouterLink>
 			</div>
 		</v-card>
 	</v-container>
