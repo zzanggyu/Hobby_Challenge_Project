@@ -131,7 +131,76 @@
 						</v-list>
 					</v-card-text>
 				</v-card>
+				<v-card class="mb-6" elevation="3">
+					<v-card-title class="text-h5 font-weight-bold text-primary">
+						<v-icon class="mr-2" color="primary"
+							>mdi-trophy-variant</v-icon
+						>
+						내 챌린지 활동
+					</v-card-title>
 
+					<v-card-text>
+						<!-- 통계 카드들 -->
+						<v-row class="mb-4">
+							<v-col cols="6" md="3">
+								<v-card variant="outlined" class="text-center pa-3">
+									<div class="text-h4 font-weight-bold text-primary">
+										{{ challengeStats.totalChallenges }}
+									</div>
+									<div class="text-caption text-grey-darken-1">
+										참여 챌린지
+									</div>
+								</v-card>
+							</v-col>
+							<v-col cols="6" md="3">
+								<v-card variant="outlined" class="text-center pa-3">
+									<div class="text-h4 font-weight-bold text-success">
+										{{ challengeStats.activeChallenges }}
+									</div>
+									<div class="text-caption text-grey-darken-1">
+										진행중
+									</div>
+								</v-card>
+							</v-col>
+							<v-col cols="6" md="3">
+								<v-card variant="outlined" class="text-center pa-3">
+									<div class="text-h4 font-weight-bold text-info">
+										{{ challengeStats.completedChallenges }}
+									</div>
+									<div class="text-caption text-grey-darken-1">
+										완료
+									</div>
+								</v-card>
+							</v-col>
+							<v-col cols="6" md="3">
+								<v-card variant="outlined" class="text-center pa-3">
+									<div class="text-h4 font-weight-bold text-orange">
+										{{ challengeStats.totalCertifications }}
+									</div>
+									<div class="text-caption text-grey-darken-1">
+										총 인증
+									</div>
+								</v-card>
+							</v-col>
+						</v-row>
+
+						<!-- 버튼들 -->
+						<v-row>
+							<v-col cols="12">
+								<v-btn
+									block
+									variant="outlined"
+									color="primary"
+									prepend-icon="mdi-format-list-bulleted"
+									@click="showMyChallenges"
+									:loading="loadingChallenges"
+								>
+									내 참여 챌린지 보기
+								</v-btn>
+							</v-col>
+						</v-row>
+					</v-card-text>
+				</v-card>
 				<!-- 비밀번호 변경 카드 - UI 개선 -->
 				<v-card class="mb-6">
 					<v-card-title>
@@ -318,6 +387,20 @@
 			</v-card>
 		</v-dialog>
 	</v-container>
+
+	<MyChallengesDialog
+		v-model="challengesDialog"
+		:challenges="myChallenges"
+		:loading="loadingChallenges"
+		@challenge-selected="onChallengeSelected"
+	/>
+
+	<MyCertificationsDialog
+		v-model="certificationsDialog"
+		:challenge="selectedChallenge"
+		:certifications="selectedCertifications"
+		:loading="certificationsLoading"
+	/>
 </template>
 
 <script setup>
@@ -329,10 +412,24 @@ import {
 	updateNickname,
 	changePassword as apiChangePassword,
 	deleteAccount as apiDeleteAccount,
+	getMyCertificationCount,
+	getUserStatistics,
+	getMyParticipations,
 } from '@/services/userService'
+import { getCertifications } from '@/services/certService'
+// 컴포넌트 임포트
+import MyChallengesDialog from '@/components/mypage/MyChallengesDialog.vue'
+import MyCertificationsDialog from '@/components/mypage/MyCertificationsDialog.vue'
 
 const router = useRouter()
 const auth = useAuthStore()
+
+// 다이얼로그 관련 상태
+const challengesDialog = ref(false)
+const certificationsDialog = ref(false)
+const selectedChallenge = ref(null)
+const selectedCertifications = ref([])
+const certificationsLoading = ref(false)
 
 // 상태 관리
 const userInfo = ref({})
@@ -351,6 +448,17 @@ const showCurrentPassword = ref(false) // 현재 비밀번호
 const showNewPassword = ref(false) // 새 비밀번호
 const showConfirmPassword = ref(false) // 새 비밀번호 확인
 const showWithdrawPassword = ref(false) // 탈퇴 확인 비밀번호
+
+// 챌린지 관련 상태
+const challengeStats = ref({
+	totalChallenges: 0,
+	activeChallenges: 0,
+	completedChallenges: 0,
+	totalCertifications: 0,
+})
+const myChallenges = ref([])
+const loadingStats = ref(false)
+const loadingChallenges = ref(false)
 
 // 폼 참조
 const passwordForm = ref()
@@ -423,8 +531,13 @@ async function loadMyInfo() {
 	try {
 		userInfo.value = await getMyInfo()
 		originalNickname.value = userInfo.value.nickname
+
+		// 사용자 정보 로딩 완료 후 통계 로드
+		if (userInfo.value.userId) {
+			await loadChallengeStats()
+		}
 	} catch (error) {
-		console.error('사용자 정보 조회 실패:', error)
+		alert('사용자 정보를 불러오는데 실패했습니다.')
 	}
 }
 
@@ -514,7 +627,6 @@ async function changePassword() {
 		//  폼 초기화 함수 사용
 		resetPasswordForm()
 	} catch (error) {
-		console.error('비밀번호 변경 실패:', error)
 		alert(error.response?.data?.message || '비밀번호 변경에 실패했습니다.')
 	} finally {
 		changingPassword.value = false
@@ -539,7 +651,6 @@ async function deleteAccount() {
 		await auth.logout()
 		router.push('/')
 	} catch (error) {
-		console.error('회원 탈퇴 실패:', error)
 		alert(error.response?.data?.message || '회원 탈퇴에 실패했습니다.')
 	} finally {
 		withdrawing.value = false
@@ -561,6 +672,250 @@ function getLevelColor(level) {
 	if (level >= 5) return 'orange'
 	if (level >= 2) return 'red'
 	return 'grey'
+}
+
+//  챌린지 선택 핸들러
+async function onChallengeSelected(challenge) {
+	certificationsLoading.value = true
+	selectedChallenge.value = challenge
+
+	try {
+		const result = await getCertifications(
+			challenge.challengeId, // challengeId
+			1, // page (첫 페이지)
+			100, // size (충분히 많이)
+			true // onlyMine (내 인증만)
+		)
+
+		// PageResponseDTO 구조에 따라 데이터 추출
+		selectedCertifications.value = result.items || []
+
+		// 날짜순 정렬 (최신순)
+		selectedCertifications.value.sort(
+			(a, b) => new Date(b.createdDate) - new Date(a.createdDate)
+		)
+
+		// 챌린지 목록 다이얼로그 닫고 인증 목록 다이얼로그 열기
+		challengesDialog.value = false
+		certificationsDialog.value = true
+	} catch (error) {
+		alert(
+			'인증 목록을 불러오는데 실패했습니다: ' +
+				(error.message || '알 수 없는 오류')
+		)
+	} finally {
+		certificationsLoading.value = false
+	}
+}
+
+// 챌린지 통계 로드
+async function loadChallengeStats() {
+	if (!userInfo.value.userId) return
+
+	loadingStats.value = true
+	try {
+		const participations = await getMyParticipations(userInfo.value.userId)
+		const approvedParticipations = participations.filter(
+			(p) => p.status === 'APPROVED' || p.role === 'OWNER'
+		)
+
+		if (approvedParticipations.length === 0) {
+			challengeStats.value = {
+				totalChallenges: 0,
+				activeChallenges: 0,
+				completedChallenges: 0,
+				totalCertifications: 0,
+			}
+
+			return
+		}
+
+		const now = new Date()
+
+		// 🆕 디버깅 로그 추가
+		const promises = approvedParticipations.map(
+			async (participation, index) => {
+				try {
+					const challengeEndDate = participation.endDate
+						? new Date(participation.endDate)
+						: new Date('9999-12-31')
+
+					const isActive = challengeEndDate >= now.setHours(0, 0, 0, 0)
+
+					const certResponse = await getMyCertificationCount(
+						userInfo.value.userId,
+						participation.challengeId
+					)
+					const certResult = certResponse.data
+
+					const finalCount = certResult.certificationCount || 0
+
+					return {
+						challengeId: participation.challengeId,
+						challengeTitle: participation.challengeTitle, // 🆕 추가
+						isActive,
+						certificationCount: finalCount,
+					}
+				} catch (error) {
+					return {
+						challengeId: participation.challengeId,
+						challengeTitle: participation.challengeTitle,
+						isActive: false,
+						certificationCount: 0,
+					}
+				}
+			}
+		)
+
+		const results = await Promise.all(promises)
+
+		// 결과 집계
+		let activeChallenges = 0
+		let completedChallenges = 0
+		let totalCertifications = 0
+
+		results.forEach((result, index) => {
+			if (result.isActive) {
+				activeChallenges++
+			} else {
+				completedChallenges++
+			}
+			totalCertifications += result.certificationCount
+		})
+
+		// 🆕 최종 통계 로그
+		const finalStats = {
+			totalChallenges: approvedParticipations.length,
+			activeChallenges: activeChallenges,
+			completedChallenges: completedChallenges,
+			totalCertifications: totalCertifications,
+		}
+
+		challengeStats.value = finalStats
+	} catch (error) {
+		challengeStats.value = {
+			totalChallenges: 0,
+			activeChallenges: 0,
+			completedChallenges: 0,
+			totalCertifications: 0,
+		}
+	} finally {
+		loadingStats.value = false
+	}
+}
+
+// 내 챌린지 목록 보기
+async function showMyChallenges() {
+	loadingChallenges.value = true
+	try {
+		const participations = await getMyParticipations(userInfo.value.userId)
+		const approvedParticipations = participations.filter(
+			(p) => p.status === 'APPROVED' || p.role === 'OWNER'
+		)
+
+		if (approvedParticipations.length === 0) {
+			alert('참여 중인 챌린지가 없습니다.')
+			return
+		}
+
+		const now = new Date()
+		const results = []
+
+		for (const participation of approvedParticipations) {
+			try {
+				const certResponse = await getMyCertificationCount(
+					userInfo.value.userId,
+					participation.challengeId
+				)
+				const certResult = certResponse.data
+				// 🆕 챌린지 상태 판단 개선
+				const challengeEndDate = participation.endDate
+					? new Date(participation.endDate)
+					: new Date('9999-12-31')
+
+				const isActive = challengeEndDate >= now.setHours(0, 0, 0, 0)
+
+				results.push({
+					challengeId: participation.challengeId,
+					challengeTitle:
+						participation.challengeTitle ||
+						participation.title ||
+						`챌린지 ${participation.challengeId}`,
+					certificationCount: certResult.certificationCount || 0,
+					status: participation.status,
+					role: participation.role,
+					isActive: isActive, // 🆕 추가
+					endDate: participation.endDate,
+					startDate: participation.startDate,
+				})
+			} catch (error) {
+				// 에러 시에도 기본 정보는 표시
+				results.push({
+					challengeId: participation.challengeId,
+					challengeTitle:
+						participation.challengeTitle ||
+						`챌린지 ${participation.challengeId}`,
+					certificationCount: 0,
+					status: participation.status,
+					role: participation.role,
+					isActive: false,
+					endDate: participation.endDate,
+				})
+			}
+		}
+
+		//  활성 챌린지를 앞으로 정렬
+		results.sort((a, b) => {
+			if (a.isActive && !b.isActive) return -1
+			if (!a.isActive && b.isActive) return 1
+			return b.certificationCount - a.certificationCount
+		})
+
+		myChallenges.value = results
+
+		// 다이얼로그 열기
+		challengesDialog.value = true
+	} catch (error) {
+		alert('챌린지 목록을 불러오는데 실패했습니다.')
+	} finally {
+		loadingChallenges.value = false
+	}
+}
+
+// 🆕 수동 새로고침 함수
+async function refreshStats() {
+	if (loadingStats.value) {
+		return
+	}
+
+	await loadChallengeStats()
+	alert('📊 통계가 갱신되었습니다!')
+}
+
+// 내 인증 내역 보기
+async function showMyCertifications() {
+	if (!userInfo.value.userId) {
+		alert('사용자 정보를 불러오는 중입니다. 잠시 후 시도해주세요.')
+		return
+	}
+
+	const total = challengeStats.value.totalCertifications
+	if (total === 0) {
+		alert(
+			'아직 작성한 인증이 없습니다.\n챌린지에 참여해서 인증을 남겨보세요!'
+		)
+		return
+	}
+
+	const message =
+		`📊 내 인증 현황\n\n` +
+		`총 인증: ${total}개\n` +
+		`참여 챌린지: ${challengeStats.value.totalChallenges}개\n` +
+		`진행중: ${challengeStats.value.activeChallenges}개\n` +
+		`완료: ${challengeStats.value.completedChallenges}개\n\n` +
+		`💡 "내 참여 챌린지" 버튼을 눌러 각 챌린지별 인증을 확인할 수 있습니다.`
+
+	alert(message)
 }
 
 onMounted(() => {

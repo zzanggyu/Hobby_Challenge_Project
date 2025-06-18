@@ -263,8 +263,7 @@ async function handleClick(notification) {
 						notification
 					)
 					router.push({
-						name: 'challenge-overview',
-						query: { tab: 'certifications' },
+						name: 'my-notifications',
 					})
 				}
 				break
