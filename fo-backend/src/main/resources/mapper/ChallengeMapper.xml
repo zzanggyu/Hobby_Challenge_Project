@@ -49,6 +49,7 @@
     	</association>
  	</resultMap>
  	
+ 	<!-- 발표! 가장 어려웠던 쿼리 -->
  	<!-- 페이징 -->
  	<!-- 동적 쿼리 xml태그 추가해 제목 검색 또는 카테고리 검색  -->
  	<select id="findAllWithPaging" resultMap="ChallengeWithCreator">
@@ -61,13 +62,23 @@
       		 , C.END_DATE AS endDate
       		 , C.CREATED_DATE createdDate
       		 , C.MODIFIED_DATE modifiedDate
+      		 
+      		 <!-- 관심 등록 수 계산 -->
       		 , (SELECT COUNT(*) FROM FAVORITE_CHALLENGE FC 
        		     WHERE FC.CHALLENGE_ID = C.CHALLENGE_ID) AS favoriteCount
+       		     
+       		 <!-- 참여자 수 계산 승인된 사용자 -->
        		 , (SELECT COUNT(*) 
 	              FROM PARTICIPATION P2 
 	             WHERE P2.CHALLENGE_ID = C.CHALLENGE_ID 
 	               AND P2.STATUS = 'APPROVED') AS participantCount    
-	         , CASE WHEN FC.USER_ID IS NOT NULL THEN TRUE ELSE FALSE END AS isFavorite <!-- 가상 컬럼 생성 관심 챌린지 여부-->
+	         
+	         <!-- 현재 사용자의 관심 여부  -->
+	         , CASE WHEN FC.USER_ID IS NOT NULL 
+	         		THEN TRUE 
+	         		ELSE FALSE 
+	         	END AS isFavorite <!-- 가상 컬럼 생성 관심 챌린지 여부-->
+	        
 	         , U.USER_ID AS userId
   			 , U.NICKNAME AS nickname
 	      FROM CHALLENGE C
@@ -77,14 +88,16 @@
     INNER JOIN USER U
   			ON C.CREATED_BY = U.USER_ID
 	   <where>
-	   		 (C.IS_DELETED = 0 OR C.IS_DELETED IS NULL) <!-- 소프트 딜리트 되지 않은 챌린지만 조회 -->
-			<if test="search != null and search.trim() != ''">
+	   		 (C.IS_DELETED = 0 OR C.IS_DELETED IS NULL) <!-- 논리 삭제 되지 않은 챌린지만 조회 -->
+			<if test="search != null and search.trim() != ''"> <!-- 검색어 조건 -->
 				AND C.TITLE LIKE CONCAT('%', #{search}, '%')
 		   </if>
-			<if test="categoryId != null">
-				AND C.CATEGORY_ID = #{categoryId}
+			<if test="categoryId != null">  <!-- 카테고리 필터 -->
+				AND C.CATEGORY_ID = #{categoryId}	
 		   </if>
 	   </where>
+	   
+	   <!-- 정렬 및 페이징 -->
 	  ORDER BY C.CREATED_DATE DESC
 	     LIMIT #{size} OFFSET #{offset}
 	</select>
@@ -120,7 +133,7 @@
 		  FROM CHALLENGE C
 	INNER JOIN USER U 
 			ON C.CREATED_BY = U.USER_ID
-	   	 WHERE (C.IS_DELETED = 0 OR C.IS_DELETED IS NULL) <!-- 소프트 딜리트 되지 않은 챌린지만 조회 -->
+	   	 WHERE (C.IS_DELETED = 0 OR C.IS_DELETED IS NULL) <!-- 논리삭제 되지 않은 챌린지만 조회 -->
 	  ORDER BY C.CREATED_DATE DESC
 	</select>
 	

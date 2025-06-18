@@ -63,7 +63,7 @@ public class ChallengeController {
 //    }
 	
 
-    /** 참여한 챌린지 상세 조회 */
+    // 참여한 챌린지 상세 조회 
 	@GetMapping("/{id:\\d+}")
 	public ChallengeDetailDTO getDetail(
 	    @PathVariable("id") Integer id,
@@ -83,13 +83,7 @@ public class ChallengeController {
 	    return ResponseEntity.ok(popular);
 	}
 	
-//	/** 승인된 참여자 목록 조회 */
-//	@GetMapping("/{id}/participants")
-//	public List<ParticipantDTO> getParticipants(
-//	    @PathVariable("id") Integer id
-//	) {
-//	    return challengeService.getApprovedParticipants(id);
-//	}
+
 	
 	// 챌린지 수정  챌린지 생성자(owner)만 가능
 	@PutMapping("/{id}")

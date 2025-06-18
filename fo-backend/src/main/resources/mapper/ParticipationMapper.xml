@@ -3,6 +3,43 @@
   PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
          "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.hobby.challenge.fobackend.mapper.ParticipationMapper">
+	<!-- 참여 요청 목록용 (챌린지 생성자가 요청자 정보 확인) -->
+	<resultMap id="RequestMap"
+	           type="com.hobby.challenge.fobackend.dto.ParticipationResponseDTO">
+	  <id column="participationId" property="participationId"/>
+	  <result column="userId" property="userId"/>
+	  <result column="nickname" property="nickname"/>
+	  <result column="challengeId" property="challengeId"/>
+	  <result column="status" property="status"/>
+	  <result column="requestDate" property="requestDate"/>
+	  <result column="participatedDate" property="participatedDate"/>
+	  <result column="role" property="role"/>
+	</resultMap>
+	
+	<!--  내 참여 챌린지 목록용 (챌린지 제목, 시작일, 종료일 포함) -->
+	<resultMap id="ParticipationWithChallengeMap"
+           type="com.hobby.challenge.fobackend.dto.ParticipationResponseDTO">
+	  <id column="participationId" property="participationId"/>
+	  <result column="userId" property="userId"/>
+	  <result column="challengeId" property="challengeId"/>
+	  <result column="challengeTitle" property="challengeTitle"/>
+	  <result column="status" property="status"/>
+	  <result column="requestDate" property="requestDate"/>
+	  <result column="participatedDate" property="participatedDate"/>
+	  <result column="role" property="role"/>
+	  <result column="startDate" property="startDate"/>
+	  <result column="endDate" property="endDate"/>
+	</resultMap>
+
+	<!-- 승인된 참여자 목록용 (참여자 프로필 정보 포함) -->
+	<resultMap id="ApprovedMap" type="com.hobby.challenge.fobackend.dto.ParticipantDTO">
+		<id column="participationId" property="participationId"/>
+	    <id column="userId" property="userId"/>
+	    <result column="nickname" property="nickname"/>
+	    <result column="role" property="role"/> 
+	    <result column="imageUrl" property="imageUrl"/>
+	</resultMap>
+
 	<!-- 챌린지에 참여 -->
 	<insert id="insertParticipation"
         useGeneratedKeys="true"
@@ -21,52 +58,49 @@
 			 )
 	</insert>
 	
-	<resultMap id="RequestMap"
-	           type="com.hobby.challenge.fobackend.dto.ParticipationResponseDTO">
-	  <id column="participationId" property="participationId"/>
-	  <result column="userId" property="userId"/>
-	  <result column="nickname" property="nickname"/>
-	  <result column="challengeId" property="challengeId"/>
-	  <result column="status" property="status"/>
-	  <result column="requestDate" property="requestDate"/>
-	  <result column="participatedDate" property="participatedDate"/>
-	  <result column="role" property="role"/>
-	</resultMap>
+
 	
 	<!-- 특정 챌린지의 모든 요청 조회 챌린지 생성자(OWNER)용 -->
 	<select id="findRequestsByChallenge"
 	        resultMap="RequestMap">
-	  SELECT P.PARTICIPATION_ID AS participationId
-	       , P.USER_ID AS userId
-	       , U.NICKNAME AS nickname
-	       , P.CHALLENGE_ID AS challengeId
-	       , P.STATUS AS status
-	       , P.REQUEST_DATE AS requestDate
-	       , P.PARTICIPATED_DATE AS participatedDate
-	       , P.ROLE AS role
-	    FROM PARTICIPATION P
-	    JOIN USER U
-	      ON P.USER_ID = U.USER_ID
-	   WHERE P.CHALLENGE_ID = #{challengeId}
-	     AND P.STATUS = 'REQUESTED'
+		 SELECT P.PARTICIPATION_ID AS participationId
+		      , P.USER_ID AS userId
+		      , U.NICKNAME AS nickname
+		      , P.CHALLENGE_ID AS challengeId
+		      , P.STATUS AS status
+		      , P.REQUEST_DATE AS requestDate
+		      , P.PARTICIPATED_DATE AS participatedDate
+		      , P.ROLE AS role
+		   FROM PARTICIPATION P
+		   JOIN USER U
+		     ON P.USER_ID = U.USER_ID
+		  WHERE P.CHALLENGE_ID = #{challengeId}
+		    AND P.STATUS = 'REQUESTED'
 	</select>
 	
 
 	
 	<!-- 특정 사용자의 챌린지 참여 내역 조회 -->
-	<select id="findByUser" 
-			resultType="com.hobby.challenge.fobackend.dto.ParticipationResponseDTO">
-		
-		SELECT PARTICIPATION_ID
-			 , USER_ID
-			 , CHALLENGE_ID
-			 , STATUS
-			 , REQUEST_DATE
-			 , PARTICIPATED_DATE
-			 , ROLE
-	      FROM PARTICIPATION
-	     WHERE USER_ID = #{userId}
+	<select id="findByUser" resultMap="ParticipationWithChallengeMap">
+	    SELECT P.PARTICIPATION_ID AS participationId
+	         , P.USER_ID AS userId
+	         , P.CHALLENGE_ID AS challengeId
+	         , C.TITLE AS challengeTitle        <!-- 🆕 챌린지 제목 추가 -->
+	         , P.STATUS AS status
+	         , P.REQUEST_DATE AS requestDate
+	         , P.PARTICIPATED_DATE AS participatedDate
+	         , P.ROLE AS role
+	         , C.START_DATE AS startDate        <!-- 🆕 시작일 추가 -->
+	         , C.END_DATE AS endDate            <!-- 🆕 종료일 추가 -->
+	      FROM PARTICIPATION P
+	INNER JOIN CHALLENGE C                      <!-- 🆕 CHALLENGE 테이블 조인 -->
+	        ON P.CHALLENGE_ID = C.CHALLENGE_ID
+	     WHERE P.USER_ID = #{userId}
+	       AND (C.IS_DELETED IS NULL OR C.IS_DELETED = FALSE)  <!-- 🆕 삭제된 챌린지 제외 -->
+	  ORDER BY P.PARTICIPATED_DATE DESC, P.REQUEST_DATE DESC
 	</select>
+	
+
 	
 	<!-- 특정 사용자의 특정 상태 참여 내역 조회 -->
 	<select id="findByUserAndStatus" 
@@ -86,6 +120,7 @@
 	
 
 	
+	
 	<select id="selectById" 
 			resultType="com.hobby.challenge.fobackend.dto.ParticipationResponseDTO">
 	    SELECT PARTICIPATION_ID
@@ -101,13 +136,7 @@
 	
 
 	
-	<resultMap id="ApprovedMap" type="com.hobby.challenge.fobackend.dto.ParticipantDTO">
-		<id column="participationId" property="participationId"/>
-	    <id column="userId" property="userId"/>
-	    <result column="nickname" property="nickname"/>
-	    <result column="role" property="role"/> 
-	    <result column="imageUrl" property="imageUrl"/>
-	</resultMap>
+
 	
 	<!-- 챌린지 참여 승인된 참여자 목록 -->
 	<select id="findApprovedByChallenge" 
@@ -162,13 +191,23 @@
 	       AND STATUS IN ('REQUESTED','APPROVED')
 	</select>
 	
-	<!-- 유저가 REQUESTED 또는 APPROVED 상태인 참여 건수 조회 -->
+	<!-- 유저가 REQUESTED 또는 APPROVED 상태인 참여 건수 조회 종료된 챌린지는 제외-->
 	<select id="countActiveParticipations" resultType="int">
+	    SELECT COUNT(*)
+	      FROM PARTICIPATION P
+	      JOIN CHALLENGE C ON P.CHALLENGE_ID = C.CHALLENGE_ID
+	     WHERE P.USER_ID = #{userId}
+	       AND P.STATUS IN ('REQUESTED','APPROVED')
+	       AND C.END_DATE >= CURDATE()
+	       AND (C.IS_DELETED = 0 OR C.IS_DELETED IS NULL)
+	</select>	
+	
+	<!-- <select id="countActiveParticipations" resultType="int">
 	    SELECT COUNT(*)
 	      FROM PARTICIPATION
 	     WHERE USER_ID = #{userId}
 	       AND STATUS IN ('REQUESTED','APPROVED')
-    </select>
+    </select> -->
 
 
 	<!-- 참여 상태 업데이트 (승인/거절) -->

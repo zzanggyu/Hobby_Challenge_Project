@@ -43,7 +43,7 @@
         <result column="ACTOR_NICKNAME" property="actorNickname"/>
     </resultMap>
 
-    <!-- 알림 목록 조회 (관련 정보 조인) - 수정된 버전 -->
+    <!-- 알림 목록 조회 (발표4 보완 필요!)-->
     <select id="findByUserId" resultMap="NotificationMap">
         SELECT n.NOTIFICATION_ID
              , n.USER_ID
@@ -118,7 +118,7 @@
              
           FROM NOTIFICATION n
           
-         <!-- 발송자 정보 조인 -->
+     <!-- 발송자 정보 조인 -->
      LEFT JOIN USER actor 
             ON n.ACTOR_USER_ID = actor.USER_ID
           
@@ -126,13 +126,13 @@
      LEFT JOIN CHALLENGE c 
              ON n.CHALLENGE_ID = c.CHALLENGE_ID
         
-     <!-- 참여자 정보 조인 (참여 요청 알림의 경우) -->
+     <!-- 참여자 정보 조인 (참여 요청 알림) -->
      LEFT JOIN PARTICIPATION p 
             ON n.PARTICIPATION_ID = p.PARTICIPATION_ID
      LEFT JOIN USER pu 
             ON p.USER_ID = pu.USER_ID
         
-        <!-- 인증 작성자 정보 조인 (인증 관련 알림의 경우) -->
+     <!-- 인증 작성자 정보 조인 (인증 관련 알림) -->
      LEFT JOIN CERTIFICATION cert 
             ON n.CERT_ID = cert.CERTIFICATION_ID
      LEFT JOIN PARTICIPATION cert_participation

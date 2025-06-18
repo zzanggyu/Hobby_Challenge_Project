@@ -1,5 +1,6 @@
 package com.hobby.challenge.fobackend.dto;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 import lombok.AllArgsConstructor;
@@ -16,8 +17,11 @@ public class ParticipationResponseDTO {
     private Integer userId;
     private String nickname;
     private Integer challengeId;
+    private String challengeTitle;
     private String status; // 참여 상태 requested, approved
     private LocalDateTime requestDate;
     private LocalDateTime participatedDate;
     private String role; // 챌린지 생성자, 참여자 owner, member
+    private LocalDate startDate;    // 챌린지 시작일 추가
+    private LocalDate endDate;      // 챌린지 종료일 추가
 }

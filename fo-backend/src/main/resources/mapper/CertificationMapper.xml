@@ -42,7 +42,7 @@
 	    <result column="COMMENT_COUNT" property="commentCount" />
 	  </resultMap>
 
-    <!-- 페이징된 챌린지별 인증 내역 조회 -->
+    <!-- 발표2! 페이징된 챌린지별 인증 내역 조회 -->
     <select id="findByChallengeWithPaging" 
             resultMap="CertMap">
         SELECT C.CERTIFICATION_ID AS CERTIFICATION_ID
@@ -50,23 +50,31 @@
              , C.COMMENT AS COMMENT
              , C.IMAGE_URL AS IMAGE_URL
              , C.CREATED_DATE AS CREATED_DATE
-             , DATE(C.CREATED_DATE) AS certDate
+             , DATE(C.CREATED_DATE) AS certDate <!-- 날짜만 추출 -->
              , C.CREATED_BY AS userId
              , C.LIKE_COUNT AS LIKE_COUNT
              , U.NICKNAME AS NICKNAME
              , U.LEVEL AS LEVEL
-             , (SELECT COUNT(*) FROM CERT_COMMENT CC  <!-- 댓글 수 계산 -->
+             
+             <!-- 댓글 수 계산 -->
+             , (SELECT COUNT(*) FROM CERT_COMMENT CC 
                  WHERE CC.CERTIFICATION_ID = C.CERTIFICATION_ID) AS COMMENT_COUNT
+                 
           FROM CERTIFICATION C
+          
     INNER JOIN PARTICIPATION P
             ON C.PARTICIPATION_ID = P.PARTICIPATION_ID
+            
     INNER JOIN USER U 
             ON C.CREATED_BY = U.USER_ID
          WHERE P.CHALLENGE_ID = #{challengeId}
+         
            <!-- onlyMine이 true면 본인 인증만 조회 -->
            <if test="onlyMine == true and userId != null">
                AND C.CREATED_BY = #{userId}
            </if>
+           
+      <!-- 페이징 -->
       ORDER BY C.CREATED_DATE DESC
          LIMIT #{size} OFFSET #{offset}
     </select>
@@ -112,13 +120,23 @@
 	 <select id="findImageUrlsByChallengeId" 
         parameterType="int" 
         resultType="string">
-    SELECT C.IMAGE_URL
-      FROM CERTIFICATION C
-     INNER JOIN PARTICIPATION P 
-        ON C.PARTICIPATION_ID = P.PARTICIPATION_ID
-     WHERE P.CHALLENGE_ID = #{challengeId}
-       AND C.IMAGE_URL IS NOT NULL
-       AND C.IMAGE_URL != ''
+	    SELECT C.IMAGE_URL
+	      FROM CERTIFICATION C
+	     INNER JOIN PARTICIPATION P 
+	        ON C.PARTICIPATION_ID = P.PARTICIPATION_ID
+	     WHERE P.CHALLENGE_ID = #{challengeId}
+	       AND C.IMAGE_URL IS NOT NULL
+	       AND C.IMAGE_URL != ''
+	</select>
+	
+	<!-- 특정 챌린지에서 특정 사용자의 인증 개수 조회 -->
+	<select id="countByUserIdAndChallengeId" resultType="int">
+	    SELECT COUNT(*)
+	      FROM CERTIFICATION c
+	     INNER JOIN PARTICIPATION p 
+	        ON c.PARTICIPATION_ID = p.PARTICIPATION_ID
+	     WHERE p.CHALLENGE_ID = #{challengeId}
+	       AND c.CREATED_BY = #{userId}
 	</select>
 	  
 	  

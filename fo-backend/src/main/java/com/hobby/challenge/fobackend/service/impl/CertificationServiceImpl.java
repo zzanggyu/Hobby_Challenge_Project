@@ -63,7 +63,7 @@ public class CertificationServiceImpl implements CertificationService {
 	
 
 	
-	// 인증 등록하기
+	// 인증 등록하기 (발표3!)
 	@Override
 	@Transactional
     public CertificationDTO submitCertification(
@@ -73,9 +73,9 @@ public class CertificationServiceImpl implements CertificationService {
             String comment) {
         
         //  파일 검증
-        validateImageFile(image);
+        validateImageFile(image); // 타입, 크기, 실제 이미지 내용 검증
         
-        //  참여 승인 확인
+        //  참여 승인 상태 확인
         ParticipationResponseDTO participation =
                 participationMapper.selectByUserAndChallenge(userId, challengeId);
         if (participation == null || !"APPROVED".equals(participation.getStatus())) {
@@ -93,6 +93,11 @@ public class CertificationServiceImpl implements CertificationService {
                 ErrorCode.CERTIFICATION_INVALID_PERIOD,
                 "챌린지 기간 내에만 인증할 수 있습니다."
             );
+        }
+        
+        // 중복 인증 제한 하루에 하나의 인증만 가능
+        if (certificationMapper.countByChallenge(challengeId, userId, true) > 0) {
+            throw new CustomException(ErrorCode.DUPLICATE_CERTIFICATION, "오늘은 이미 인증을 등록했습니다.");
         }
         
         //  S3에 이미지 업로드
@@ -119,9 +124,9 @@ public class CertificationServiceImpl implements CertificationService {
             boolean alreadyReceivedToday = pointHistoryMapper.hasReceivedPointsToday(userId, "CERT_UPLOAD");
             if (!alreadyReceivedToday) {
                 userService.addPoints(userId, 10, "CERT_UPLOAD"); 
-                System.out.println("인증 포인트 지급: 10P (사용자 ID: " + userId + ")");
+                System.out.println("인증 포인트 지급");
             } else {
-                System.out.println("오늘 이미 인증 포인트를 받았음 (사용자 ID: " + userId + ")");
+                System.out.println("오늘 이미 인증 포인트를 받았음");
             }
 
         } catch (DuplicateKeyException e) {
@@ -133,7 +138,7 @@ public class CertificationServiceImpl implements CertificationService {
             );
         }
         
-        // 6) DTO 반환
+        // DTO 반환
         return certificationMapper.selectById(cert.getCertificationId());
     }
 	
@@ -166,17 +171,17 @@ public class CertificationServiceImpl implements CertificationService {
 	
     // 파일 검증 
 	private void validateImageFile(MultipartFile file) {
-	    // 1. 기본 파일 존재 여부 검사 (가장 먼저!)
+	    // 기본 파일 존재 여부 검사
 	    if (file == null || file.isEmpty()) {
 	        throw new CustomException(ErrorCode.FILE_REQUIRED, "이미지 파일은 필수입니다.");
 	    }
 
-	    // 2. 파일 크기 검증
+	    // 파일 크기 검증
 	    if (file.getSize() > MAX_FILE_SIZE) {
 	        throw new CustomException(ErrorCode.FILE_TOO_LARGE, "파일 크기는 최대 5MB까지 가능합니다.");
 	    }
 
-	    // 3. MIME 타입 기본 검증
+	    // MIME 타입 기본 검증
 	    String contentType = file.getContentType();
 	    if (contentType == null || !ALLOWED_TYPES.contains(contentType.toLowerCase())) {
 	        throw new CustomException(
@@ -185,20 +190,20 @@ public class CertificationServiceImpl implements CertificationService {
 	        );
 	    }
 
-	    // 4. 파일명 검증 (경로 순회 공격 방지)
+	    // 파일명 검증 (경로 순회 공격 방지)
 	    String filename = file.getOriginalFilename();
 	    if (filename != null && (filename.contains("..") || filename.contains("/") || filename.contains("\\"))) {
 	        throw new CustomException(ErrorCode.INVALID_FILE_NAME, "유효하지 않은 파일명입니다.");
 	    }
 
-	    // 5. 실제 파일 내용 검증 (MIME 타입 스푸핑 방지)
+	    // 실제 파일 내용 검증 (MIME 타입 스푸핑 방지)
 	    try (InputStream inputStream = file.getInputStream()) {
 	        BufferedImage image = ImageIO.read(inputStream);
 	        if (image == null) {
 	            throw new CustomException(ErrorCode.INVALID_FILE_TYPE, "유효하지 않은 이미지 파일입니다.");
 	        }
 	        
-	        // 6. 이미지 크기 제한
+	        // 이미지 크기 제한
 	        if (image.getWidth() > 4000 || image.getHeight() > 4000) {
 	            throw new CustomException(ErrorCode.IMAGE_TOO_LARGE, "이미지 해상도가 너무 큽니다. (최대 4000x4000)");
 	        }
@@ -256,6 +261,13 @@ public class CertificationServiceImpl implements CertificationService {
             return true;
         }
 	}
+	
+	//특정 챌린지에서 특정 사용자의 인증 개수 조회
+	@Override
+	@Transactional(readOnly = true)
+	public int getCertificationCountByUserAndChallenge(Integer challengeId, Integer userId) {
+	    return certificationMapper.countByUserIdAndChallengeId(userId, challengeId);
+	}
 
 	
 	// 인증 수정
@@ -284,7 +296,7 @@ public class CertificationServiceImpl implements CertificationService {
             // 파일 검증
             validateImageFile(image);
             
-            // ✅ 수정: 기존 이미지 URL 저장 (old 변수 사용)
+            // 기존 이미지 URL 저장 (old 변수 사용)
             String oldImageUrl = old.getImageUrl();
             
             try {

@@ -29,6 +29,9 @@ public interface CertificationService {
     // 좋아요 토글
     boolean toggleLike(int certificationId, int userId);
     
+    // 특정 챌린지에서 특정 사용자의 인증 개수 조회
+    int getCertificationCountByUserAndChallenge(Integer challengeId, Integer userId);
+    
     // 인증 수정
     CertificationDTO updateCertification(
             Integer userId, 
